@@ -12,19 +12,19 @@ On the other hand, those who have already contracted HIV may be subject to take 
 
 This application has several components. These include 
 
-⋅⋅* The data collection application is responsible for collecting labeled streams from all relevant available sensors. This is an Android application.
-..* The data analysis application is a suite of Python scripts provide useful statistical information pertaining to the data collected and provide evaluations for several customized Machine Learning approaches to this detection problem.
-..* The PrEPare pill intake detection application identifies instances of pill intake and sets daily reminders for the patient. Day-to-day intake data is available to the user through the main UI and can also be shared with a personal healthcare provider.
+  1. The data collection application is responsible for collecting labeled streams from all relevant available sensors. This is an Android application.
+  2. The data analysis application is a suite of Python scripts provide useful statistical information pertaining to the data collected and provide evaluations for several customized Machine Learning approaches to this detection problem.
+  3. The PrEPare pill intake detection application identifies instances of pill intake and sets daily reminders for the patient. Day-to-day intake data is available to the user through the main UI and can also be shared with a personal healthcare provider.
 
 ## Data Collection
 
 Before a classifier can be learned to identify pill intake instances, we require a substantial dataset, preferably with ground-truth labels. The data collection application is responsible for this process. It simultaneously streams synchronized data of the following modalities:
 
-..* Accelerometer/Gyroscope from the Metawear C
-..* Accelerometer/Gyroscope from the Android Wearable
-..* RSSI (Received Signal Strength Indicator) between the Metawear C and Android Wearable 
-..* Video/Audio from the mobile device
-..* Self reports in the absence of video
+  * Accelerometer/Gyroscope from the Metawear C
+  * Accelerometer/Gyroscope from the Android Wearable
+  * RSSI (Received Signal Strength Indicator) between the Metawear C and Android Wearable 
+  * Video/Audio from the mobile device
+  * Self reports in the absence of video
 
 Any of the sensors can be disabled through the main application preferences accessible from the user interface on the mobile device. Additionally, all enabled sensors can run in the background, allowing the user to continue with ordinary phone usage during data collection, only at the expense of satisfactory video recording.
 

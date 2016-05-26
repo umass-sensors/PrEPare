@@ -1,70 +1,37 @@
-# MetaWear Android Starter
-This project is a stripped down version of the MetaWear Android app that provides a template for creating a MetaWear Android 
-app.  The provided code handles Bluetooth scanning and maintaining an connection to the board; all users need to do is add their 
-own UI elements and setup their board with the MetaWear API.
+# PrEPare - Helping HIV patients overcome daily challenges.
 
-# Usage
-User additions will mostly be added to the [DeviceSetupActivityFragment](https://github.com/mbientlab-projects/MetaWear-AndroidStarterApp/blob/master/app/src/main/java/com/mbientlab/metawear/starter/DeviceSetupActivityFragment.java) 
-class and the [fragment_device_setup.xml](https://github.com/mbientlab-projects/MetaWear-AndroidStarterApp/blob/master/app/src/main/res/layout/fragment_device_setup.xml) 
-layout file.  In the DeviceSetupActivityFragment class, users can use the [reconnected](https://github.com/mbientlab-projects/MetaWear-AndroidStarterApp/blob/master/app/src/main/java/com/mbientlab/metawear/starter/DeviceSetupActivityFragment.java#L105) 
-function to be alerted of when connection is re-established and the [ready](https://github.com/mbientlab-projects/MetaWear-AndroidStarterApp/blob/master/app/src/main/java/com/mbientlab/metawear/starter/DeviceSetupActivityFragment.java#L110) 
-function to be notified of when the mwBoard variable has been assigned.
+This application tracks pill intake by interfacing with a smart pill bottle equipped with a [Metawear C](https://mbientlab.com/metawearc/), which has a 6-axis inertial measurement unit (IMU): accelerometer and gyroscope. The user may optionally be equipped with a smartwatch that supports Android Wear in order to additionally track the wrist trajectory and the watch-to-bottle RSSI (received signal strength indicator), which provides useful proximity estimates. The primary intent is to help HIV patients follow their daily pill intake regiment; however, this system may be advantageous to anyone who might need help remembering to take their daily pills.
 
-The next section provides a simple example that shows how to add a switch that controls the LED using this app template.
+# Background
 
-## LED Switch
-In the ``fragment_device_setup.xml`` layout file, we will add a switch to turn on/off the LED.  
+Pre-exposure Prophylaxis, known as PrEP, is a medication that can prevent HIV infection and is generally provided to those who are at substantial risk e.g. due to their genetic predisposition or sexual preferences. Although PrEP significantly reduces the risk of infection, by up to 92%, it is essential that it be taken consistently See [http://www.cdc.gov/hiv/risk/prep/](http://www.cdc.gov/hiv/risk/prep/).
 
-```xml
-<Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="LED"
-        android:id="@+id/led_ctrl"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:checked="false" />
-```
+On the other hand, those who have already contracted HIV may be subject to take several pills daily for effective treatment. The FDA has approved more than 25 drugs available for treatment. A comprehensive list can be found [here](http://www.healthline.com/health/hiv-aids/medications-list#4).
 
-In the DeviceSetupActivityFragment class, use the ``ready`` function to retrieve a reference to the Led module:
+# Components
 
-```java
-private Led led= null;
+This application has several components. These include 
 
-public void ready() {
-    try {
-        led= mwBoard.getModule(Led.class);
-    } catch (UnsupportedModuleException e) {
-        Snackbar.make(getActivity().findViewById(R.id.device_setup_fragment), e.getMessage(), 
-                Snackbar.LENGTH_SHORT).show();
-    }
-}
-```
+⋅⋅* The data collection application is responsible for collecting labeled streams from all relevant available sensors. This is an Android application.
+..* The data analysis application is a suite of Python scripts provide useful statistical information pertaining to the data collected and provide evaluations for several customized Machine Learning approaches to this detection problem.
+..* The PrEPare pill intake detection application identifies instances of pill intake and sets daily reminders for the patient. Day-to-day intake data is available to the user through the main UI and can also be shared with a personal healthcare provider.
 
-And, override ``onViewCreated`` to have the switch control the led with an ``OnCheckChangedListener`` class:
+## Data Collection
 
-```java
-@Override
-public void onViewCreated(View view, Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
+Before a classifier can be learned to identify pill intake instances, we require a substantial dataset, preferably with ground-truth labels. The data collection application is responsible for this process. It simultaneously streams synchronized data of the following modalities:
 
-    ((Switch) view.findViewById(R.id.led_ctrl)).setOnCheckedChangeListener(new OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            if (isChecked) {
-                led.configureColorChannel(Led.ColorChannel.BLUE)
-                        .setHighIntensity((byte) 31).setLowIntensity((byte) 31)
-                        .setHighTime((short) 1000).setPulseDuration((short) 1000)
-                        .setRepeatCount((byte) -1)
-                        .commit();
-                led.play(false);
-            } else {
-                led.stop(true);
-            }
-        }
-    });
-}
-```
+..* Accelerometer/Gyroscope from the Metawear C
+..* Accelerometer/Gyroscope from the Android Wearable
+..* RSSI (Received Signal Strength Indicator) between the Metawear C and Android Wearable 
+..* Video/Audio from the mobile device
+..* Self reports in the absence of video
 
-After making your code changes, load the app on your phone and use the switch to turn on/off the LED.
+Any of the sensors can be disabled through the main application preferences accessible from the user interface on the mobile device. Additionally, all enabled sensors can run in the background, allowing the user to continue with ordinary phone usage during data collection, only at the expense of satisfactory video recording.
+
+## Data Analysis
+
+TODO
+
+## PrEPare - Detection in the real world
+
+TODO

@@ -1,4 +1,5 @@
-# PrEPare - Helping HIV patients overcome daily challenges.
+# PrEPare
+###Helping HIV patients overcome daily challenges.
 
 This application tracks pill intake by interfacing with a smart pill bottle equipped with a [Metawear C](https://mbientlab.com/metawearc/), which has a 6-axis inertial measurement unit (IMU): accelerometer and gyroscope. The user may optionally be equipped with a smartwatch that supports Android Wear in order to additionally track the wrist trajectory and the watch-to-bottle RSSI (received signal strength indicator), which provides useful proximity estimates. The primary intent is to help HIV patients follow their daily pill intake regiment; however, this system may be advantageous to anyone who might need help remembering to take their daily pills.
 
@@ -27,6 +28,22 @@ Before a classifier can be learned to identify pill intake instances, we require
   * Self reports in the absence of video
 
 Any of the sensors can be disabled through the main application preferences accessible from the user interface on the mobile device. Additionally, all enabled sensors can run in the background, allowing the user to continue with ordinary phone usage during data collection, only at the expense of satisfactory video recording.
+
+### Low-Power Data Collection
+
+Using several sensing modalities simultaneously poses the issue of high power consumption. However, notice that the data collection is distributed among three dedicated devices.
+
+  1. The phone handles the user interactions, the video recording, the Bluetooth connection with the smartwatch and the ongoing background service.
+  2. The watch handles basic user interactions and notifications, accelerometer and gyroscope streaming, the Bluetooth connection with the Metawear device and the sensor data transmission to the phone.
+  3. The Metawear device handles only its own accelerometer and gyroscope data, sending them periodically to the smartwatch.
+
+The mobile and wearable devices are both rechargeable and we recommend recharging these devices each night. However, the Metawear device runs on a non-rechargeable replaceable CR-2032 coin cell battery. For convenience, the battery level is displayed in the application during data collection and updated periodically. The user is notified both on the mobile device and on the watch when the Metawear battery reaches low battery charge.
+
+Because the Metawear device sits in Beacon mode until the watch is in range, it consumes very little power when data collection is not in process. Even when the user is in range of the Metawear device, it consumes minimal power until the user is sufficiently close to the device. The proximity is estimated by the RSSI between the wearable and the Metawear device.
+
+The Metawear device is estimated to last six weeks before battery replacement is required. However, more comprehensive testing is required for accurate estimates.
+
+To reduce the daily power consumption of the pill bottle and the watch, it is recommended that the gyroscope is disabled. The gyroscope consumes two orders of magnitude greater power than the accelerometer and offers little boost in performance.
 
 ## Data Analysis
 

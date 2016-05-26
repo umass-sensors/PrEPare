@@ -53,7 +53,7 @@ The only essential application permission is ```WRITE_EXTERNAL_STORAGE```, which
 
 In addition, the application needs the following permissions:
 
-  * ```ACCESS_COARSE_LOCATION``` is since Android version 6.0 required to scan for Bluetooth Low Energy devices. The user may alternatively select to enter the MAC ID of the Metawear device manually.
+  * [```ACCESS_COARSE_LOCATION```](https://developer.android.com/reference/android/Manifest.permission.html#ACCESS_COARSE_LOCATION) is since Android version 6.0 required to scan for Bluetooth Low Energy devices. The user may alternatively select to enter the MAC ID of the Metawear device manually.
   * ```CAMERA``` is required if video recording is enabled for use in ground-truth labeling.
   * ```RECORD_AUDIO``` is required if in addition to video recording, audio recording is also enabled.
   * ```SYSTEM_ALERT_WINDOW``` is a special permission that allows the application to draw over all other applications. It is required for background recording video when the application is not visible or closed entirely. If you do not wish to grant this permission, then video will be disabled.

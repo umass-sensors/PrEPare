@@ -7,7 +7,7 @@ This application tracks pill intake by interfacing with a smart pill bottle equi
 
 ## Background
 
-Pre-exposure Prophylaxis, known as PrEP, is a medication that can prevent HIV infection and is generally provided to those who are at substantial risk e.g. due to their genetic predisposition or sexual preferences. Although PrEP significantly reduces the risk of infection, by up to 92%, it is essential that it be taken consistently See [http://www.cdc.gov/hiv/risk/prep/](http://www.cdc.gov/hiv/risk/prep/).
+Pre-exposure Prophylaxis, known as PrEP, is a medication that can prevent HIV infection and is generally provided to those who are at substantial risk e.g. due to their genetic predisposition or sexual preferences. Although PrEP significantly reduces the risk of infection, by up to 92%, it is essential that it be taken consistently. See [http://www.cdc.gov/hiv/risk/prep/](http://www.cdc.gov/hiv/risk/prep/).
 
 On the other hand, those who have already contracted HIV may be subject to take several pills daily for effective treatment. The FDA has approved more than 25 drugs available for treatment. A comprehensive list can be found [here](http://www.healthline.com/health/hiv-aids/medications-list#4).
 
@@ -46,6 +46,17 @@ Because the Metawear device sits in Beacon mode until the watch is in range, it 
 The Metawear device is estimated to last six weeks before battery replacement is required. However, more comprehensive testing is required for accurate estimates.
 
 To reduce the daily power consumption of the pill bottle and the watch, it is recommended that the gyroscope is disabled. The gyroscope consumes two orders of magnitude greater power than the accelerometer and offers little boost in performance.
+
+#### Application Permissions
+
+The only essential application permission is ```WRITE_EXTERNAL_STORAGE```, which is used to write data to disk. Without it, no data collection can really take place.
+
+In addition, the application needs the following permissions:
+
+  * ```ACCESS_COARSE_LOCATION``` is since Android version 6.0 required to scan for Bluetooth Low Energy devices. The user may alternatively select to enter the MAC ID of the Metawear device manually.
+  * ```CAMERA``` is required if video recording is enabled for use in ground-truth labeling.
+  * ```RECORD_AUDIO``` is required if in addition to video recording, audio recording is also enabled.
+  * ```SYSTEM_ALERT_WINDOW``` is a special permission that allows the application to draw over all other applications. It is required for background recording video when the application is not visible or closed entirely. If you do not wish to grant this permission, then video will be disabled.
 
 ### Data Analysis
 

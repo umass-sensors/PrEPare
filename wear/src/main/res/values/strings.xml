@@ -1,7 +1,3 @@
 <resources>
-    <string name="app_name">PrEPare</string>
-
-    <string name="hello">Hello World!</string>
-    <string name="title">Hello Notification!</string>
-    <string name="notification_posted">Notification posted</string>
+    <string name="hello">Hello!</string>
 </resources>

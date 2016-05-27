@@ -38,7 +38,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="edu.umass.cs.mobile.main.MainActivity">
+    tools:context="edu.umass.cs.prepare.main.MainActivity">
 
     <fragment xmlns:tools="http://schemas.android.com/tools" android:id="@+id/scanner_fragment"
         android:name="com.mbientlab.bletoolbox.scanner.BleScannerFragment"

@@ -122,7 +122,8 @@ public class SensorService extends Service implements ServiceConnection {
 
     @Override
     public void onDestroy(){
-        mwBoard.disconnect();
+        if (mwBoard != null)
+            mwBoard.disconnect();
         super.onDestroy();
     }
 
@@ -132,15 +133,17 @@ public class SensorService extends Service implements ServiceConnection {
             Log.d(TAG, "Metawear service started.");
             loadSharedPreferences();
             setup();
-            String mwMacAddress= intent.getStringExtra("metawear-mac-address");
+            String mwMacAddress = intent.getStringExtra("metawear-mac-address");
             BluetoothManager btManager= (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
-            btDevice= btManager.getAdapter().getRemoteDevice(mwMacAddress);
-            getApplicationContext().bindService(new Intent(this, MetaWearBleService.class), this, Context.BIND_AUTO_CREATE);
-            mIsBound = true;
+            Log.d(TAG, "MAC ID : " + mwMacAddress);
+            btDevice = btManager.getAdapter().getRemoteDevice(mwMacAddress);
+            mIsBound = getApplicationContext().bindService(new Intent(this, MetaWearBleService.class), this, Context.BIND_AUTO_CREATE);
+            Log.d(TAG, "Bound to service? " + mIsBound);
         } else if (intent.getAction().equals(Constants.ACTION.STOP_SERVICE)){
             Log.d(TAG, "Metawear service stopped.");
             stopAccelerometer();
-            mwBoard.disconnect();
+            if (mwBoard != null)
+                mwBoard.disconnect();
             stopForeground(true);
             if (mIsBound){
                 getApplicationContext().unbindService(this); //TODO: Also in onDestroy()
@@ -156,13 +159,17 @@ public class SensorService extends Service implements ServiceConnection {
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
+        Log.d(TAG, "Service Bound.");
         mwBoard= ((MetaWearBleService.LocalBinder) service).getMetaWearBoard(btDevice);
+
+        Log.d(TAG, "Connecting...");
 
         //sendMessageToClients(Constants.MESSAGE.CONNECTING);
 
         mwBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
             @Override
             public void connected() {
+                Log.d(TAG, "Connected!");
                 //sendMessageToClients(Constants.MESSAGE.CONNECTED);
                 ready();
                 startAccelerometer();
@@ -301,6 +308,7 @@ public class SensorService extends Service implements ServiceConnection {
                             public void process(Message msg) {
                                 CartesianFloat reading = msg.getData(CartesianFloat.class);
                                 synchronized (accelBuffer) { //add sensor data to the appropriate buffer
+                                    Log.d(TAG, reading.toString());
                                     accelBuffer.addReading(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
                                 }
                             }

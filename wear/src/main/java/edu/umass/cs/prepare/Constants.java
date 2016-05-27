@@ -1,4 +1,4 @@
-package cs.umass.edu.prepare;
+package edu.umass.cs.prepare;
 
 public class Constants {
     public interface ACTION {

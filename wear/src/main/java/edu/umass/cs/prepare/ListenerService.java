@@ -1,4 +1,4 @@
-package cs.umass.edu.prepare;
+package edu.umass.cs.prepare;
 
 import android.content.Intent;
 import android.util.Log;
@@ -43,12 +43,12 @@ public class ListenerService extends WearableListenerService {
                 e.printStackTrace();
             }
             Log.d(TAG, "Mac ID is " + mwMacAddress);
-            Intent startServiceIntent = new Intent(this, cs.umass.edu.prepare.metawear.SensorService.class);
+            Intent startServiceIntent = new Intent(this, edu.umass.cs.prepare.metawear.SensorService.class);
             startServiceIntent.setAction(Constants.ACTION.START_SERVICE);
             startServiceIntent.putExtra("metawear-mac-address", mwMacAddress);
             startService(startServiceIntent);
         }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.STOP_METAWEAR_SERVICE)) {
-            Intent stopServiceIntent = new Intent(this, cs.umass.edu.prepare.metawear.SensorService.class);
+            Intent stopServiceIntent = new Intent(this, edu.umass.cs.prepare.metawear.SensorService.class);
             stopServiceIntent.setAction(Constants.ACTION.STOP_SERVICE);
             startService(stopServiceIntent);
 

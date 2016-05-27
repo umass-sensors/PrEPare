@@ -1,4 +1,4 @@
-package cs.umass.edu.prepare;
+package edu.umass.cs.prepare;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import cs.umass.edu.prepare.R;
 import cs.umass.edu.shared.SharedConstants;
 
 /**

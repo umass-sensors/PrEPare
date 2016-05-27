@@ -1,4 +1,4 @@
-package cs.umass.edu.prepare.metawear;
+package edu.umass.cs.prepare.metawear;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -30,8 +30,8 @@ import com.mbientlab.metawear.module.Accelerometer;
 import java.io.BufferedWriter;
 
 import cs.umass.edu.shared.SharedConstants;
-import cs.umass.edu.prepare.Constants;
-import cs.umass.edu.prepare.DataClient;
+import edu.umass.cs.prepare.Constants;
+import edu.umass.cs.prepare.DataClient;
 import cs.umass.edu.prepare.R;
 
 //import edu.umass.cs.mobile.R;

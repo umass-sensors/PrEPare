@@ -22,7 +22,6 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-import cs.umass.edu.prepare.R;
 import cs.umass.edu.shared.SharedConstants;
 
 /**

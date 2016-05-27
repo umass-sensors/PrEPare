@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cs.umass.edu.prepare" >
+    package="edu.umass.cs.prepare" >
 
     <uses-feature android:name="android.hardware.type.watch" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -17,14 +17,14 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <service android:name="cs.umass.edu.prepare.ListenerService">
+        <service android:name="edu.umass.cs.prepare.ListenerService">
             <intent-filter>
                 <action
                     android:name="com.google.android.gms.wearable.BIND_LISTENER" />
             </intent-filter>
         </service>
-        <service android:name="cs.umass.edu.prepare.SensorService" />
-        <service android:name="cs.umass.edu.prepare.metawear.SensorService" />
+        <service android:name="edu.umass.cs.prepare.SensorService" />
+        <service android:name="edu.umass.cs.prepare.metawear.SensorService" />
     </application>
 
 </manifest>

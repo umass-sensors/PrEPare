@@ -32,7 +32,7 @@ import java.io.BufferedWriter;
 import cs.umass.edu.shared.SharedConstants;
 import edu.umass.cs.prepare.Constants;
 import edu.umass.cs.prepare.DataClient;
-import cs.umass.edu.prepare.R;
+import edu.umass.cs.prepare.R;
 
 //import edu.umass.cs.mobile.R;
 //import edu.umass.cs.mobile.constants.Constants;

@@ -1,6 +1,7 @@
 package edu.umass.cs.prepare;
 
 import android.content.Context;
+import android.content.Intent;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -19,14 +20,16 @@ import cs.umass.edu.shared.SharedConstants;
 /**
  * The DataClient is responsible for sending data from the wearable device to the handheld application.
  *
- * See <a href=https://github.com/pocmo/SensorDashboard/blob/master/wear/src/main/java/com/github/pocmo/sensordashboard/DeviceClient.java>this link</a>
- * for the basis of the structure for the DataClient.
+ * See <a href=https://github.com/pocmo/SensorDashboard/blob/master/wear/src/main/java/com/github/pocmo/sensordashboard/DeviceClient.java>
+ *     Sensor Dashboard</a>
+ * for similar work.
  *
  * @see GoogleApiClient
  * @see DataApi
  */
 public class DataClient {
 
+    @SuppressWarnings("unused")
     /** used for debugging purposes */
     private static final String TAG = DataClient.class.getName();
 
@@ -56,16 +59,15 @@ public class DataClient {
         executorService = Executors.newCachedThreadPool();
     }
 
-    public void sendSensorData(final int sensorType, final long[] timestamps, final float[] values) {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                sendSensorDataInBackground(sensorType, timestamps, values);
-            }
-        });
-    }
-
-    public void sendSensorData(final int sensorType, final String[] timestamps, final float[] values) {
+    /**
+     * Sends the sensor data via the data layer to the handheld application. This calls
+     * {@link #sendSensorDataInBackground(SharedConstants.SENSOR_TYPE, String[], float[])} so as not to block
+     * program execution on the main thread.
+     * @param sensorType the sensor from which the data is received, defined in {@link cs.umass.edu.shared.SharedConstants.SENSOR_TYPE}
+     * @param timestamps a sequence of timestamps corresponding to when the values were measured
+     * @param values a list sensor readings
+     */
+    public void sendSensorData(final SharedConstants.SENSOR_TYPE sensorType, final String[] timestamps, final float[] values) {
         executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -75,22 +77,12 @@ public class DataClient {
     }
 
     /**
-     * Sends the sensor data via the data layer to the handheld application
-     * @param sensorType the (3-axis) sensor from which we are collecting data, i.e. Sensor.TYPE_ACCELEROMETER, TYPE_GYROSCOPE
-     * @param timestamps a sequence of timestamps corresponding to when the values were measured (uptime in nanoseconds)
-     * @param values a list of the x-, y-, and z-values of the sensor reading
+     * Sends the sensor data via the data layer to the handheld application in a background thread.
+     * @param sensorType the sensor from which the data is received, defined in {@link cs.umass.edu.shared.SharedConstants.SENSOR_TYPE}
+     * @param timestamps a sequence of timestamps corresponding to when the values were measured
+     * @param values a list sensor readings
      */
-    private void sendSensorDataInBackground(int sensorType, long[] timestamps, float[] values) {
-        PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH + sensorType);
-
-        dataMap.getDataMap().putLongArray(SharedConstants.VALUES.TIMESTAMPS, timestamps);
-        dataMap.getDataMap().putFloatArray(SharedConstants.VALUES.SENSOR_VALUES, values);
-
-        PutDataRequest putDataRequest = dataMap.asPutDataRequest();
-        send(putDataRequest);
-    }
-
-    private void sendSensorDataInBackground(int sensorType, String[] timestamps, float[] values) {
+    private void sendSensorDataInBackground(final SharedConstants.SENSOR_TYPE sensorType, final String[] timestamps, final float[] values) {
         PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH + sensorType);
 
         dataMap.getDataMap().putStringArray(SharedConstants.VALUES.TIMESTAMPS, timestamps);
@@ -100,6 +92,10 @@ public class DataClient {
         send(putDataRequest);
     }
 
+    /**
+     * Connects to the Google API client if necessary.
+     * @return True if successful, false otherwise.
+     */
     private boolean validateConnection() {
         if (googleApiClient.isConnected()) {
             return true;
@@ -110,6 +106,11 @@ public class DataClient {
         return result.isSuccess();
     }
 
+    /**
+     * Sends the data mapped to the put request to the mobile device via the Google API client.
+     * @param putDataRequest encodes the data being sent to the mobile device. A {@link PutDataRequest}
+     *                       is analogous to an {@link Intent}, which allows cross-context communication.
+     */
     private void send(PutDataRequest putDataRequest) {
         if (validateConnection()) {
             Wearable.DataApi.putDataItem(googleApiClient, putDataRequest).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
@@ -119,31 +120,5 @@ public class DataClient {
                 }
             });
         }
-    }
-
-    public void sendLabel(final long timestamp, final String activity, final String command) {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                sendLabelInBackground(timestamp, activity, command);
-            }
-        });
-    }
-
-    /**
-     * sends the label via the data layer to the handheld application
-     * @param timestamp the moment at which the label occurred (uptime in nanoseconds)
-     * @param activity the activity the user performed
-     * @param command a command describing the action: either starting the action or stopping the action
-     */
-    private void sendLabelInBackground(long timestamp, String activity, String command) {
-        PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.LABEL_PATH);
-
-        dataMap.getDataMap().putLong(SharedConstants.VALUES.LABEL_TIMESTAMP, timestamp);
-        dataMap.getDataMap().putString(SharedConstants.VALUES.ACTIVITY, activity);
-        dataMap.getDataMap().putString(SharedConstants.VALUES.COMMAND, command);
-
-        PutDataRequest putDataRequest = dataMap.asPutDataRequest();
-        send(putDataRequest);
     }
 }

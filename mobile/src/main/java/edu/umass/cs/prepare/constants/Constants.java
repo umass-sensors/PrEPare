@@ -37,7 +37,7 @@ public class Constants {
         String SURFACE_WIDTH = "edu.umass.cs.prepare.key.surface-width";
         String SURFACE_HEIGHT = "edu.umass.cs.prepare.key.surface-height";
         String SURFACE_X = "edu.umass.cs.prepare.key.surface-x";
-        String SURFACE_Y = "edu.umeass.cs.prepare.key.surface-y";
+        String SURFACE_Y = "edu.umass.cs.prepare.key.surface-y";
         String CANCEL_CONNECTING = "edu.umass.cs.prepare.key.cancel-connecting";
         String SENSOR_DATA = "edu.umass.cs.prepare.key.sensor-data";
         String SENSOR_TYPE = "edu.umass.cs.prepare.key.sensor-type";

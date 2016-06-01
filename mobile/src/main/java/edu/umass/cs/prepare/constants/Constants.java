@@ -1,9 +1,5 @@
 package edu.umass.cs.prepare.constants;
 
-import android.os.Environment;
-
-import java.io.File;
-
 /**
  * The Constants class stores various constants that are used across various classes, including
  * identifiers for intent actions used when the main UI communicates with the sensor service; the
@@ -14,6 +10,12 @@ import java.io.File;
  */
 public class Constants {
 
+    /** Number of bytes required to represent a timestamp string, used for efficient allocation **/
+    public static final int BYTES_PER_TIMESTAMP = 20;
+
+    /** Number of bytes required to represent a float reading, used for efficient allocation **/
+    public static final int BYTES_PER_SENSOR_READING = 10;
+
     /** Intent actions used to communicate between the main UI and the sensor service
      * @see android.content.Intent */
     public interface ACTION {
@@ -23,37 +25,9 @@ public class Constants {
         String MINIMIZE_VIDEO = "edu.umass.cs.bluedroid.action.minimize-video";
         String MAXIMIZE_VIDEO = "edu.umass.cs.bluedroid.action.maximize-video";
 
-
-        String START_FOREGROUND = "do-something-with-this";
         String NAVIGATE_TO_APP = "this too!";
-        String RECORD_LABEL = "probably delete this";
-        String STOP_FOREGROUND = "don't forget about me!";
-    }
-
-    public interface NOTIFICATION_ID {
-        /** Identifies the service to ensure that we have one single instance in the foreground */
-        int SENSOR_SERVICE = 101;
-        int VIDEO_SERVICE = 102;
-        int FOREGROUND_SERVICE = 103; //TODO: Change this, make it more descriptive
-    }
-
-    public interface PREFERENCES {
-        interface FILE_NAME {
-            interface ACCELEROMETER {
-                String KEY = "accelerometer-file-name";
-                String DEFAULT = "accelerometer";
-            }
-
-            interface RSSI {
-                String KEY = "rssi";
-                String DEFAULT = "";
-            }
-        }
-
-        interface SAVE_DIRECTORY {
-            String DEFAULT_DIRECTORY_NAME = "bluedroid";
-            String DEFAULT = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DEFAULT_DIRECTORY_NAME).getAbsolutePath();
-        }
+        String BROADCAST_SENSOR_DATA = "edu.umass.cs.bluedroid.action.broadcast-sensor-data";
+        int REQUEST_SET_PREFERENCES = 5; //TODO: WHERE TO PUT REQUESTS??
     }
 
     public interface KEY {
@@ -65,6 +39,9 @@ public class Constants {
         String SURFACE_X = "edu.umass.cs.bluedroid.key.surface-x";
         String SURFACE_Y = "edu.umass.cs.bluedroid.key.surface-y";
         String CANCEL_CONNECTING = "edu.umass.cs.bluedroid.key.cancel-connecting";
+        String SENSOR_DATA = "edu.umass.cs.bluedroid.key.sensor-data";
+        String SENSOR_TYPE = "edu.umass.cs.bluedroid.key.sensor-type";
+        String TIMESTAMP = "edu.umass.cs.bluedroid.key.timestamp";
     }
 
     public interface MESSAGE {

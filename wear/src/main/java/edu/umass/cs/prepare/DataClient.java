@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import cs.umass.edu.shared.SharedConstants;
+import edu.umass.cs.shared.SharedConstants;
 
 /**
  * The DataClient is responsible for sending data from the wearable device to the handheld application.
@@ -63,7 +63,7 @@ public class DataClient {
      * Sends the sensor data via the data layer to the handheld application. This calls
      * {@link #sendSensorDataInBackground(SharedConstants.SENSOR_TYPE, String[], float[])} so as not to block
      * program execution on the main thread.
-     * @param sensorType the sensor from which the data is received, defined in {@link cs.umass.edu.shared.SharedConstants.SENSOR_TYPE}
+     * @param sensorType the sensor from which the data is received, defined in {@link SharedConstants.SENSOR_TYPE}
      * @param timestamps a sequence of timestamps corresponding to when the values were measured
      * @param values a list sensor readings
      */
@@ -78,15 +78,16 @@ public class DataClient {
 
     /**
      * Sends the sensor data via the data layer to the handheld application in a background thread.
-     * @param sensorType the sensor from which the data is received, defined in {@link cs.umass.edu.shared.SharedConstants.SENSOR_TYPE}
+     * @param sensorType the sensor from which the data is received, defined in {@link SharedConstants.SENSOR_TYPE}
      * @param timestamps a sequence of timestamps corresponding to when the values were measured
      * @param values a list sensor readings
      */
     private void sendSensorDataInBackground(final SharedConstants.SENSOR_TYPE sensorType, final String[] timestamps, final float[] values) {
-        PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH + sensorType);
+        PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH);
 
-        dataMap.getDataMap().putStringArray(SharedConstants.VALUES.TIMESTAMPS, timestamps);
-        dataMap.getDataMap().putFloatArray(SharedConstants.VALUES.SENSOR_VALUES, values);
+        dataMap.getDataMap().putInt(SharedConstants.KEY.SENSOR_TYPE, sensorType.ordinal()); //TODO: .ordinal() is considered sloppy
+        dataMap.getDataMap().putStringArray(SharedConstants.KEY.TIMESTAMPS, timestamps);
+        dataMap.getDataMap().putFloatArray(SharedConstants.KEY.SENSOR_VALUES, values);
 
         PutDataRequest putDataRequest = dataMap.asPutDataRequest();
         send(putDataRequest);

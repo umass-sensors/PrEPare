@@ -2,4 +2,6 @@
     <string name="app_name">PrEPare</string>
 
     <string name="notification_text">Collecting sensor data…</string>
+
+    <string name="stop_service">Stop service</string>
 </resources>

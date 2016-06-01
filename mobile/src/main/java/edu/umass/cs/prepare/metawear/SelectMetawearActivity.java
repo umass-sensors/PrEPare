@@ -10,14 +10,20 @@ import com.mbientlab.metawear.MetaWearBoard;
 
 import java.util.UUID;
 
+import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
 
+/**
+ * This activity allows the user to select an available Metawear device by its unique identifier.
+ * All BLE Metawear devices are listed, along with their signal strength and address.
+ * @see BleScannerFragment
+ */
 public class SelectMetawearActivity extends AppCompatActivity implements BleScannerFragment.ScannerCommunicationBus {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_select_metawear);
     }
 
     @Override
@@ -38,7 +44,7 @@ public class SelectMetawearActivity extends AppCompatActivity implements BleScan
     @Override
     public void onDeviceSelected(final BluetoothDevice device) {
         Intent data = new Intent();
-        data.putExtra("metawear-device", device);
+        data.putExtra(SharedConstants.KEY.UUID, device.getAddress());
         setResult(RESULT_OK, data);
         finish();
     }

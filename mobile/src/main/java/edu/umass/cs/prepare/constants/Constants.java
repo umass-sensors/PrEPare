@@ -19,29 +19,29 @@ public class Constants {
     /** Intent actions used to communicate between the main UI and the sensor service
      * @see android.content.Intent */
     public interface ACTION {
-        String START_SERVICE = "edu.umass.cs.bluedroid.action.start-service";
-        String NOTIFY = "edu.umass.cs.bluedroid.action.notify";
-        String STOP_SERVICE = "edu.umass.cs.bluedroid.action.stop-service";
-        String MINIMIZE_VIDEO = "edu.umass.cs.bluedroid.action.minimize-video";
-        String MAXIMIZE_VIDEO = "edu.umass.cs.bluedroid.action.maximize-video";
+        String START_SERVICE = "edu.umass.cs.prepare.action.start-service";
+        String NOTIFY = "edu.umass.cs.prepare.action.notify";
+        String STOP_SERVICE = "edu.umass.cs.prepare.action.stop-service";
+        String MINIMIZE_VIDEO = "edu.umass.cs.prepare.action.minimize-video";
+        String MAXIMIZE_VIDEO = "edu.umass.cs.prepare.action.maximize-video";
 
         String NAVIGATE_TO_APP = "this too!";
-        String BROADCAST_SENSOR_DATA = "edu.umass.cs.bluedroid.action.broadcast-sensor-data";
+        String BROADCAST_SENSOR_DATA = "edu.umass.cs.prepare.action.broadcast-sensor-data";
         int REQUEST_SET_PREFERENCES = 5; //TODO: WHERE TO PUT REQUESTS??
     }
 
     public interface KEY {
-        String STATUS = "edu.umass.cs.bluedroid.key.status";
-        String ACCELEROMETER_READING = "edu.umass.cs.bluedroid.key.accelerometer-reading";
-        String BATTERY_LEVEL = "edu.umass.cs.bluedroid.key.battery-level";
-        String SURFACE_WIDTH = "edu.umass.cs.bluedroid.key.surface-width";
-        String SURFACE_HEIGHT = "edu.umass.cs.bluedroid.key.surface-height";
-        String SURFACE_X = "edu.umass.cs.bluedroid.key.surface-x";
-        String SURFACE_Y = "edu.umass.cs.bluedroid.key.surface-y";
-        String CANCEL_CONNECTING = "edu.umass.cs.bluedroid.key.cancel-connecting";
-        String SENSOR_DATA = "edu.umass.cs.bluedroid.key.sensor-data";
-        String SENSOR_TYPE = "edu.umass.cs.bluedroid.key.sensor-type";
-        String TIMESTAMP = "edu.umass.cs.bluedroid.key.timestamp";
+        String STATUS = "edu.umass.cs.prepare.key.status";
+        String ACCELEROMETER_READING = "edu.umass.cs.prepare.key.accelerometer-reading";
+        String BATTERY_LEVEL = "edu.umass.cs.prepare.key.battery-level";
+        String SURFACE_WIDTH = "edu.umass.cs.prepare.key.surface-width";
+        String SURFACE_HEIGHT = "edu.umass.cs.prepare.key.surface-height";
+        String SURFACE_X = "edu.umass.cs.prepare.key.surface-x";
+        String SURFACE_Y = "edu.umass.cs.prepare.key.surface-y";
+        String CANCEL_CONNECTING = "edu.umass.cs.prepare.key.cancel-connecting";
+        String SENSOR_DATA = "edu.umass.cs.prepare.key.sensor-data";
+        String SENSOR_TYPE = "edu.umass.cs.prepare.key.sensor-type";
+        String TIMESTAMP = "edu.umass.cs.prepare.key.timestamp";
     }
 
     public interface MESSAGE {

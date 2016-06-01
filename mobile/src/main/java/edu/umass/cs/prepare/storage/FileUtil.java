@@ -1,6 +1,8 @@
 package edu.umass.cs.prepare.storage;
 
+import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -11,7 +13,7 @@ import java.io.IOException;
  * This class handles file input/output operations, such as saving the accelerometer/gyroscope
  * data and labels, opening/closing file readers/writers, and deleting the data storage location.
  */
-public class FileUtil {
+class FileUtil {
 
     /** tag used for debugging purposes */
     private static final String TAG = FileUtil.class.getName();
@@ -24,12 +26,13 @@ public class FileUtil {
      * @param filename file name (without extension!)
      * @return the file writer for the particular filename
      */
-    public static BufferedWriter getFileWriter(String filename, File directory){
+    public static BufferedWriter getFileWriter(Context context, String filename, File directory){
         if(!directory.exists()) {
             if (directory.mkdirs()){
-                //TODO: Let user know directory was created
+                Toast.makeText(context, String.format("Created directory %s", directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
             }else{
-                Log.w(TAG, "Failed to create directory " + directory.getAbsolutePath());
+                Toast.makeText(context, String.format("Failed to create directory %s. Please set the directory in Settings",
+                        directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
             }
         }
         String fullFileName = filename + String.valueOf(System.currentTimeMillis()) + CSV_EXTENSION;
@@ -50,7 +53,7 @@ public class FileUtil {
      */
     public static void writeToFile(String s, final BufferedWriter out) {
         try{
-            out.write(s+"\n");
+            out.write(s + "\n");
         } catch(IOException e){
             e.printStackTrace();
         }

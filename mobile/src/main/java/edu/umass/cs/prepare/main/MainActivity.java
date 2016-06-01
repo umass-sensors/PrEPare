@@ -3,7 +3,6 @@ package edu.umass.cs.prepare.main;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -30,38 +29,53 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+
+import com.google.android.gms.wearable.MessageApi;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.umass.cs.prepare.metawear.DataReceiverService;
+import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.metawear.RemoteSensorManager;
-import edu.umass.cs.prepare.metawear.SelectMetawearActivity;
 import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.preferences.SettingsActivity;
+import edu.umass.cs.prepare.storage.DataWriterService;
 
+/**
+ * The Main Activity is the entry point for the application. It involves the main user interface
+ * and is responsible for managing all background sensor services. These services handle
+ * {@link DataReceiverService receiving data from the wearable},
+ * {@link SensorService collecting data from the Metawear tag directly to the phone},
+ * {@link DataReceiverService writing data to storage},
+ * recording video in the background, and
+ * {@link RemoteSensorManager managing the services available on the wearable}.
+ */
 public class MainActivity extends AppCompatActivity {
 
+    /** View which displays the accelerometer readings from the Metawear tag TODO: make array adapter list view for displaying multiple modalities **/
     private TextView txtAccelerometer;
 
     /**
      * Messenger service for exchanging messages with the background service
      */
     private Messenger mService = null;
+
     /**
-     * Variable indicating if this activity is connected to the service
+     * indicates if this activity is bound to the {@link SensorService}
      */
     private boolean mIsBound;
+
     /**
      * Messenger receiving messages from the background service to update UI
      */
     private final Messenger mMessenger = new Messenger(new IncomingHandler(this));
-
-    private BluetoothDevice btDevice;
 
     /** whether the application should record video during data collection **/
     private boolean record_video;
@@ -69,13 +83,16 @@ public class MainActivity extends AppCompatActivity {
     /** whether video recording should include audio **/
     private boolean record_audio;
 
+    private boolean runServiceOverWearable;
+
+    /** The address of the Metawear device from which data is to be collected **/
+    private String metawearAddress;
+
     /** Permission request identifier **/
     private static final int PERMISSION_REQUEST = 1;
 
     /** code to post/handler request for permission */
-    public final static int WINDOW_OVERLAY_REQUEST = 2;
-
-    private static final int BLUETOOTH_DISCOVERY_REQUEST = 3;
+    private final static int WINDOW_OVERLAY_REQUEST = 2;
 
     /** The sensor manager which handles sensors on the wearable device remotely */
     private RemoteSensorManager remoteSensorManager;
@@ -161,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Connection with the service
      */
-    private ServiceConnection mConnection = new ServiceConnection() {
+    private final ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = new Messenger(service);
             //updateStatus("Attached to the sensor service.");
@@ -186,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Binds the activity to the background service
      */
-    void doBindService() {
+    private void doBindService() {
         bindService(new Intent(this, SensorService.class), mConnection, Context.BIND_AUTO_CREATE);
         //updateStatus("Binding to Service...");
     }
@@ -194,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Unbind this activity from the background service
      */
-    void doUnbindService() {
+    private void doUnbindService() {
         if (mIsBound) {
             // If we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
@@ -212,10 +229,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private BluetoothDevice getBtDevice(){
-        return btDevice;
-    }
-
     private SharedPreferences preferences;
     /**
      * Loads shared user preferences, e.g. whether video/audio is enabled
@@ -226,34 +239,45 @@ public class MainActivity extends AppCompatActivity {
                 getResources().getBoolean(R.bool.pref_video_default));
         record_audio = preferences.getBoolean(getString(R.string.pref_audio_key),
                 getResources().getBoolean(R.bool.pref_audio_default));
+        metawearAddress = preferences.getString(getString(R.string.pref_device_key),
+                getString(R.string.pref_device_default));
+        runServiceOverWearable = preferences.getBoolean(getString(R.string.pref_wearable_key),
+                getResources().getBoolean(R.bool.pref_wearable_default));
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_read_accel);
-//        doBindService();
+        setContentView(R.layout.activity_main);
+
+        loadPreferences();
+        if (!runServiceOverWearable)
+            doBindService();
 
         remoteSensorManager = RemoteSensorManager.getInstance(this);
+        //TODO: Is this necessary?
+        remoteSensorManager.setRemoteSensorListener(new RemoteSensorManager.RemoteSensorListener() {
+            @Override
+            public void onMessageResult(String path, byte[] msg, MessageApi.SendMessageResult sendMessageResult) {
 
-        findViewById(R.id.start_button).setOnClickListener(new View.OnClickListener() {
+            }
+        });
+
+        Button startButton = (Button) findViewById(R.id.start_button);
+        assert startButton != null;
+        startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loadPreferences();
                 requestPermissions();
             }
         });
-        findViewById(R.id.stop_button).setOnClickListener(new View.OnClickListener() {
+        Button stopButton = (Button) findViewById(R.id.stop_button);
+        assert stopButton != null;
+        stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                remoteSensorManager.stopMetawearService();
-//                if (!mIsBound) {
-//                    doBindService();
-//                }else {
-//                    Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
-//                    startServiceIntent.setAction(Constants.ACTION.STOP_SERVICE);
-//                    startService(startServiceIntent);
-//                }
+                stopDataWriterService();
+                stopMetawearService();
             }
         });
         txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
@@ -267,7 +291,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @TargetApi(23)
-    public void checkDrawOverlayPermission() {
+    private void checkDrawOverlayPermission() {
         /** check if we already  have permission to draw over other apps */
         if (record_video && !Settings.canDrawOverlays(getApplicationContext())) {
             /** if not construct intent to request permission */
@@ -276,43 +300,57 @@ public class MainActivity extends AppCompatActivity {
             /** request permission via start activity for result */
             startActivityForResult(intent, WINDOW_OVERLAY_REQUEST);
         }else{
-            discoverMetawear();
+            startDataWriterService();
+            startMetawearService();
         }
     }
 
-    private void discoverMetawear(){
-        startActivityForResult(new Intent(MainActivity.this, SelectMetawearActivity.class), BLUETOOTH_DISCOVERY_REQUEST);
+    private void startDataWriterService(){
+        Intent startIntent = new Intent(MainActivity.this, DataWriterService.class);
+        startIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
+        startService(startIntent);
     }
 
-    private void startSensorService(){
-        remoteSensorManager.startMetawearService(getBtDevice().getAddress());
+    private void stopDataWriterService(){
+        Intent startIntent = new Intent(MainActivity.this, DataWriterService.class);
+        startIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
+        startService(startIntent);
+    }
 
-//        Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
-//        startServiceIntent.putExtra("metawear-device", getBtDevice());
-//        startServiceIntent.setAction(Constants.ACTION.START_SERVICE);
-//        startService(startServiceIntent);
+    private void startMetawearService(){
+        if (runServiceOverWearable){
+            remoteSensorManager.startMetawearService(preferences.getAll());
+        }else{
+            Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
+            startServiceIntent.putExtra(SharedConstants.KEY.UUID, metawearAddress);
+            startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
+            startService(startServiceIntent);
+        }
+    }
+
+    private void stopMetawearService(){
+        if (runServiceOverWearable){
+            remoteSensorManager.stopMetawearService();
+        }else{
+            Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
+            startServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
+            startService(startServiceIntent);
+        }
     }
 
 
     @TargetApi(23)
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == BLUETOOTH_DISCOVERY_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                btDevice = data.getParcelableExtra("metawear-device"); //TODO: only need to send back the ID not the btDevice
-//                View parentLayout = findViewById(R.id.buttons);
-//                Snackbar.make(parentLayout, btDevice.getAddress(), Snackbar.LENGTH_SHORT).show();
-                startSensorService();
-//                if (!mIsBound) {
-//                    doBindService();
-//                }else{
-//                    startSensorService();
-//                }
-            } else if (requestCode == WINDOW_OVERLAY_REQUEST) {
-                /** if so check once again if we have permission */
-                if (Settings.canDrawOverlays(this)) {
-                    discoverMetawear();
-                }
+        if (requestCode == WINDOW_OVERLAY_REQUEST) {
+            /** if so check once again if we have permission */
+            if (Settings.canDrawOverlays(this)) {
+                startDataWriterService();
+                startMetawearService();
             }
+        }else if (requestCode == Constants.ACTION.REQUEST_SET_PREFERENCES){
+            loadPreferences();
+            if (!runServiceOverWearable)
+                doBindService();
         }
     }
 
@@ -335,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
      * display the battery level in the UI
      * @param percentage battery level in the range of [0,100]
      */
-    public void updateBatteryLevel(final int percentage){
+    private void updateBatteryLevel(final int percentage){
         if (batteryLevelBitmap == null)
             batteryLevelBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_battery_image_set);
         int nImages = 11;
@@ -366,7 +404,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_read_accel, menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
@@ -380,8 +418,7 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             Intent openSettings = new Intent(MainActivity.this, SettingsActivity.class);
-            //myIntent.putExtra("key", value); //Optional parameters
-            startActivity(openSettings);
+            startActivityForResult(openSettings, Constants.ACTION.REQUEST_SET_PREFERENCES, null);
             return true;
         }
 

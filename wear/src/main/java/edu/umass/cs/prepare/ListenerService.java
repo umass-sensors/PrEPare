@@ -6,9 +6,7 @@ import android.util.Log;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 
-import java.io.UnsupportedEncodingException;
-
-import cs.umass.edu.shared.SharedConstants;
+import edu.umass.cs.shared.SharedConstants;
 
 /**
  * The Listener Service is responsible for handling messages received from the handheld device.
@@ -25,31 +23,31 @@ public class ListenerService extends WearableListenerService {
         Log.d(TAG, "Received Message");
         if (messageEvent.getPath().equals(SharedConstants.COMMANDS.START_SENSOR_SERVICE)) {
             Intent startServiceIntent = new Intent(this, SensorService.class);
-            startServiceIntent.setAction(Constants.ACTION.START_SERVICE);
+            startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
             startService(startServiceIntent);
         }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.STOP_SENSOR_SERVICE)) {
             Intent stopServiceIntent = new Intent(this, SensorService.class);
-            stopServiceIntent.setAction(Constants.ACTION.STOP_SERVICE);
+            stopServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
             startService(stopServiceIntent);
 
             //note: we call startService() instead of stopService() and pass in an intent with the stop service action,
             //so that the service can unregister the sensors and do anything else it needs to do and then call stopSelf()
         }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.START_METAWEAR_SERVICE)) {
             Log.d(TAG, "Received Message: Start metawear service");
-            String mwMacAddress = "";
-            try {
-                mwMacAddress = new String(messageEvent.getData(), "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            Log.d(TAG, "Mac ID is " + mwMacAddress);
+//            String mwMacAddress = "";
+//            try {
+//                mwMacAddress = new String(messageEvent.getData(), "UTF-8");
+//            } catch (UnsupportedEncodingException e) {
+//                e.printStackTrace();
+//            }
+//            Log.d(TAG, "Mac ID is " + mwMacAddress);
             Intent startServiceIntent = new Intent(this, edu.umass.cs.prepare.metawear.SensorService.class);
-            startServiceIntent.setAction(Constants.ACTION.START_SERVICE);
-            startServiceIntent.putExtra("metawear-mac-address", mwMacAddress);
+            startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
+            startServiceIntent.putExtra(SharedConstants.KEY.PREFERENCES, messageEvent.getData());
             startService(startServiceIntent);
         }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.STOP_METAWEAR_SERVICE)) {
             Intent stopServiceIntent = new Intent(this, edu.umass.cs.prepare.metawear.SensorService.class);
-            stopServiceIntent.setAction(Constants.ACTION.STOP_SERVICE);
+            stopServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
             startService(stopServiceIntent);
 
             //note: we call startService() instead of stopService() and pass in an intent with the stop service action,

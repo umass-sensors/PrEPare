@@ -11,8 +11,6 @@ import android.content.Intent;
  */
 public class SharedConstants {
 
-    public static final long LED_RESPONSE_WAIT_MILLIS = 100;
-
     /**
      * Tags that define the type of communication between the handheld and wearable application.
      * These are used as keys to identify data packages sent over Bluetooth to the mobile device.

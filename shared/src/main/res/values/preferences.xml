@@ -16,17 +16,17 @@
 
     <string name="pref_rssi_sampling_rate_key">rssi-sampling-rate</string>
     <string name="pref_rssi_sampling_rate_title">RSSI Sampling Rate</string>
-    <string name="pref_rssi_sampling_rate_desc">Rate at which Bean-to-Phone signal strength is sampled: %s</string>
+    <string name="pref_rssi_sampling_rate_desc">Rate at which Metawear-to-Phone signal strength is sampled: %s</string>
     <string name="pref_rssi_sampling_rate_default">60</string>
 
     <string name="pref_accelerometer_sampling_rate_key">accelerometer-sampling-rate</string>
     <string name="pref_accelerometer_sampling_rate_title">Accelerometer Sampling Rate</string>
-    <string name="pref_accelerometer_sampling_rate_desc">Rate at which Bean accelerometer is sampled: %s</string>
+    <string name="pref_accelerometer_sampling_rate_desc">Rate at which Metawear accelerometer is sampled: %s</string>
     <string name="pref_accelerometer_sampling_rate_default">60</string>
 
     <string name="pref_gyroscope_sampling_rate_key">gyroscope-sampling-rate</string>
     <string name="pref_gyroscope_sampling_rate_title">Gyroscope Sampling Rate</string>
-    <string name="pref_gyroscope_sampling_rate_desc">Rate at which Bean gyroscope is sampled: %s</string>
+    <string name="pref_gyroscope_sampling_rate_desc">Rate at which Metawear gyroscope is sampled: %s</string>
     <string name="pref_gyroscope_sampling_rate_default">60</string>
 
     <string-array name="pref_sampling_rate_options">
@@ -48,31 +48,31 @@
     <string name="pref_device_title">Select Metawear Device</string>
     <string name="pref_device_default">00:00:00:00:00</string>
 
-    <string name="pref_led_key">bean-led-while-running</string>
-    <string name="pref_led_title">Enable Bean LED</string>
-    <string name="pref_led_desc">If checked, the Bean LED will be turned on during data collection. Note this increases battery consumption on the Bean.</string>
+    <string name="pref_led_key">metawear-led-while-running</string>
+    <string name="pref_led_title">Enable Metawear LED</string>
+    <string name="pref_led_desc">If checked, the Metawear LED will be turned on during data collection. Note this increases battery consumption on the Metawear device.</string>
     <bool name="pref_led_default">true</bool>
 
     <!-- Indicates whether the accelerometer on the Metawear device is enabled. -->
-    <string name="pref_accelerometer_key">bean-accelerometer</string>
-    <string name="pref_accelerometer_title">Enable Bean Accelerometer</string>
-    <string name="pref_accelerometer_desc">If checked, Bean accelerometer data will be sampled.</string>
+    <string name="pref_accelerometer_key">metawear-accelerometer</string>
+    <string name="pref_accelerometer_title">Enable Metawear Accelerometer</string>
+    <string name="pref_accelerometer_desc">If checked, Metawear accelerometer data will be sampled.</string>
     <bool name="pref_accelerometer_default">true</bool>
 
-    <string name="pref_gyroscope_key">bean-gyroscope</string>
-    <string name="pref_gyroscope_title">Enable Bean Gyroscope</string>
-    <string name="pref_gyroscope_desc">If checked, Bean gyroscope data will be sampled.</string>
+    <string name="pref_gyroscope_key">metawear-gyroscope</string>
+    <string name="pref_gyroscope_title">Enable Metawear Gyroscope</string>
+    <string name="pref_gyroscope_desc">If checked, Metawear gyroscope data will be sampled.</string>
     <bool name="pref_gyroscope_default">false</bool>
 
-    <string name="pref_rssi_key">bean-rssi</string>
-    <string name="pref_rssi_title">Enable Bean-to-Phone RSSI</string>
-    <string name="pref_rssi_desc">If checked, Bean-to-Phone signal strength data will be sampled.</string>
+    <string name="pref_rssi_key">metawear-rssi</string>
+    <string name="pref_rssi_title">Enable RSSI</string>
+    <string name="pref_rssi_desc">If checked, Metawear signal strength data will be sampled.</string>
     <bool name="pref_rssi_default">true</bool>
 
     <string name="pref_group_video_key">video-settings</string>
     <string name="pref_group_video_title">Video Settings</string>
 
-    <string name="pref_group_bean_key">bean-settings</string>
-    <string name="pref_group_bean_title">Bean Settings</string>
+    <string name="pref_group_metawear_key">metawear-settings</string>
+    <string name="pref_group_metawear_title">Metawear Settings</string>
 
 </resources>

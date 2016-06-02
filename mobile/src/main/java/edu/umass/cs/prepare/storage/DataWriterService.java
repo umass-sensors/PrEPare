@@ -42,19 +42,18 @@ public class DataWriterService extends Service {
     /** used for debugging purposes */
     private static final String TAG = DataWriterService.class.getName();
 
-    private final BufferedWriter accelerometerWearableWriter;
-    private final BufferedWriter gyroscopeWearableWriter;
-    private final BufferedWriter accelerometerPhoneWriter;
-    private final BufferedWriter gyroscopePhoneWriter;
-    private final BufferedWriter accelerometerMetawearWriter;
-    private final BufferedWriter gyroscopeMetawearWriter;
-    private final BufferedWriter rssiMetawearToPhoneWriter;
-    private final BufferedWriter rssiMetawearToWearableWriter;
+    private BufferedWriter accelerometerWearableWriter;
+    private BufferedWriter gyroscopeWearableWriter;
+    private BufferedWriter accelerometerPhoneWriter;
+    private BufferedWriter gyroscopePhoneWriter;
+    private BufferedWriter accelerometerMetawearWriter;
+    private BufferedWriter gyroscopeMetawearWriter;
+    private BufferedWriter rssiMetawearToPhoneWriter;
+    private BufferedWriter rssiMetawearToWearableWriter;
 
     private File directory;
 
-    public DataWriterService(){
-        loadPreferences();
+    public void initializeFileWriters(){
         accelerometerWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_WEARABLE", directory);
         gyroscopeWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "GYRO_WEARABLE", directory);
         accelerometerPhoneWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_PHONE", directory);
@@ -66,7 +65,7 @@ public class DataWriterService extends Service {
     }
 
     private void loadPreferences(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         final String defaultDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name)).getAbsolutePath();
         final String dir = preferences.getString(getString(R.string.pref_directory_key), defaultDirectory);
         if (dir == null)
@@ -125,6 +124,9 @@ public class DataWriterService extends Service {
 
     @Override
     public void onCreate(){
+        loadPreferences();
+        initializeFileWriters();
+
         //the intent filter specifies the messages we are interested in receiving
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);

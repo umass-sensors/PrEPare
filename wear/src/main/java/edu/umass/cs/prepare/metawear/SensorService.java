@@ -40,9 +40,10 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction().equals(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL)){
-            queryBatteryLevel();
-        }
+        if (intent != null)
+            if (intent.getAction().equals(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL)){
+                queryBatteryLevel();
+            }
         return super.onStartCommand(intent, flags, startId);
     }
 

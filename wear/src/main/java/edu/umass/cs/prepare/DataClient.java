@@ -88,7 +88,7 @@ public class DataClient {
     private void sendSensorDataInBackground(final SharedConstants.SENSOR_TYPE sensorType, final String[] timestamps, final float[] values) {
         PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH);
 
-        dataMap.getDataMap().putInt(SharedConstants.KEY.SENSOR_TYPE, sensorType.ordinal()); //TODO: .ordinal() is considered sloppy
+        dataMap.getDataMap().putInt(SharedConstants.KEY.SENSOR_TYPE, sensorType.ordinal());
         dataMap.getDataMap().putStringArray(SharedConstants.KEY.TIMESTAMPS, timestamps);
         dataMap.getDataMap().putFloatArray(SharedConstants.KEY.SENSOR_VALUES, values);
 

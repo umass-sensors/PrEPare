@@ -191,13 +191,13 @@ public class SensorService extends Service implements ServiceConnection {
             e.printStackTrace();
             return;
         }
-        accelerometerSamplingRate = (int) preferenceMap.get(getString(R.string.pref_accelerometer_sampling_rate_key));
-        gyroscopeSamplingRate = (int) preferenceMap.get(getString(R.string.pref_gyroscope_sampling_rate_key));
-        rssiSamplingRate = (int) preferenceMap.get(getString(R.string.pref_rssi_sampling_rate_key));
-        turnOnLedWhileRunning = (boolean) preferenceMap.get(getString(R.string.pref_led_key));
-        enableAccelerometer = (boolean) preferenceMap.get(getString(R.string.pref_accelerometer_key));
-        enableGyroscope = (boolean) preferenceMap.get(getString(R.string.pref_gyroscope_key));
-        enableRSSI = (boolean) preferenceMap.get(getString(R.string.pref_rssi_key));
+        accelerometerSamplingRate = (Integer) preferenceMap.get(getString(R.string.pref_accelerometer_sampling_rate_key));
+        gyroscopeSamplingRate = (Integer) preferenceMap.get(getString(R.string.pref_gyroscope_sampling_rate_key));
+        rssiSamplingRate = (Integer) preferenceMap.get(getString(R.string.pref_rssi_sampling_rate_key));
+        turnOnLedWhileRunning = (Boolean) preferenceMap.get(getString(R.string.pref_led_key));
+        enableAccelerometer = (Boolean) preferenceMap.get(getString(R.string.pref_accelerometer_key));
+        enableGyroscope = (Boolean) preferenceMap.get(getString(R.string.pref_gyroscope_key));
+        enableRSSI = (Boolean) preferenceMap.get(getString(R.string.pref_rssi_key));
         mwMacAddress = (String) preferenceMap.get(getString(R.string.pref_device_key));
     }
 

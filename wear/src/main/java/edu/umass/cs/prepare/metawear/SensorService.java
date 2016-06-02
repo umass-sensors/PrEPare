@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import edu.umass.cs.prepare.R;
 import edu.umass.cs.shared.BatteryUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.shared.SensorBuffer;

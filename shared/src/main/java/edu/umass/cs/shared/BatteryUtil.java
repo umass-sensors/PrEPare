@@ -2,6 +2,13 @@ package edu.umass.cs.shared;
 
 import cs.umass.edu.shared.R;
 
+/**
+ * This utility class exposes static methods regarding the battery life on the Metawear device,
+ * e.g. getting the icon corresponding to each battery level interval.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ */
 public class BatteryUtil {
 
     /**

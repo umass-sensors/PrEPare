@@ -21,6 +21,9 @@ import edu.umass.cs.prepare.constants.Constants;
  * The Data Receiver Service listens for data sent from the wearable to the handheld device. In
  * particular, we expect sensor data from the wearable and the Metawear C tag via the wearable.
  *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
  * @see com.google.android.gms.common.api.GoogleApiClient
  * @see WearableListenerService
  */

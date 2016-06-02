@@ -3,6 +3,9 @@ package edu.umass.cs.shared;
 /**
  * Data buffer for arbitrary dimensional sensor data, e.g. 3-axis accelerometer data,
  * 4-axis quaternion stream or single-axis RSSI readings.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class SensorBuffer {
     /** The size of the buffer, in number of readings. **/

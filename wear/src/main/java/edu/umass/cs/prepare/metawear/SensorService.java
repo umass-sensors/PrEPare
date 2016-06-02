@@ -20,6 +20,8 @@ import edu.umass.cs.prepare.DataClient;
  * mobile device via the wearable device. Available sensors include the accelerometer,
  * gyroscope and the Metawear-to-wearable received signal strength indicator (RSSI).
  *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 

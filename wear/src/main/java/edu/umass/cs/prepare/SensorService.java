@@ -21,7 +21,9 @@ import edu.umass.cs.shared.SharedConstants;
  * Sensors available through this service include accelerometer and gyroscope sensors.
  * It is an ongoing service that is initiated and terminated through {@link Intent} actions.
  *
- * @author Sean Noran 6/18/15
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
  * @see DataClient
  * @see Service
  * @see Sensor

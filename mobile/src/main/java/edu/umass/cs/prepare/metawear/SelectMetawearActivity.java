@@ -16,6 +16,10 @@ import edu.umass.cs.prepare.R;
 /**
  * This activity allows the user to select an available Metawear device by its unique identifier.
  * All BLE Metawear devices are listed, along with their signal strength and address.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
  * @see BleScannerFragment
  */
 public class SelectMetawearActivity extends AppCompatActivity implements BleScannerFragment.ScannerCommunicationBus {

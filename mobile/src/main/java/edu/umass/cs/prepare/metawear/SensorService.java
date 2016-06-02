@@ -32,6 +32,9 @@ import edu.umass.cs.prepare.R;
  * passing in a {@link String} extra with key {@link SharedConstants.KEY#UUID}
  * to identify the Bluetooth device by its address. To stop the service, use action
  * {@link edu.umass.cs.prepare.constants.Constants.ACTION#STOP_SERVICE}.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 

@@ -38,6 +38,9 @@ import edu.umass.cs.shared.SensorBuffer;
  * streamed to the phone or to a wearable device. Subclasses of Sensor Service may handle events,
  * such as receiving sensor readings or connecting to the Metawear device, differently by overriding
  * the appropriate methods.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class SensorService extends Service implements ServiceConnection {
 

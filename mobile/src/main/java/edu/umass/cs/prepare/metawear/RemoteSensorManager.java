@@ -26,6 +26,7 @@ import edu.umass.cs.shared.SharedConstants;
  * sensor data collection services on the wearable.
  *
  * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  *
  * @see com.google.android.gms.wearable.DataApi
  * @see GoogleApiClient

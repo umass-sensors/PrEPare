@@ -56,6 +56,9 @@ import edu.umass.cs.prepare.storage.DataWriterService;
  * {@link DataReceiverService writing data to storage},
  * recording video in the background, and
  * {@link RemoteSensorManager managing the services available on the wearable}.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class MainActivity extends AppCompatActivity {
 

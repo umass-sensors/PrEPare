@@ -7,6 +7,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 
+/**
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ */
 public class PreferenceMapSerializer {
 
     public static byte[] serialize(Map<String, ?> preferenceMap) throws IOException {

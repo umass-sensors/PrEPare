@@ -31,6 +31,9 @@ import java.io.File;
  * By ease of convention, preference keys, defaults, summaries and other related values are maintained in
  * {@link cs.umass.edu.shared.R.xml#preferences}, while the preference definitions and preference layout are
  * maintained in {@link R.xml#preferences}.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class SettingsActivity extends PreferenceActivity {
 

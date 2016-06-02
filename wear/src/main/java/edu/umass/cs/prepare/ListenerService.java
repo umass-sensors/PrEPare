@@ -13,6 +13,9 @@ import edu.umass.cs.shared.SharedConstants;
  * Currently, this includes only commands to start and stop the sensor service, but it could
  * also include commands to change the sampling rate, or provide some sort of notification on
  * the wearable device.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class ListenerService extends WearableListenerService {
     /** used for debugging purposes */

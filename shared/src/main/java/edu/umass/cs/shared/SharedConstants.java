@@ -5,6 +5,9 @@ import android.content.Intent;
 /**
  * This file contains constants that are shared between the handheld and wearable applications,
  * such as data layer communications tags and shared service commands.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
  */
 public class SharedConstants {
 

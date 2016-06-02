@@ -24,6 +24,9 @@ import edu.umass.cs.shared.SharedConstants;
  *     Sensor Dashboard</a>
  * for similar work.
  *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
  * @see GoogleApiClient
  * @see DataApi
  */

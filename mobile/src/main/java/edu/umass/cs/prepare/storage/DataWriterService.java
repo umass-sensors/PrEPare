@@ -29,7 +29,9 @@ import edu.umass.cs.prepare.metawear.DataReceiverService;
 /**
  * The Data Writer Service is responsible for writing all sensor data to their respective files.
  *
- * @author Sean Noran 7/7/15.
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
  * @see DataReceiverService
  * @see FileUtil
  * @see Service

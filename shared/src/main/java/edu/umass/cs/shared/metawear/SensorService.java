@@ -21,6 +21,7 @@ import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.mbientlab.metawear.module.Gyro;
+import com.mbientlab.metawear.module.IBeacon;
 import com.mbientlab.metawear.module.Led;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ import edu.umass.cs.shared.SensorBuffer;
  * streamed to the phone or to a wearable device. Subclasses of Sensor Service may handle events,
  * such as receiving sensor readings or connecting to the Metawear device, differently by overriding
  * the appropriate methods.
- * 
+ *
  * TODO: Buffer on the Metawear device itself: http://projects.mbientlab.com/using-offline-logging-with-the-metawear-android-api/
  *
  * @author Sean Noran
@@ -49,6 +50,12 @@ public class SensorService extends Service implements ServiceConnection {
     @SuppressWarnings("unused")
     /** used for debugging purposes */
     private static final String TAG = SensorService.class.getName();
+
+    /** The number of milliseconds the {@link Thread} should sleep between disabling the sensors on the
+     * Metawear board and disconnecting from the board. If {@link MetaWearBoard#disconnect()} is called
+     * immediately, then the sensors will continue to run after the service terminates, consuming
+     * unnecessary battery on the board. Empirically verified, 100 milliseconds is sufficient. **/
+    public static final long DISCONNECT_WAIT_MILLIS = 100;
 
     /** The Bluetooth device handle of the <a href="https://mbientlab.com/metawearc/">MetaWear C</a> tag **/
     private BluetoothDevice btDevice;
@@ -67,6 +74,8 @@ public class SensorService extends Service implements ServiceConnection {
 
     /** Module that handles LED state for on-board notifications. **/
     private Led ledModule;
+
+    private IBeacon beaconModule;
 
     /** The approximate sampling rate of the accelerometer. If the sampling rate is not supported by
      * the Metawear device, then the closest supported sampling rate is used. **/
@@ -184,6 +193,23 @@ public class SensorService extends Service implements ServiceConnection {
 
     }
 
+    //TODO: Put these 2 methods in a different file (PreferenceUtil or something)
+    private boolean getBooleanPreference(Map<String, ?> preferenceMap, String key, boolean defaultValue){
+        Boolean value = (Boolean) preferenceMap.get(key);
+        if (value == null)
+            return defaultValue;
+        else
+            return value;
+    }
+
+    private String getStringPreference(Map<String, ?> preferenceMap, String key, String defaultValue){
+        String value = (String) preferenceMap.get(key);
+        if (value == null)
+            return defaultValue;
+        else
+            return value;
+    }
+
     /**
      * Gets all relevant shared preferences, given a key-value preference mapping.
      * @param serializedPreferenceMap A mapping from preference keys to values, serialized as a byte array
@@ -196,14 +222,23 @@ public class SensorService extends Service implements ServiceConnection {
             e.printStackTrace();
             return;
         }
-        accelerometerSamplingRate = (Integer) preferenceMap.get(getString(R.string.pref_accelerometer_sampling_rate_key));
-        gyroscopeSamplingRate = (Integer) preferenceMap.get(getString(R.string.pref_gyroscope_sampling_rate_key));
-        rssiSamplingRate = (Integer) preferenceMap.get(getString(R.string.pref_rssi_sampling_rate_key));
-        turnOnLedWhileRunning = (Boolean) preferenceMap.get(getString(R.string.pref_led_key));
-        enableAccelerometer = (Boolean) preferenceMap.get(getString(R.string.pref_accelerometer_key));
-        enableGyroscope = (Boolean) preferenceMap.get(getString(R.string.pref_gyroscope_key));
-        enableRSSI = (Boolean) preferenceMap.get(getString(R.string.pref_rssi_key));
-        mwMacAddress = (String) preferenceMap.get(getString(R.string.pref_device_key));
+        accelerometerSamplingRate = Integer.parseInt(getStringPreference(preferenceMap, getString(R.string.pref_accelerometer_sampling_rate_key),
+                getString(R.string.pref_accelerometer_sampling_rate_default)));
+        gyroscopeSamplingRate = Integer.parseInt(getStringPreference(preferenceMap, getString(R.string.pref_gyroscope_sampling_rate_key),
+                getString(R.string.pref_gyroscope_sampling_rate_default)));
+        rssiSamplingRate = Integer.parseInt(getStringPreference(preferenceMap, getString(R.string.pref_rssi_sampling_rate_key),
+                getString(R.string.pref_rssi_sampling_rate_default)));
+        turnOnLedWhileRunning = getBooleanPreference(preferenceMap, getString(R.string.pref_led_key),
+                getResources().getBoolean(R.bool.pref_led_default));
+        enableAccelerometer = getBooleanPreference(preferenceMap, getString(R.string.pref_accelerometer_key),
+                getResources().getBoolean(R.bool.pref_accelerometer_default));
+        enableGyroscope = getBooleanPreference(preferenceMap, getString(R.string.pref_gyroscope_key),
+                getResources().getBoolean(R.bool.pref_gyroscope_default));
+        enableRSSI = getBooleanPreference(preferenceMap, getString(R.string.pref_rssi_key),
+                getResources().getBoolean(R.bool.pref_rssi_default));
+        mwMacAddress = getStringPreference(preferenceMap, getString(R.string.pref_device_key),
+                getString(R.string.pref_device_default));
+
     }
 
     /**
@@ -211,6 +246,23 @@ public class SensorService extends Service implements ServiceConnection {
      */
     private void ready() {
         try {
+            beaconModule = mwBoard.getModule(IBeacon.class);
+            assert beaconModule != null;
+            beaconModule.readConfiguration().onComplete(new AsyncOperation.CompletionHandler<IBeacon.Configuration>() {
+                @Override
+                public void success(IBeacon.Configuration result) {
+                    Log.d(TAG, result.adUuid().toString());
+                    super.success(result);
+                }
+
+                @Override
+                public void failure(Throwable error) {
+                    Log.d(TAG, "ERROR reading IBeacon configuration.");
+                    super.failure(error);
+                }
+            });
+
+
             accModule = mwBoard.getModule(Accelerometer.class);
             // Set the output data rate to 25Hz or closet valid value
             accModule.setOutputDataRate((float) accelerometerSamplingRate);
@@ -256,7 +308,13 @@ public class SensorService extends Service implements ServiceConnection {
      */
     protected void onServiceStarted(){
         BluetoothManager btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
-        btDevice = btManager.getAdapter().getRemoteDevice(mwMacAddress);
+        try {
+            btDevice = btManager.getAdapter().getRemoteDevice(mwMacAddress);
+        }catch(IllegalArgumentException e){
+            e.printStackTrace();
+            //TODO: Notify user that address is not valid
+            return;
+        }
         mIsBound = getApplicationContext().bindService(new Intent(this, MetaWearBleService.class), this, Context.BIND_AUTO_CREATE);
     }
 
@@ -266,11 +324,6 @@ public class SensorService extends Service implements ServiceConnection {
     protected void onServiceStopped(){
         if (ledModule != null){
             ledModule.stop(true);
-        }
-        try {
-            Thread.sleep(SharedConstants.LED_RESPONSE_WAIT_MILLIS); //to ensure that the LED is turned off before disconnecting
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
         if (gyroModule != null){
             gyroModule.stop();
@@ -282,6 +335,12 @@ public class SensorService extends Service implements ServiceConnection {
         if (handler != null)
             handler.removeCallbacksAndMessages(null);
         isRunning = false;
+        //beaconModule.enable(); //TODO: IBeacon
+        try {
+            Thread.sleep(DISCONNECT_WAIT_MILLIS); //to ensure that the LED is turned off before disconnecting
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         disconnect();
     }
 

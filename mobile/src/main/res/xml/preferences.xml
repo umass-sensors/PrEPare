@@ -7,12 +7,6 @@
         android:title="@string/pref_directory_title"
         android:key="@string/pref_directory_key" />
 
-    <CheckBoxPreference
-        android:key="@string/pref_wearable_key"
-        android:title="@string/pref_wearable_title"
-        android:summary="@string/pref_wearable_desc"
-        android:defaultValue="@bool/pref_wearable_default" />
-
     <PreferenceScreen
         android:title="@string/pref_group_video_title"
         android:key="@string/pref_group_video_key">
@@ -39,6 +33,15 @@
         <Preference
             android:title="@string/pref_device_title"
             android:key="@string/pref_device_key" />
+
+        <ListPreference
+            android:key="@string/pref_beacon_distance_key"
+            android:title="@string/pref_beacon_distance_title"
+            android:summary="@string/pref_beacon_distance_desc"
+            android:dialogTitle="@string/pref_beacon_distance_title"
+            android:entries="@array/pref_beacon_distance_options"
+            android:entryValues="@array/pref_beacon_distance_options"
+            android:defaultValue="@string/pref_beacon_distance_default"/>
 
         <CheckBoxPreference
             android:key="@string/pref_accelerometer_key"
@@ -77,6 +80,13 @@
             android:title="@string/pref_rssi_title"
             android:summary="@string/pref_rssi_desc"
             android:defaultValue="@bool/pref_rssi_default" />
+
+        <CheckBoxPreference
+            android:key="@string/pref_wearable_key"
+            android:title="@string/pref_wearable_title"
+            android:summary="@string/pref_wearable_desc"
+            android:defaultValue="@bool/pref_wearable_default"
+            android:dependency="@string/pref_rssi_key" />
 
         <ListPreference
             android:key="@string/pref_rssi_sampling_rate_key"

@@ -75,4 +75,17 @@
     <string name="pref_group_metawear_key">metawear-settings</string>
     <string name="pref_group_metawear_title">Metawear Settings</string>
 
+    <string-array name="pref_beacon_distance_options">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+    </string-array>
+    <string name="pref_beacon_distance_key">beacon-distance-threshold</string>
+    <string name="pref_beacon_distance_title">Trigger Distance</string>
+    <string name="pref_beacon_distance_desc">When the wearable is within %s meters of the Metawear tag, automatically begin data collection.</string>
+    <string name="pref_beacon_distance_default">5</string>
+
 </resources>

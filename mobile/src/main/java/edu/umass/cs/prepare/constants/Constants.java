@@ -27,6 +27,7 @@ public class Constants {
 
         String NAVIGATE_TO_APP = "this too!";
         String BROADCAST_SENSOR_DATA = "edu.umass.cs.prepare.action.broadcast-sensor-data";
+        String BROADCAST_MESSAGE = "edu.umass.cs.prepare.action.broadcast-message";
         int REQUEST_SET_PREFERENCES = 5; //TODO: WHERE TO PUT REQUESTS??
     }
 
@@ -38,7 +39,6 @@ public class Constants {
         String SURFACE_HEIGHT = "edu.umass.cs.prepare.key.surface-height";
         String SURFACE_X = "edu.umass.cs.prepare.key.surface-x";
         String SURFACE_Y = "edu.umass.cs.prepare.key.surface-y";
-        String CANCEL_CONNECTING = "edu.umass.cs.prepare.key.cancel-connecting";
         String SENSOR_DATA = "edu.umass.cs.prepare.key.sensor-data";
         String SENSOR_TYPE = "edu.umass.cs.prepare.key.sensor-type";
         String TIMESTAMP = "edu.umass.cs.prepare.key.timestamp";

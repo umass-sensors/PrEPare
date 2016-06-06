@@ -80,8 +80,33 @@ public class DataWriterService extends Service {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() != null) {
                 if (intent.getAction().equals(Constants.ACTION.BROADCAST_SENSOR_DATA)) {
-                    String line = intent.getStringExtra(Constants.KEY.SENSOR_DATA);
+
+                    String[] timestamps = intent.getStringArrayExtra(Constants.KEY.TIMESTAMP);
+                    float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
+
+                    StringBuilder builder = new StringBuilder(timestamps.length * (Constants.BYTES_PER_TIMESTAMP + Constants.BYTES_PER_SENSOR_READING + 6));
+                    if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI ||
+                            sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
+
+                        for (int i = 0; i < timestamps.length; i++) {
+                            String timestamp = timestamps[i];
+                            float rssi = values[i];
+                            builder.append(String.format("%s,%d\n", timestamp, (int) rssi));
+                        }
+                    }else {
+
+                        for (int i = 0; i < timestamps.length; i++) {
+                            String timestamp = timestamps[i];
+                            float x = values[3 * i];
+                            float y = values[3 * i + 1];
+                            float z = values[3 * i + 2];
+
+                            builder.append(String.format("%s,%f,%f,%f\n", timestamp, x, y, z));
+                        }
+                    }
+
+                    String line = builder.toString();
                     if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE){
                         synchronized (accelerometerWearableWriter) {
                             FileUtil.writeToFile(line, accelerometerWearableWriter);
@@ -130,7 +155,7 @@ public class DataWriterService extends Service {
         //the intent filter specifies the messages we are interested in receiving
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
-        registerReceiver(receiver, filter);
+        registerReceiver(receiver, filter); //TODO: Do this in onStartCommand?
     }
 
     @Override

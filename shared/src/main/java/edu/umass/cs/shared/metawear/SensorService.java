@@ -100,6 +100,9 @@ public class SensorService extends Service implements ServiceConnection {
     /** Indicates whether gyroscope is enabled on the Metawear. **/
     private boolean enableGyroscope;
 
+    /** The period of time between advertisements when the Metawear device is in beacon mode. **/
+    private short advertisementPeriod;
+
     /** Sensor buffer size. */
     private static final int BUFFER_SIZE = 256;
 
@@ -206,6 +209,8 @@ public class SensorService extends Service implements ServiceConnection {
                 getString(R.string.pref_gyroscope_sampling_rate_default)));
         rssiSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_rssi_sampling_rate_key),
                 getString(R.string.pref_rssi_sampling_rate_default)));
+        advertisementPeriod = Short.parseShort(preferences.getString(getString(R.string.pref_advertisement_period_key),
+                getString(R.string.pref_advertisement_period_default)));
         turnOnLedWhileRunning = preferences.getBoolean(getString(R.string.pref_led_key), getResources().getBoolean(R.bool.pref_led_default));
         enableAccelerometer = preferences.getBoolean(getString(R.string.pref_accelerometer_key), getResources().getBoolean(R.bool.pref_accelerometer_default));
         enableGyroscope = preferences.getBoolean(getString(R.string.pref_gyroscope_key), getResources().getBoolean(R.bool.pref_gyroscope_default));
@@ -232,7 +237,7 @@ public class SensorService extends Service implements ServiceConnection {
                     super.failure(error);
                 }
             });
-            beaconModule.configure().setAdPeriod((short) 2500).commit();
+            beaconModule.configure().setAdPeriod(advertisementPeriod).commit();
             beaconModule.enable();
 
             accModule = mwBoard.getModule(Accelerometer.class);

@@ -18,6 +18,7 @@ public class SharedConstants {
      */
     public interface DATA_LAYER_CONSTANTS {
         String SENSOR_PATH = "/sensors/";
+        String MESSAGE_PATH = "/message/";
     }
 
     /**
@@ -28,15 +29,25 @@ public class SharedConstants {
         String STOP_SENSOR_SERVICE = "edu.umass.cs.prepare.commands.stop-sensor-service";
         String START_METAWEAR_SERVICE = "edu.umass.cs.prepare.commands.start-metawear-service";
         String STOP_METAWEAR_SERVICE = "edu.umass.cs.prepare.commands.stop-metawear-service";
+        String START_BEACON_SERVICE = "edu.umass.cs.prepare.commands.start-beacon-service";
+        String STOP_BEACON_SERVICE = "edu.umass.cs.prepare.commands.stop-beacon-service";
+        String CANCEL_METAWEAR_CONNECTION = "edu.umass.cs.prepare.commands.cancel-metawear-connection";
+    }
+
+    public interface MESSAGES {
+        int BEACON_WITHIN_RANGE = 0;
+        int METAWEAR_CONNECTED = 1;
+        int METAWEAR_CONNECTING = 2;
     }
 
     /**
      * Actions sent to bound services via an {@link Intent} handle.
      */
     public interface ACTIONS {
-        String START_SERVICE = "edu.umass.cs.prepare.commands.start-service";
-        String STOP_SERVICE = "edu.umass.cs.prepare.commands.stop-service";
-        String QUERY_BATTERY_LEVEL = "edu.umass.cs.prepare.commands.query-battery-level";
+        String START_SERVICE = "edu.umass.cs.prepare.action.start-service";
+        String STOP_SERVICE = "edu.umass.cs.prepare.action.stop-service";
+        String QUERY_BATTERY_LEVEL = "edu.umass.cs.prepare.action.query-battery-level";
+        String CANCEL_CONNECTING = "edu.umass.cs.prepare.action.cancel-connecting";
     }
 
     /**
@@ -49,6 +60,7 @@ public class SharedConstants {
         String SENSOR_VALUES = "edu.umass.cs.prepare.key.sensor-values";
         String SENSOR_TYPE = "edu.umass.cs.prepare.key.sensor-type";
         String PREFERENCES = "edu.umass.cs.prepare.key.preferences";
+        String MESSAGE = "edu.umass.cs.prepare.key.message";
     }
 
     /**
@@ -79,5 +91,6 @@ public class SharedConstants {
         int METAWEAR_SENSOR_SERVICE = 102;
         int DATA_WRITER_SERVICE = 103;
         int RECORDING_SERVICE = 104;
+        int BEACON_SERVICE = 105;
     }
 }

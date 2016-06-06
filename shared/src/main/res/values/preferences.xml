@@ -82,6 +82,8 @@
         <item>20</item>
         <item>25</item>
         <item>30</item>
+        <item>35</item>
+        <item>40</item>
     </string-array>
     <string name="pref_beacon_distance_key">beacon-distance-threshold</string>
     <string name="pref_beacon_distance_title">Trigger Distance</string>

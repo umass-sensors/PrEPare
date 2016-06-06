@@ -26,6 +26,7 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -533,6 +534,22 @@ public class MainActivity extends AppCompatActivity {
                         showConnectingDialog();
                     }else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         cancelConnectingDialog();
+                    }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STARTED){
+                        View mainUI = MainActivity.this.findViewById(R.id.fragment);
+                        assert mainUI != null;
+                        Snackbar snack = Snackbar.make(mainUI, "Searching for beacons...", Snackbar.LENGTH_LONG);
+                        View view = snack.getView();
+                        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        snack.show();
+                    }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STOPPED){
+                        View mainUI = MainActivity.this.findViewById(R.id.fragment);
+                        assert mainUI != null;
+                        Snackbar snack = Snackbar.make(mainUI, "Beacon service disabled.", Snackbar.LENGTH_LONG);
+                        View view = snack.getView();
+                        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        snack.show();
                     }
                 }
             }

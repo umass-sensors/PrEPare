@@ -3,6 +3,7 @@ package edu.umass.cs.prepare.metawear;
 import android.content.Intent;
 import android.util.Log;
 
+import edu.umass.cs.prepare.DataClient;
 import edu.umass.cs.shared.SharedConstants;
 
 /**
@@ -15,6 +16,23 @@ public class BeaconService extends edu.umass.cs.shared.metawear.BeaconService {
     @SuppressWarnings("unused")
     /** used for debugging purposes */
     private static final String TAG = BeaconService.class.getName();
+
+    private DataClient client;
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null)
+            if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)){
+                if (client == null)
+                    client = DataClient.getInstance(this);
+                client.sendMessage(SharedConstants.MESSAGES.BEACON_SERVICE_STARTED);
+            } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)){
+                if (client == null)
+                    client = DataClient.getInstance(this);
+                client.sendMessage(SharedConstants.MESSAGES.BEACON_SERVICE_STOPPED);
+            }
+        return super.onStartCommand(intent, flags, startId);
+    }
 
     @Override
     public void onCreate() {

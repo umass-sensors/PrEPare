@@ -38,6 +38,8 @@ public class SharedConstants {
         int BEACON_WITHIN_RANGE = 0;
         int METAWEAR_CONNECTED = 1;
         int METAWEAR_CONNECTING = 2;
+        int BEACON_SERVICE_STARTED = 3;
+        int BEACON_SERVICE_STOPPED = 4;
     }
 
     /**

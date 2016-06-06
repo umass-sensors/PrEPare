@@ -43,6 +43,15 @@
             android:entryValues="@array/pref_beacon_distance_options"
             android:defaultValue="@string/pref_beacon_distance_default"/>
 
+        <ListPreference
+            android:key="@string/pref_advertisement_period_key"
+            android:title="@string/pref_advertisement_period_title"
+            android:summary="@string/pref_advertisement_period_desc"
+            android:dialogTitle="@string/pref_advertisement_period_title"
+            android:entries="@array/pref_advertisement_period_options"
+            android:entryValues="@array/pref_advertisement_period_options"
+            android:defaultValue="@string/pref_advertisement_period_default"/>
+
         <CheckBoxPreference
             android:key="@string/pref_accelerometer_key"
             android:title="@string/pref_accelerometer_title"

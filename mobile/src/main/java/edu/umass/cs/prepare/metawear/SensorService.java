@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
@@ -57,7 +58,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         }
 
         @Override
-        public void handleMessage(android.os.Message msg) {
+        public void handleMessage(Message msg) {
             switch (msg.what) {
                 case Constants.MESSAGE.REGISTER_CLIENT:
                     mService.get().mClients.add(msg.replyTo);
@@ -69,16 +70,6 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
                     super.handleMessage(msg);
             }
         }
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null) {
-            if (intent.getAction().equals(Constants.KEY.CANCEL_CONNECTING)){
-                disconnect();
-            }
-        }
-        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
@@ -159,7 +150,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
                 Bundle b = new Bundle();
                 b.putString(Constants.KEY.TIMESTAMP, timestamp);
                 b.putFloatArray(Constants.KEY.ACCELEROMETER_READING, new float[]{x, y, z});
-                android.os.Message msg = android.os.Message.obtain(null, Constants.MESSAGE.ACCELEROMETER_READING);
+                Message msg = Message.obtain(null, Constants.MESSAGE.ACCELEROMETER_READING);
                 msg.setData(b);
                 mClients.get(i).send(msg);
             } catch (RemoteException e) {
@@ -178,7 +169,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
             try {
                 // Send message value
                 Bundle b = new Bundle();
-                android.os.Message msg = android.os.Message.obtain(null, message);
+                Message msg = Message.obtain(null, message);
                 msg.setData(b);
                 mClients.get(i).send(msg);
             } catch (RemoteException e) {

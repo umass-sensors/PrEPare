@@ -3,10 +3,12 @@ package edu.umass.cs.prepare.main;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -15,6 +17,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -26,6 +29,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,6 +44,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import edu.umass.cs.prepare.metawear.DataReceiverService;
+import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
@@ -87,9 +92,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean record_audio;
 
     private boolean runServiceOverWearable;
-
-    /** The address of the Metawear device from which data is to be collected **/
-    private String metawearAddress;
 
     /** Permission request identifier **/
     private static final int PERMISSION_REQUEST = 1;
@@ -166,9 +168,14 @@ public class MainActivity extends AppCompatActivity {
         connectDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
-                startServiceIntent.setAction(Constants.KEY.CANCEL_CONNECTING);
-                startService(startServiceIntent);
+                if (!runServiceOverWearable) { //TODO: What if it changes during running?
+                    Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
+                    startServiceIntent.setAction(SharedConstants.ACTIONS.CANCEL_CONNECTING);
+                    startService(startServiceIntent);
+                }else{
+                    remoteSensorManager.cancelMetawearConnection();
+                }
+
             }
         });
         connectDialog.show();
@@ -183,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private final ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
+            //TODO: Change mService to a list to contain multiple services, try using log cat with className to check this holds for DataReceiverService
             mService = new Messenger(service);
             //updateStatus("Attached to the sensor service.");
             mIsBound = true;
@@ -232,18 +240,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private SharedPreferences preferences;
     /**
      * Loads shared user preferences, e.g. whether video/audio is enabled
      */
     private void loadPreferences(){
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         record_video = preferences.getBoolean(getString(R.string.pref_video_key),
                 getResources().getBoolean(R.bool.pref_video_default));
         record_audio = preferences.getBoolean(getString(R.string.pref_audio_key),
                 getResources().getBoolean(R.bool.pref_audio_default));
-        metawearAddress = preferences.getString(getString(R.string.pref_device_key),
-                getString(R.string.pref_device_default));
         runServiceOverWearable = preferences.getBoolean(getString(R.string.pref_wearable_key),
                 getResources().getBoolean(R.bool.pref_wearable_default));
     }
@@ -252,6 +257,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //the intent filter specifies the messages we are interested in receiving
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
+        filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
+        registerReceiver(receiver, filter);
 
         loadPreferences();
         if (!runServiceOverWearable)
@@ -271,7 +282,10 @@ public class MainActivity extends AppCompatActivity {
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                requestPermissions();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    requestPermissions();
+                else
+                    remoteSensorManager.startBeaconService();
             }
         });
         Button stopButton = (Button) findViewById(R.id.stop_button);
@@ -281,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 stopDataWriterService();
                 stopMetawearService();
+                remoteSensorManager.stopBeaconService();
             }
         });
         txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
@@ -293,42 +308,10 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @TargetApi(23)
-    private void checkDrawOverlayPermission() {
-        /** check if we already  have permission to draw over other apps */
-        if (record_video && !Settings.canDrawOverlays(getApplicationContext())) {
-            /** if not construct intent to request permission */
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            /** request permission via start activity for result */
-            startActivityForResult(intent, WINDOW_OVERLAY_REQUEST);
-        }else{
-            startDataWriterService();
-            startMetawearService();
-        }
-    }
-
-    private void startDataWriterService(){
-        Intent startIntent = new Intent(MainActivity.this, DataWriterService.class);
-        startIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
-        startService(startIntent);
-    }
-
     private void stopDataWriterService(){
         Intent startIntent = new Intent(MainActivity.this, DataWriterService.class);
         startIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
         startService(startIntent);
-    }
-
-    private void startMetawearService(){
-        if (runServiceOverWearable){
-            remoteSensorManager.startMetawearService(preferences.getAll());
-        }else{
-            Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
-            startServiceIntent.putExtra(SharedConstants.KEY.UUID, metawearAddress);
-            startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
-            startService(startServiceIntent);
-        }
     }
 
     private void stopMetawearService(){
@@ -341,22 +324,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    @TargetApi(23)
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == WINDOW_OVERLAY_REQUEST) {
-            /** if so check once again if we have permission */
-            if (Settings.canDrawOverlays(this)) {
-                startDataWriterService();
-                startMetawearService();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                /** if so check once again if we have permission */
+                if (Settings.canDrawOverlays(this)) {
+                    remoteSensorManager.startBeaconService();
+                }
             }
         }else if (requestCode == Constants.ACTION.REQUEST_SET_PREFERENCES){
             loadPreferences();
-            if (!runServiceOverWearable)
+            if (runServiceOverWearable)
+                doUnbindService();
+            else
                 doBindService();
         }
     }
 
+    /**
+     * Displays a single accelerometer reading on the main UI
+     * @param reading a 3-dimensional floating point vector representing the x, y and z accelerometer values respectively.
+     */
     private void displayAccelerometerReading(final float[] reading){
         float x = reading[0];
         float y = reading[1];
@@ -393,8 +381,6 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                //txtDeviceInfo.setText(percentage);
-                //imgBatteryStatus.setImageBitmap(batteryLevelSingleBitmap);
                 //noinspection ConstantConditions
                 getSupportActionBar().setDisplayShowHomeEnabled(true);
                 getSupportActionBar().setIcon(icon);
@@ -413,12 +399,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             Intent openSettings = new Intent(MainActivity.this, SettingsActivity.class);
             startActivityForResult(openSettings, Constants.ACTION.REQUEST_SET_PREFERENCES, null);
@@ -426,6 +408,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.M)
+    private void checkDrawOverlayPermission() {
+        /** check if we already  have permission to draw over other apps */
+        if (record_video && !Settings.canDrawOverlays(getApplicationContext())) {
+            /** if not construct intent to request permission */
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            /** request permission via start activity for result */
+            startActivityForResult(intent, WINDOW_OVERLAY_REQUEST);
+        }else{
+            remoteSensorManager.startBeaconService();
+        }
     }
 
     @Override
@@ -472,12 +469,11 @@ public class MainActivity extends AppCompatActivity {
      * recording, which is disabled by default, the
      * {@link android.Manifest.permission#RECORD_AUDIO RECORD_AUDIO} permission is required.
      */
+    @TargetApi(Build.VERSION_CODES.M)
     private void requestPermissions(){
         List<String> permissionGroup = new ArrayList<>(Arrays.asList(new String[]{
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                //Manifest.permission.BLUETOOTH,
-                //Manifest.permission.BLUETOOTH_ADMIN,
-                //Manifest.permission.ACCESS_COARSE_LOCATION
+                Manifest.permission.ACCESS_COARSE_LOCATION
         }));
 
         if (record_video) {
@@ -509,4 +505,37 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
+
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction() != null) {
+                if (intent.getAction().equals(Constants.ACTION.BROADCAST_SENSOR_DATA)) {
+                    float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
+                    float[] averages = new float[3];
+                    for (int i = 0; i < values.length; i++) {
+                        averages[i % 3] += values[i];
+                    }
+                    for (int j = 0; j < averages.length; j++) {
+                        averages[j] /= (values.length / 3f);
+                    }
+                    SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
+                    Log.d("Main", sensorType.name());
+                    if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
+                        displayAccelerometerReading(averages);
+                        Log.d("Main", String.valueOf(averages[0]));
+                        Log.d("Main", String.valueOf(averages[1]));
+                        Log.d("Main", String.valueOf(averages[2]));
+                    }
+                }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
+                    int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
+                    if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
+                        showConnectingDialog();
+                    }else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
+                        cancelConnectingDialog();
+                    }
+                }
+            }
+        }
+    };
 }

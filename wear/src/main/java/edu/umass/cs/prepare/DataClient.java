@@ -2,6 +2,7 @@ package edu.umass.cs.prepare;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -97,6 +98,32 @@ public class DataClient {
     }
 
     /**
+     * Sends a message via the data layer to the handheld application. This calls
+     * {@link #sendMessageInBackground(int)} so as not to block
+     * program execution on the main thread.
+     * @param message the message being delivered
+     */
+    public void sendMessage(final int message) {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                sendMessageInBackground(message);
+            }
+        });
+    }
+
+    /**
+     * Sends a message via the data layer to the handheld application in a background thread.
+     * @param message the message being delivered
+     */
+    private void sendMessageInBackground(final int message) {
+        PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.MESSAGE_PATH);
+        dataMap.getDataMap().putInt(SharedConstants.KEY.MESSAGE, message);
+        PutDataRequest putDataRequest = dataMap.asPutDataRequest();
+        send(putDataRequest);
+    }
+
+    /**
      * Connects to the Google API client if necessary.
      * @return True if successful, false otherwise.
      */
@@ -119,7 +146,7 @@ public class DataClient {
         if (validateConnection()) {
             Wearable.DataApi.putDataItem(googleApiClient, putDataRequest).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
                 @Override
-                public void onResult(DataApi.DataItemResult dataItemResult) {
+                public void onResult(@NonNull DataApi.DataItemResult dataItemResult) {
                     //use dataItemResult.getStatus().isSuccess() to see if successful
                 }
             });

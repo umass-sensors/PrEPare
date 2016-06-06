@@ -1,6 +1,7 @@
 package edu.umass.cs.prepare.metawear;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -10,14 +11,11 @@ import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import edu.umass.cs.shared.PreferenceMapSerializer;
 import edu.umass.cs.shared.SharedConstants;
 
 /**
@@ -110,25 +108,36 @@ public class RemoteSensorManager {
         });
     }
 
+    /** send a message to the wearable device to start the beacon service on the wearable */
+    public void startBeaconService() {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG, "Start Beacon Service");
+                sendMessageInBackground(SharedConstants.COMMANDS.START_BEACON_SERVICE, null);
+            }
+        });
+    }
+
+    /** send a message to the wearable device to stop the beacon service on the wearable */
+    public void stopBeaconService() {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG, "Stop Beacon Service");
+                sendMessageInBackground(SharedConstants.COMMANDS.STOP_BEACON_SERVICE, null);
+            }
+        });
+    }
+
     /** send a message to the wearable device to start data collection on the Metawear tag */
-    public void startMetawearService(final Map<String, ?> preferenceMap){
+    public void startMetawearService(){
         Log.d(TAG, "startMetawearService called.");
         executorService.submit(new Runnable() {
             @Override
             public void run() {
-                byte[] bytes = new byte[0];
-                try {
-                    bytes = PreferenceMapSerializer.serialize(preferenceMap);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-//                try {
-//                    bytes = mwMacAddress.getBytes("UTF-8");
-//                } catch (UnsupportedEncodingException e) {
-//                    e.printStackTrace();
-//                }
                 Log.d(TAG, "Sending message to wearable...");
-                sendMessageInBackground(SharedConstants.COMMANDS.START_METAWEAR_SERVICE, bytes);
+                sendMessageInBackground(SharedConstants.COMMANDS.START_METAWEAR_SERVICE, null);
             }
         });
     }
@@ -140,6 +149,17 @@ public class RemoteSensorManager {
             public void run() {
                 Log.v(TAG, "Stop Sensor Service");
                 sendMessageInBackground(SharedConstants.COMMANDS.STOP_METAWEAR_SERVICE, null);
+            }
+        });
+    }
+
+    /** send a message to the wearable device to cancel connection to the Metawear tag */
+    public void cancelMetawearConnection() {
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG, "Cancel Metawear connection.");
+                sendMessageInBackground(SharedConstants.COMMANDS.CANCEL_METAWEAR_CONNECTION, null);
             }
         });
     }
@@ -157,7 +177,7 @@ public class RemoteSensorManager {
                 Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), path, msg).
                         setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
                             @Override
-                            public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                            public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
                                 Log.d(TAG, "startOrStopInBackground(" + path + "): " + sendMessageResult.getStatus().isSuccess());
                                 if (listener != null)
                                     listener.onMessageResult(path, msg, sendMessageResult);

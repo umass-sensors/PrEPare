@@ -7,9 +7,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.mbientlab.metawear.AsyncOperation;
@@ -24,11 +26,7 @@ import com.mbientlab.metawear.module.Gyro;
 import com.mbientlab.metawear.module.IBeacon;
 import com.mbientlab.metawear.module.Led;
 
-import java.io.IOException;
-import java.util.Map;
-
 import cs.umass.edu.shared.R;
-import edu.umass.cs.shared.PreferenceMapSerializer;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.shared.SensorBuffer;
 
@@ -144,17 +142,21 @@ public class SensorService extends Service implements ServiceConnection {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null)
             if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)){
-                parsePreferences(intent.getByteArrayExtra(SharedConstants.KEY.PREFERENCES));
+                loadPreferences();
+                mwMacAddress = intent.getStringExtra(SharedConstants.KEY.UUID);
                 onServiceStarted();
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)){
                 onServiceStopped();
+            } else if (intent.getAction().equals(SharedConstants.ACTIONS.CANCEL_CONNECTING)){
+                disconnect();
             }
         return START_STICKY;
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        mwBoard= ((MetaWearBleService.LocalBinder) service).getMetaWearBoard(btDevice);
+        if (mwBoard == null)
+            mwBoard= ((MetaWearBleService.LocalBinder) service).getMetaWearBoard(btDevice);
 
         mwBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
             @Override
@@ -193,52 +195,22 @@ public class SensorService extends Service implements ServiceConnection {
 
     }
 
-    //TODO: Put these 2 methods in a different file (PreferenceUtil or something)
-    private boolean getBooleanPreference(Map<String, ?> preferenceMap, String key, boolean defaultValue){
-        Boolean value = (Boolean) preferenceMap.get(key);
-        if (value == null)
-            return defaultValue;
-        else
-            return value;
-    }
-
-    private String getStringPreference(Map<String, ?> preferenceMap, String key, String defaultValue){
-        String value = (String) preferenceMap.get(key);
-        if (value == null)
-            return defaultValue;
-        else
-            return value;
-    }
-
     /**
-     * Gets all relevant shared preferences, given a key-value preference mapping.
-     * @param serializedPreferenceMap A mapping from preference keys to values, serialized as a byte array
+     * Gets all relevant shared preferences.
      */
-    private void parsePreferences(final byte[] serializedPreferenceMap){
-        Map<String, ?> preferenceMap;
-        try {
-            preferenceMap = PreferenceMapSerializer.deserialize(serializedPreferenceMap);
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return;
-        }
-        accelerometerSamplingRate = Integer.parseInt(getStringPreference(preferenceMap, getString(R.string.pref_accelerometer_sampling_rate_key),
+    private void loadPreferences(){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        accelerometerSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_accelerometer_sampling_rate_key),
                 getString(R.string.pref_accelerometer_sampling_rate_default)));
-        gyroscopeSamplingRate = Integer.parseInt(getStringPreference(preferenceMap, getString(R.string.pref_gyroscope_sampling_rate_key),
+        gyroscopeSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_gyroscope_sampling_rate_key),
                 getString(R.string.pref_gyroscope_sampling_rate_default)));
-        rssiSamplingRate = Integer.parseInt(getStringPreference(preferenceMap, getString(R.string.pref_rssi_sampling_rate_key),
+        rssiSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_rssi_sampling_rate_key),
                 getString(R.string.pref_rssi_sampling_rate_default)));
-        turnOnLedWhileRunning = getBooleanPreference(preferenceMap, getString(R.string.pref_led_key),
-                getResources().getBoolean(R.bool.pref_led_default));
-        enableAccelerometer = getBooleanPreference(preferenceMap, getString(R.string.pref_accelerometer_key),
-                getResources().getBoolean(R.bool.pref_accelerometer_default));
-        enableGyroscope = getBooleanPreference(preferenceMap, getString(R.string.pref_gyroscope_key),
-                getResources().getBoolean(R.bool.pref_gyroscope_default));
-        enableRSSI = getBooleanPreference(preferenceMap, getString(R.string.pref_rssi_key),
-                getResources().getBoolean(R.bool.pref_rssi_default));
-        mwMacAddress = getStringPreference(preferenceMap, getString(R.string.pref_device_key),
-                getString(R.string.pref_device_default));
-
+        turnOnLedWhileRunning = preferences.getBoolean(getString(R.string.pref_led_key), getResources().getBoolean(R.bool.pref_led_default));
+        enableAccelerometer = preferences.getBoolean(getString(R.string.pref_accelerometer_key), getResources().getBoolean(R.bool.pref_accelerometer_default));
+        enableGyroscope = preferences.getBoolean(getString(R.string.pref_gyroscope_key), getResources().getBoolean(R.bool.pref_gyroscope_default));
+        enableRSSI = preferences.getBoolean(getString(R.string.pref_rssi_key), getResources().getBoolean(R.bool.pref_rssi_default));
+        //mwMacAddress = preferences.getString(getString(R.string.pref_device_key), getString(R.string.pref_device_default));
     }
 
     /**
@@ -251,7 +223,6 @@ public class SensorService extends Service implements ServiceConnection {
             beaconModule.readConfiguration().onComplete(new AsyncOperation.CompletionHandler<IBeacon.Configuration>() {
                 @Override
                 public void success(IBeacon.Configuration result) {
-                    Log.d(TAG, result.adUuid().toString());
                     super.success(result);
                 }
 
@@ -261,7 +232,8 @@ public class SensorService extends Service implements ServiceConnection {
                     super.failure(error);
                 }
             });
-
+            beaconModule.configure().setAdPeriod((short) 2500).commit();
+            beaconModule.enable();
 
             accModule = mwBoard.getModule(Accelerometer.class);
             // Set the output data rate to 25Hz or closet valid value
@@ -335,7 +307,6 @@ public class SensorService extends Service implements ServiceConnection {
         if (handler != null)
             handler.removeCallbacksAndMessages(null);
         isRunning = false;
-        //beaconModule.enable(); //TODO: IBeacon
         try {
             Thread.sleep(DISCONNECT_WAIT_MILLIS); //to ensure that the LED is turned off before disconnecting
         } catch (InterruptedException e) {

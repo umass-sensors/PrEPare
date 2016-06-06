@@ -13,6 +13,7 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import edu.umass.cs.prepare.storage.DataWriterService;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.constants.Constants;
@@ -64,11 +65,24 @@ public class DataReceiverService extends WearableListenerService {
                     Log.d(TAG, "Data received on mobile application : " + sensorType.name());
                     broadcastSensorData(this, sensorType, timestamps, values);
                 }
-//                else if (path.equals(SharedConstants.DATA_LAYER_CONSTANTS.STATUS_CONNECTED)){
-//                    sendMessageToClients(Constants.MESSAGE.CONNECTED);
-//                }
+                else if (path.equals(SharedConstants.DATA_LAYER_CONSTANTS.MESSAGE_PATH)){
+                    int message = dataMap.getInt(SharedConstants.KEY.MESSAGE);
+                    broadcastMessage(this, message);
+                    if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
+                        startDataWriterService();
+                    }
+//                    if (dataMap.getInt(SharedConstants.KEY.MESSAGE) == SharedConstants.MESSAGES.BEACON_WITHIN_RANGE) {
+//                        RemoteSensorManager.getInstance(this).startMetawearService();
+//                    }
+                }
             }
         }
+    }
+
+    private void startDataWriterService(){
+        Intent startIntent = new Intent(this, DataWriterService.class);
+        startIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
+        startService(startIntent);
     }
 
     /**
@@ -79,31 +93,24 @@ public class DataReceiverService extends WearableListenerService {
      * @param values list of sensor readings
      */
     public static void broadcastSensorData(Context context, SharedConstants.SENSOR_TYPE sensorType, String[] timestamps, float[] values){
-        StringBuilder line = new StringBuilder(timestamps.length * (Constants.BYTES_PER_TIMESTAMP + Constants.BYTES_PER_SENSOR_READING + 6));
-        if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI ||
-                sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
-
-            for (int i = 0; i < timestamps.length; i++) {
-                String timestamp = timestamps[i];
-                float rssi = values[i];
-                line.append(String.format("%s,%d\n", timestamp, (int)rssi));
-            }
-        }else {
-
-            for (int i = 0; i < timestamps.length; i++) {
-                String timestamp = timestamps[i];
-                float x = values[3 * i];
-                float y = values[3 * i + 1];
-                float z = values[3 * i + 2];
-
-                line.append(String.format("%s,%f,%f,%f\n", timestamp, x, y, z));
-            }
-        }
-
         Intent intent = new Intent();
         DataLayerUtil.serialize(sensorType).to(intent);
-        intent.putExtra(Constants.KEY.SENSOR_DATA, line.toString());
+        intent.putExtra(Constants.KEY.SENSOR_TYPE, sensorType);
+        intent.putExtra(Constants.KEY.SENSOR_DATA, values);
+        intent.putExtra(Constants.KEY.TIMESTAMP, timestamps);
         intent.setAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
+        context.sendBroadcast(intent);
+    }
+
+    /**
+     * Broadcasts a message to send to other mobile application components.
+     * @param context the context from which the message is sent.
+     * @param message the message being broadcast
+     */
+    public static void broadcastMessage(Context context, int message){
+        Intent intent = new Intent();
+        intent.putExtra(SharedConstants.KEY.MESSAGE, message);
+        intent.setAction(Constants.ACTION.BROADCAST_MESSAGE);
         context.sendBroadcast(intent);
     }
 }

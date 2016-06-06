@@ -4,6 +4,10 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false"/>
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false"/>
@@ -13,6 +17,7 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_pill"
         android:label="@string/app_name"
+        android:name=".main.App"
         android:theme="@android:style/Theme.DeviceDefault" >
 
         <meta-data
@@ -21,13 +26,14 @@
 
         <service android:name="edu.umass.cs.prepare.ListenerService">
             <intent-filter>
-                <action
-                    android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
             </intent-filter>
         </service>
         <service android:name="edu.umass.cs.prepare.SensorService" />
         <service android:name="edu.umass.cs.prepare.metawear.SensorService" />
         <service android:name="com.mbientlab.metawear.MetaWearBleService" />
+        <service android:name=".metawear.BeaconService"/>
+        <activity android:name=".PermissionsActivity" android:launchMode="singleInstance"/>
     </application>
 
 </manifest>

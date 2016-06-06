@@ -15,6 +15,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.mbientlab.metawear.AsyncOperation;
+import com.mbientlab.metawear.DataSignal;
 import com.mbientlab.metawear.Message;
 import com.mbientlab.metawear.MetaWearBleService;
 import com.mbientlab.metawear.MetaWearBoard;
@@ -22,9 +23,13 @@ import com.mbientlab.metawear.RouteManager;
 import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.module.Accelerometer;
+import com.mbientlab.metawear.module.DataProcessor;
 import com.mbientlab.metawear.module.Gyro;
 import com.mbientlab.metawear.module.IBeacon;
 import com.mbientlab.metawear.module.Led;
+import com.mbientlab.metawear.module.Settings;
+
+import java.util.Map;
 
 import cs.umass.edu.shared.R;
 import edu.umass.cs.shared.SharedConstants;
@@ -48,12 +53,6 @@ public class SensorService extends Service implements ServiceConnection {
     @SuppressWarnings("unused")
     /** used for debugging purposes */
     private static final String TAG = SensorService.class.getName();
-
-    /** The number of milliseconds the {@link Thread} should sleep between disabling the sensors on the
-     * Metawear board and disconnecting from the board. If {@link MetaWearBoard#disconnect()} is called
-     * immediately, then the sensors will continue to run after the service terminates, consuming
-     * unnecessary battery on the board. Empirically verified, 100 milliseconds is sufficient. **/
-    public static final long DISCONNECT_WAIT_MILLIS = 100;
 
     /** The Bluetooth device handle of the <a href="https://mbientlab.com/metawearc/">MetaWear C</a> tag **/
     private BluetoothDevice btDevice;
@@ -237,8 +236,6 @@ public class SensorService extends Service implements ServiceConnection {
                     super.failure(error);
                 }
             });
-            beaconModule.configure().setAdPeriod(advertisementPeriod).commit();
-            beaconModule.enable();
 
             accModule = mwBoard.getModule(Accelerometer.class);
             // Set the output data rate to 25Hz or closet valid value
@@ -248,6 +245,25 @@ public class SensorService extends Service implements ServiceConnection {
             gyroModule.setOutputDataRate((float) gyroscopeSamplingRate);
 
             ledModule = mwBoard.getModule(Led.class);
+
+            //handle disconnection from the board:
+            mwBoard.getModule(Settings.class).handleEvent().fromDisconnect().monitor(new DataSignal.ActivityHandler() {
+                @Override
+                public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
+                    if (ledModule != null){
+                        ledModule.stop(true);
+                    }
+                    if (gyroModule != null){
+                        gyroModule.stop();
+                    }
+                    if (accModule != null){
+                        accModule.stop();
+                        accModule.disableAxisSampling();
+                    }
+                    beaconModule.configure().setAdPeriod(advertisementPeriod).commit();
+                    beaconModule.enable();
+                }
+            }).commit();
 
         } catch (UnsupportedModuleException e) {
             e.printStackTrace();
@@ -266,9 +282,8 @@ public class SensorService extends Service implements ServiceConnection {
             startGyroscope();
         if (enableRSSI)
             startRSSI();
-        ledModule.stop(true);
         if (turnOnLedWhileRunning)
-            turnOnLed();
+            turnOnLed(Led.ColorChannel.GREEN);
     }
 
 
@@ -299,24 +314,9 @@ public class SensorService extends Service implements ServiceConnection {
      * Called when the sensor service is stopped, by command from the handheld application.
      */
     protected void onServiceStopped(){
-        if (ledModule != null){
-            ledModule.stop(true);
-        }
-        if (gyroModule != null){
-            gyroModule.stop();
-        }
-        if (accModule != null){
-            accModule.stop();
-            accModule.disableAxisSampling();
-        }
         if (handler != null)
             handler.removeCallbacksAndMessages(null);
         isRunning = false;
-        try {
-            Thread.sleep(DISCONNECT_WAIT_MILLIS); //to ensure that the LED is turned off before disconnecting
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         disconnect();
     }
 
@@ -422,10 +422,11 @@ public class SensorService extends Service implements ServiceConnection {
     /**
      * Turns on the LED on the Metawear device.
      */
-    private void turnOnLed(){
-        ledModule.configureColorChannel(Led.ColorChannel.BLUE)
-                .setHighIntensity((byte) 31).setLowIntensity((byte) 31)
-                .setHighTime((short) 1000).setPulseDuration((short) 1000)
+    private void turnOnLed(Led.ColorChannel color){
+        ledModule.stop(true);
+        ledModule.configureColorChannel(color)
+                .setHighIntensity((byte) 15).setLowIntensity((byte) 0)
+                .setHighTime((short) 500).setPulseDuration((short) 2000)
                 .setRepeatCount((byte) -1)
                 .commit();
         ledModule.play(false);
@@ -440,6 +441,9 @@ public class SensorService extends Service implements ServiceConnection {
         mwBoard.readBatteryLevel().onComplete(new AsyncOperation.CompletionHandler<Byte>() {
             @Override
             public void success(final Byte result) {
+                if (result <= 100 && turnOnLedWhileRunning){
+                    turnOnLed(Led.ColorChannel.RED);
+                }
                 onBatteryLevelReceived(result);
             }
 

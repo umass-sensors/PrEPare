@@ -69,4 +69,5 @@ dependencies {
     compile 'com.android.support:design:23.2.1'
 
     compile ('net.rdrei.android.dirchooser:library:3.0@aar') { transitive = true; }
+    compile 'me.denley.wearprefs:WearPrefs:1.1.3'
 }

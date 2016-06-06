@@ -441,7 +441,7 @@ public class SensorService extends Service implements ServiceConnection {
         mwBoard.readBatteryLevel().onComplete(new AsyncOperation.CompletionHandler<Byte>() {
             @Override
             public void success(final Byte result) {
-                if (result <= 100 && turnOnLedWhileRunning){
+                if (result <= 10 && turnOnLedWhileRunning){
                     turnOnLed(Led.ColorChannel.RED);
                 }
                 onBatteryLevelReceived(result);

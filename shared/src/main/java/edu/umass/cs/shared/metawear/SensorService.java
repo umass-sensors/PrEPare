@@ -23,6 +23,7 @@ import com.mbientlab.metawear.RouteManager;
 import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.module.Accelerometer;
+import com.mbientlab.metawear.module.Bmi160Accelerometer;
 import com.mbientlab.metawear.module.DataProcessor;
 import com.mbientlab.metawear.module.Gyro;
 import com.mbientlab.metawear.module.IBeacon;
@@ -73,6 +74,8 @@ public class SensorService extends Service implements ServiceConnection {
     private Led ledModule;
 
     private IBeacon beaconModule;
+
+    private Bmi160Accelerometer motionModule;
 
     /** The approximate sampling rate of the accelerometer. If the sampling rate is not supported by
      * the Metawear device, then the closest supported sampling rate is used. **/
@@ -237,6 +240,8 @@ public class SensorService extends Service implements ServiceConnection {
                 }
             });
 
+            motionModule = mwBoard.getModule(Bmi160Accelerometer.class);
+
             accModule = mwBoard.getModule(Accelerometer.class);
             // Set the output data rate to 25Hz or closet valid value
             accModule.setOutputDataRate((float) accelerometerSamplingRate);
@@ -250,15 +255,10 @@ public class SensorService extends Service implements ServiceConnection {
             mwBoard.getModule(Settings.class).handleEvent().fromDisconnect().monitor(new DataSignal.ActivityHandler() {
                 @Override
                 public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
-                    if (ledModule != null){
-                        ledModule.stop(true);
-                    }
-                    if (gyroModule != null){
-                        gyroModule.stop();
-                    }
-                    if (accModule != null){
-                        accModule.stop();
-                        accModule.disableAxisSampling();
+                    stopSensors();
+                    if (motionModule != null) {
+                        motionModule.stop();
+                        motionModule.disableMotionDetection();
                     }
                     beaconModule.configure().setAdPeriod(advertisementPeriod).commit();
                     beaconModule.enable();
@@ -276,6 +276,10 @@ public class SensorService extends Service implements ServiceConnection {
     protected void onMetawearConnected(){
         isRunning = true;
         ready();
+        startMotionDetection();
+    }
+
+    private void startSensors(){
         if (enableAccelerometer)
             startAccelerometer();
         if (enableGyroscope)
@@ -284,6 +288,21 @@ public class SensorService extends Service implements ServiceConnection {
             startRSSI();
         if (turnOnLedWhileRunning)
             turnOnLed(Led.ColorChannel.GREEN);
+    }
+
+    private void stopSensors(){
+        if (ledModule != null) {
+            ledModule.stop(true);
+        }
+        if (gyroModule != null) {
+            gyroModule.stop();
+        }
+        if (accModule != null) {
+            accModule.stop();
+            accModule.disableAxisSampling();
+        }
+        if (handler != null)
+            handler.removeCallbacksAndMessages(null);
     }
 
 
@@ -314,8 +333,6 @@ public class SensorService extends Service implements ServiceConnection {
      * Called when the sensor service is stopped, by command from the handheld application.
      */
     protected void onServiceStopped(){
-        if (handler != null)
-            handler.removeCallbacksAndMessages(null);
         isRunning = false;
         disconnect();
     }
@@ -335,6 +352,54 @@ public class SensorService extends Service implements ServiceConnection {
 
     protected void onBatteryLevelReceived(int percentage){
         //DO NOTHING: this is meant for subclasses to override
+    }
+
+    private void startMotionDetection(){
+        if (turnOnLedWhileRunning)
+            turnOnLed(Led.ColorChannel.BLUE);
+        motionModule.stop();
+        motionModule.disableMotionDetection();
+        motionModule.routeData().fromMotion().stream("streaming-motion").commit()
+                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+                    @Override
+                    public void success(RouteManager result) {
+                        result.subscribe("streaming-motion", new RouteManager.MessageHandler() {
+                            @Override
+                            public void process(Message msg) {
+                                Log.d(TAG, "MOTION DETECTED");
+                                startSensors();
+                                startNoMotionDetection();
+                            }
+                        });
+                        motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.ANY_MOTION);
+                        motionModule.configureAnyMotionDetection().setThreshold(0.1f).commit();
+                        motionModule.startLowPower();
+                    }
+                });
+
+    }
+
+    private void startNoMotionDetection(){
+        motionModule.stop();
+        motionModule.disableMotionDetection();
+        motionModule.routeData().fromMotion().stream("streaming-no-motion").commit()
+                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+                    @Override
+                    public void success(RouteManager result) {
+                        result.subscribe("streaming-no-motion", new RouteManager.MessageHandler() {
+                            @Override
+                            public void process(Message msg) {
+                                Log.d(TAG, "NO MOTION DETECTED");
+                                stopSensors();
+                                startMotionDetection();
+                            }
+                        });
+                        motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.NO_MOTION);
+                        motionModule.configureNoMotionDetection().setThreshold(0.005f).setDuration(1000).commit();
+                        motionModule.startLowPower();
+                    }
+                });
+
     }
 
     private void startAccelerometer(){

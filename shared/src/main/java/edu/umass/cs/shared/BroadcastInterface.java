@@ -6,6 +6,10 @@ package edu.umass.cs.shared;
  * the implementation may involve sending data through the Google Play services data layer API to
  * persist notifications the mobile device; from the phone itself, this may be as simple as
  * broadcasting an intent.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
  */
 public interface BroadcastInterface {
     void broadcastMessage(int message);

@@ -8,10 +8,22 @@ import edu.umass.cs.shared.BroadcastInterface;
 import edu.umass.cs.shared.SharedConstants;
 
 /**
- * Created by snoran on 6/8/16.
+ * Specifies how a mobile service should notify the other application components of important events,
+ * e.g. the service started/stopped.
+ * <br><br>
+ * This specific implementation simply broadcasts a message via an {@link Intent} for other
+ * application components to receive.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
+ * @see BroadcastInterface
+ * @see Context
+ * @see Intent
  */
 public class Broadcaster implements BroadcastInterface {
 
+    /** The application component from which the message is sent. **/
     private Context context;
 
     public Broadcaster(Context context){

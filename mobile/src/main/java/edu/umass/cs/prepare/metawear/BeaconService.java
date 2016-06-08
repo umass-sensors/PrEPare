@@ -19,6 +19,7 @@ public class BeaconService extends edu.umass.cs.shared.metawear.BeaconService {
     @Override
     public void onCreate() {
         super.onCreate();
+        setBroadcaster(new Broadcaster(this));
     }
 
     @Override

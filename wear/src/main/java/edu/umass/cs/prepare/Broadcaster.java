@@ -1,10 +1,7 @@
 package edu.umass.cs.prepare;
 
 import android.content.Context;
-import android.content.Intent;
-
 import edu.umass.cs.shared.BroadcastInterface;
-import edu.umass.cs.shared.SharedConstants;
 
 /**
  * Specifies how a wearable service should notify the other application components of important events,

@@ -1,12 +1,24 @@
 package edu.umass.cs.prepare;
 
 import android.content.Context;
+import android.content.Intent;
 
 import edu.umass.cs.shared.BroadcastInterface;
 import edu.umass.cs.shared.SharedConstants;
 
 /**
- * Created by snoran on 6/8/16.
+ * Specifies how a wearable service should notify the other application components of important events,
+ * e.g. the service started/stopped.
+ * <br><br>
+ * This specific implementation sends data via the {@link DataClient} from the wearable to the
+ * mobile application.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
+ * @see BroadcastInterface
+ * @see Context
+ * @see DataClient
  */
 public class Broadcaster implements BroadcastInterface {
 
@@ -21,6 +33,6 @@ public class Broadcaster implements BroadcastInterface {
     public void broadcastMessage(int message) {
         if (client == null)
             client = DataClient.getInstance(context);
-        client.sendMessage(SharedConstants.MESSAGES.BEACON_SERVICE_STARTED);
+        client.sendMessage(message);
     }
 }

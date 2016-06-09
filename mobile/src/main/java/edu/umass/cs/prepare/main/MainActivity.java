@@ -30,7 +30,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.umass.cs.prepare.metawear.BeaconService;
 import edu.umass.cs.prepare.metawear.DataReceiverService;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
@@ -283,10 +283,11 @@ public class MainActivity extends AppCompatActivity {
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //TODO: Do Android versions prior to M require run-time permission request for overlay?
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                     requestPermissions();
                 else
-                    remoteSensorManager.startBeaconService();
+                    onPermissionsGranted();
             }
         });
         Button stopButton = (Button) findViewById(R.id.stop_button);
@@ -294,19 +295,57 @@ public class MainActivity extends AppCompatActivity {
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                remoteSensorManager.stopBeaconService();
-                stopDataWriterService();
-                stopMetawearService();
+                stopServices();
             }
         });
         txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
         txtAccelerometer.setText(String.format(getString(R.string.initial_sensor_readings), 0f, 0f, 0f));
     }
 
+    /**
+     * Stops all ongoing services
+     */
+    private void stopServices(){
+        if (runServiceOverWearable)
+            remoteSensorManager.stopBeaconService();
+        else
+            stopLocalBeaconService();
+        stopDataWriterService();
+        stopMetawearService();
+    }
+
+    /**
+     * Called when all required permissions have been granted.
+     */
+    private void onPermissionsGranted(){
+        if (runServiceOverWearable)
+            remoteSensorManager.startBeaconService();
+        else
+            startLocalBeaconService();
+    }
+
     @Override
     public void onDestroy() {
         doUnbindService();
         super.onDestroy();
+    }
+
+    /**
+     * Starts the Beacon service on the phone.
+     */
+    private void startLocalBeaconService(){
+        Intent startIntent = new Intent(MainActivity.this, BeaconService.class);
+        startIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
+        startService(startIntent);
+    }
+
+    /**
+     * Stops the Beacon service on the phone.
+     */
+    private void stopLocalBeaconService(){
+        Intent startIntent = new Intent(MainActivity.this, BeaconService.class);
+        startIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
+        startService(startIntent);
     }
 
     private void stopDataWriterService(){
@@ -330,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 /** if so check once again if we have permission */
                 if (Settings.canDrawOverlays(this)) {
-                    remoteSensorManager.startBeaconService();
+                    onPermissionsGranted();
                 }
             }
         }else if (requestCode == Constants.ACTION.REQUEST_SET_PREFERENCES){
@@ -422,7 +461,7 @@ public class MainActivity extends AppCompatActivity {
             /** request permission via start activity for result */
             startActivityForResult(intent, WINDOW_OVERLAY_REQUEST);
         }else{
-            remoteSensorManager.startBeaconService();
+            onPermissionsGranted();
         }
     }
 
@@ -521,12 +560,8 @@ public class MainActivity extends AppCompatActivity {
                         averages[j] /= (values.length / 3f);
                     }
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
-                    Log.d("Main", sensorType.name());
                     if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
                         displayAccelerometerReading(averages);
-                        Log.d("Main", String.valueOf(averages[0]));
-                        Log.d("Main", String.valueOf(averages[1]));
-                        Log.d("Main", String.valueOf(averages[2]));
                     }
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);

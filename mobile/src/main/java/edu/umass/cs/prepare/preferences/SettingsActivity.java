@@ -37,6 +37,10 @@ import java.io.File;
  */
 public class SettingsActivity extends PreferenceActivity {
 
+    @SuppressWarnings("unused")
+    /** used for debugging purposes */
+    private static final String TAG = SettingsActivity.class.getName();
+
     /** Request code to identify that the user selected the directory when the activity called for result returns. **/
     private static final int SELECT_DIRECTORY_REQUEST_CODE = 1;
 

@@ -22,12 +22,14 @@ import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.RouteManager;
 import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
+import com.mbientlab.metawear.data.CartesianShort;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.mbientlab.metawear.module.Bmi160Accelerometer;
 import com.mbientlab.metawear.module.DataProcessor;
 import com.mbientlab.metawear.module.Gyro;
 import com.mbientlab.metawear.module.IBeacon;
 import com.mbientlab.metawear.module.Led;
+import com.mbientlab.metawear.module.Logging;
 import com.mbientlab.metawear.module.Settings;
 
 import java.util.Map;
@@ -76,6 +78,8 @@ public class SensorService extends Service implements ServiceConnection {
     private IBeacon beaconModule;
 
     private Bmi160Accelerometer motionModule;
+
+    private Logging loggingModule;
 
     /** The approximate sampling rate of the accelerometer. If the sampling rate is not supported by
      * the Metawear device, then the closest supported sampling rate is used. **/
@@ -242,6 +246,8 @@ public class SensorService extends Service implements ServiceConnection {
 
             motionModule = mwBoard.getModule(Bmi160Accelerometer.class);
 
+            loggingModule = mwBoard.getModule(Logging.class);
+
             accModule = mwBoard.getModule(Accelerometer.class);
             // Set the output data rate to 25Hz or closet valid value
             accModule.setOutputDataRate((float) accelerometerSamplingRate);
@@ -293,6 +299,9 @@ public class SensorService extends Service implements ServiceConnection {
     private void stopSensors(){
         if (ledModule != null) {
             ledModule.stop(true);
+        }
+        if (loggingModule != null) {
+            loggingModule.stopLogging();
         }
         if (gyroModule != null) {
             gyroModule.stop();
@@ -395,33 +404,59 @@ public class SensorService extends Service implements ServiceConnection {
                             }
                         });
                         motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.NO_MOTION);
-                        motionModule.configureNoMotionDetection().setThreshold(0.005f).setDuration(1000).commit();
+                        motionModule.configureNoMotionDetection().setThreshold(0.005f).setDuration(5000).commit();
                         motionModule.startLowPower();
                     }
                 });
 
     }
 
+    private boolean streaming = true;
+    private final String LOG_KEY = "logging";
+    private boolean overwrite = true;
+
     private void startAccelerometer(){
-        accModule.routeData().fromAxes().stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER).commit()
-                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
-                    @Override
-                    public void success(RouteManager result) {
-                        result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER, new RouteManager.MessageHandler() {
-                            @Override
-                            public void process(Message msg) {
-                                CartesianFloat reading = msg.getData(CartesianFloat.class);
-                                onAccelerometerReadingReceived(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
-                                synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
-                                    accelerometerBuffer.addReading(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+        if (streaming) {
+            accModule.routeData().fromAxes().stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER).commit()
+                    .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+                        @Override
+                        public void success(RouteManager result) {
+                            result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER, new RouteManager.MessageHandler() {
+                                @Override
+                                public void process(Message msg) {
+                                    CartesianFloat reading = msg.getData(CartesianFloat.class);
+                                    onAccelerometerReadingReceived(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                    synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
+                                        accelerometerBuffer.addReading(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                    }
                                 }
-                            }
-                        });
-                        accModule.enableAxisSampling();
-                        accModule.start();
-                        onAccelerometerStarted();
-                    }
-                });
+                            });
+                            accModule.enableAxisSampling();
+                            accModule.start();
+                            onAccelerometerStarted();
+                        }
+                    });
+        }else{
+            accModule.routeData().fromAxes().log(LOG_KEY).commit()
+                    .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+                        @Override
+                        public void success(RouteManager result) {
+                            result.setLogMessageHandler(LOG_KEY, new RouteManager.MessageHandler() {
+                                @Override
+                                public void process(Message msg) {
+                                    CartesianFloat reading = msg.getData(CartesianFloat.class);
+                                    onAccelerometerReadingReceived(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                    //final CartesianShort axisData = msg.getData(CartesianShort.class);
+                                    //Log.i(TAG, String.format("Log: %s", axisData.toString()));
+                                }
+                            });
+                            loggingModule.startLogging(overwrite);
+                            accModule.enableAxisSampling();
+                            accModule.start();
+                            onAccelerometerStarted();
+                        }
+                    });
+        }
     }
 
     private void startGyroscope() {

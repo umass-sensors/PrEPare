@@ -136,6 +136,13 @@ public class ServiceManager {
         context.startService(startIntent);
     }
 
+    public void startMetawearService(String address){
+        Intent startServiceIntent = new Intent(context, SensorService.class);
+        startServiceIntent.putExtra(SharedConstants.KEY.UUID, address);
+        startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
+        context.startService(startServiceIntent);
+    }
+
     /**
      * Stops the Metawear service on the mobile device.
      */

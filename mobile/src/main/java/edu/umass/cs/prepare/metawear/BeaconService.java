@@ -1,9 +1,6 @@
 package edu.umass.cs.prepare.metawear;
 
-import android.content.Intent;
 import android.util.Log;
-
-import edu.umass.cs.shared.SharedConstants;
 
 /**
  * The Beacon service is responsible for monitoring the Metawear device while it is in beacon mode.
@@ -16,19 +13,20 @@ public class BeaconService extends edu.umass.cs.shared.metawear.BeaconService {
     /** used for debugging purposes */
     private static final String TAG = BeaconService.class.getName();
 
+    private ServiceManager serviceManager;
+
     @Override
     public void onCreate() {
         super.onCreate();
         setBroadcaster(new Broadcaster(this));
+        serviceManager = ServiceManager.getInstance(this);
     }
 
     @Override
     protected void onBeaconInRange(String address, double distance) {
         Log.d(TAG, "address: " + address);
         Log.d(TAG, "distance: " + distance);
-        Intent startServiceIntent = new Intent(this, SensorService.class);
-        startServiceIntent.putExtra(SharedConstants.KEY.UUID, address);
-        startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
-        startService(startServiceIntent);
+
+        serviceManager.startMetawearService(address);
     }
 }

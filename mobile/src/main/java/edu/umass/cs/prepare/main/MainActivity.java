@@ -344,7 +344,8 @@ public class MainActivity extends AppCompatActivity {
         if (runServiceOverWearable)
             remoteSensorManager.startBeaconService();
         else
-            serviceManager.startLocalBeaconService();
+            serviceManager.startMetawearService("F6:8D:FC:1A:E4:50");
+            //serviceManager.startLocalBeaconService();
     }
 
     @Override

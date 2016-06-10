@@ -173,14 +173,11 @@ public class DataWriterService extends Service {
             stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
             PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
 
-            Bitmap icon = BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_save);
-
             Notification notification = new NotificationCompat.Builder(this)
                     .setContentTitle(getString(R.string.app_name))
                     .setTicker(getString(R.string.app_name))
                     .setContentText(getString(R.string.notification_text))
                     .setSmallIcon(android.R.drawable.ic_menu_save)
-                    .setLargeIcon(Bitmap.createScaledBitmap(icon, 128, 128, false))
                     .setContentIntent(pendingIntent)
                     .setPriority(Notification.PRIORITY_MAX) //otherwise buttons will not show up!
                     .setOngoing(true)

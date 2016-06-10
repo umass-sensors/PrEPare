@@ -129,13 +129,14 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             sHolder.setFixedSize(width, height);
             sHolder.setFormat(PixelFormat.TRANSPARENT);
 
-            // create option to stop the service from the notification
+            Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
+            notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
             Intent stopIntent = new Intent(this, RecordingService.class);
             stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-            PendingIntent pendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
-            PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
-
-            Bitmap icon = BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_camera);
+            PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
 
             // notify the user that the foreground service has started
             Notification notification = new NotificationCompat.Builder(this)
@@ -143,12 +144,11 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
                     .setTicker(getString(R.string.app_name))
                     .setContentText("Video currently recording...")
                     .setSmallIcon(android.R.drawable.ic_menu_camera)
-                    .setLargeIcon(Bitmap.createScaledBitmap(icon, 128, 128, false))
                     .setOngoing(true)
                     .setVibrate(new long[]{0, 50, 150, 200})
                     .setPriority(Notification.PRIORITY_MAX)
-                    .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), pendingIntent)
-                    .setContentIntent(contentIntent).build();
+                    .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent)
+                    .setContentIntent(pendingIntent).build();
 
             startForeground(SharedConstants.NOTIFICATION_ID.RECORDING_SERVICE, notification);
 

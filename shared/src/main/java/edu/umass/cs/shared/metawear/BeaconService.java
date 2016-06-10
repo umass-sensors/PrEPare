@@ -81,8 +81,6 @@ public class BeaconService extends Service implements BeaconConsumer {
                 BeaconManager.setRssiFilterImplClass(RunningAverageRssiFilter.class);
                 RunningAverageRssiFilter.setSampleExpirationMilliseconds(RSSI_AVERAGING_DURATION_MILLIS);
                 beaconManager.bind(this);
-                if (broadcaster != null)
-                    broadcaster.broadcastMessage(SharedConstants.MESSAGES.BEACON_SERVICE_STARTED);
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)){
                 if (beaconManager != null)
                     beaconManager.unbind(this);
@@ -98,7 +96,8 @@ public class BeaconService extends Service implements BeaconConsumer {
 
     @Override
     public void onBeaconServiceConnect() {
-        Log.d(TAG, "Beacon service connected.");
+        if (broadcaster != null)
+            broadcaster.broadcastMessage(SharedConstants.MESSAGES.BEACON_SERVICE_STARTED);
         try {
             beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
             beaconManager.setRangeNotifier(new RangeNotifier() {
@@ -107,6 +106,8 @@ public class BeaconService extends Service implements BeaconConsumer {
                     Log.d(TAG, beacons.size() + " beacons in region.");
                     for (Beacon beacon : beacons) {
                         if (beacon.getDistance() < beaconDistanceThreshold) {
+                            if (broadcaster != null)
+                                broadcaster.broadcastMessage(SharedConstants.MESSAGES.BEACON_WITHIN_RANGE);
                             onBeaconInRange(beacon.getBluetoothAddress(), beacon.getDistance());
                         }
                     }

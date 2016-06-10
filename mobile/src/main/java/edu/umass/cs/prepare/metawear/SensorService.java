@@ -16,6 +16,7 @@ import android.support.v4.app.NotificationCompat;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import edu.umass.cs.prepare.main.MainActivity;
 import edu.umass.cs.shared.BatteryUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.shared.SensorBuffer;
@@ -48,6 +49,14 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
     /** List of bound clients/activities to this service */
     private final ArrayList<Messenger> mClients = new ArrayList<>();
+
+    private ServiceManager serviceManager;
+
+    @Override
+    public void onCreate() {
+        serviceManager = ServiceManager.getInstance(this);
+        super.onCreate();
+    }
 
     /** Handler to handle incoming messages **/
     private static class IncomingHandler extends Handler {
@@ -95,6 +104,8 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         });
         queryBatteryLevel();
         sendMessageToClients(Constants.MESSAGE.CONNECTED);
+        serviceManager.startDataWriterService();
+        serviceManager.startRecordingService();
         super.onMetawearConnected();
     }
 
@@ -112,6 +123,11 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         queryBatteryLevelIntent.setAction(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL);
         PendingIntent queryBatteryLevelPendingIntent = PendingIntent.getService(this, 0, queryBatteryLevelIntent, 0);
 
+        Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
+        notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
         // notify the user that the foreground service has started
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setContentTitle(getString(R.string.app_name))
@@ -119,6 +135,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
                 .setContentText(getString(R.string.notification_text))
                 .setSmallIcon(R.drawable.ic_notification)
                 .setOngoing(true)
+                .setContentIntent(pendingIntent)
                 .setVibrate(new long[]{0, 50, 150, 200})
                 .setPriority(Notification.PRIORITY_MAX)
                 .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent);

@@ -13,7 +13,6 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.WearableListenerService;
 
-import edu.umass.cs.prepare.storage.DataWriterService;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.constants.Constants;
@@ -33,6 +32,14 @@ public class DataReceiverService extends WearableListenerService {
     @SuppressWarnings("unused")
     /** used for debugging purposes */
     private static final String TAG = DataReceiverService.class.getName();
+
+    private ServiceManager serviceManager;
+
+    @Override
+    public void onCreate() {
+        serviceManager = ServiceManager.getInstance(this);
+        super.onCreate();
+    }
 
     @Override
     public void onPeerConnected(Node peer) {
@@ -69,7 +76,9 @@ public class DataReceiverService extends WearableListenerService {
                     int message = dataMap.getInt(SharedConstants.KEY.MESSAGE);
                     broadcastMessage(this, message);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
-                        startDataWriterService();
+                        Log.d(TAG, "Received message CONNECTED.");
+                        serviceManager.startDataWriterService();
+                        serviceManager.startRecordingService();
                     }
 //                    if (dataMap.getInt(SharedConstants.KEY.MESSAGE) == SharedConstants.MESSAGES.BEACON_WITHIN_RANGE) {
 //                        RemoteSensorManager.getInstance(this).startMetawearService();
@@ -77,12 +86,6 @@ public class DataReceiverService extends WearableListenerService {
                 }
             }
         }
-    }
-
-    private void startDataWriterService(){
-        Intent startIntent = new Intent(this, DataWriterService.class);
-        startIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
-        startService(startIntent);
     }
 
     /**

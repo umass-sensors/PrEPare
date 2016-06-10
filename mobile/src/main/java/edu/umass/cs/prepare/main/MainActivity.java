@@ -28,10 +28,12 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -43,8 +45,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import edu.umass.cs.prepare.metawear.BeaconService;
 import edu.umass.cs.prepare.metawear.DataReceiverService;
+import edu.umass.cs.prepare.metawear.ServiceManager;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
@@ -52,7 +54,6 @@ import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.metawear.RemoteSensorManager;
 import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.preferences.SettingsActivity;
-import edu.umass.cs.prepare.storage.DataWriterService;
 
 /**
  * The Main Activity is the entry point for the application. It involves the main user interface
@@ -102,6 +103,11 @@ public class MainActivity extends AppCompatActivity {
 
     /** The sensor manager which handles sensors on the wearable device remotely */
     private RemoteSensorManager remoteSensorManager;
+
+    /** Handles services on the mobile application. */
+    private ServiceManager serviceManager;
+
+    public SurfaceView mSurfaceView;
 
     /**
      * Handler to handle incoming messages
@@ -255,6 +261,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        serviceManager.maximizeVideo();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        serviceManager.minimizeVideo();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -278,6 +296,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        serviceManager = ServiceManager.getInstance(this);
+
         Button startButton = (Button) findViewById(R.id.start_button);
         assert startButton != null;
         startButton.setOnClickListener(new View.OnClickListener() {
@@ -300,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
         });
         txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
         txtAccelerometer.setText(String.format(getString(R.string.initial_sensor_readings), 0f, 0f, 0f));
+        mSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
     }
 
     /**
@@ -309,8 +330,10 @@ public class MainActivity extends AppCompatActivity {
         if (runServiceOverWearable)
             remoteSensorManager.stopBeaconService();
         else
-            stopLocalBeaconService();
-        stopDataWriterService();
+            serviceManager.stopLocalBeaconService();
+
+        serviceManager.stopRecordingService();
+        serviceManager.stopDataWriterService();
         stopMetawearService();
     }
 
@@ -321,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
         if (runServiceOverWearable)
             remoteSensorManager.startBeaconService();
         else
-            startLocalBeaconService();
+            serviceManager.startLocalBeaconService();
     }
 
     @Override
@@ -330,37 +353,11 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    /**
-     * Starts the Beacon service on the phone.
-     */
-    private void startLocalBeaconService(){
-        Intent startIntent = new Intent(MainActivity.this, BeaconService.class);
-        startIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
-        startService(startIntent);
-    }
-
-    /**
-     * Stops the Beacon service on the phone.
-     */
-    private void stopLocalBeaconService(){
-        Intent startIntent = new Intent(MainActivity.this, BeaconService.class);
-        startIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-        startService(startIntent);
-    }
-
-    private void stopDataWriterService(){
-        Intent startIntent = new Intent(MainActivity.this, DataWriterService.class);
-        startIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-        startService(startIntent);
-    }
-
     private void stopMetawearService(){
         if (runServiceOverWearable){
             remoteSensorManager.stopMetawearService();
         }else{
-            Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
-            startServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-            startService(startServiceIntent);
+            serviceManager.stopMetawearService();
         }
     }
 
@@ -421,10 +418,11 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                //noinspection ConstantConditions
-                getSupportActionBar().setDisplayShowHomeEnabled(true);
-                getSupportActionBar().setIcon(icon);
-                getSupportActionBar().setTitle("");
+                ActionBar actionBar = getSupportActionBar();
+                assert actionBar != null;
+                actionBar.setDisplayShowHomeEnabled(true);
+                actionBar.setIcon(icon);
+                actionBar.setTitle("");
             }
         });
 
@@ -546,6 +544,20 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Shows a removable status message at the bottom of the application.
+     * @param message the status message shown
+     */
+    private void showStatus(String message){
+        View mainUI = MainActivity.this.findViewById(R.id.fragment);
+        assert mainUI != null;
+        Snackbar snack = Snackbar.make(mainUI, message, Snackbar.LENGTH_LONG);
+        View view = snack.getView();
+        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        snack.show();
+    }
+
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -570,21 +582,11 @@ public class MainActivity extends AppCompatActivity {
                     }else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         cancelConnectingDialog();
                     }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STARTED){
-                        View mainUI = MainActivity.this.findViewById(R.id.fragment);
-                        assert mainUI != null;
-                        Snackbar snack = Snackbar.make(mainUI, "Searching for beacons...", Snackbar.LENGTH_LONG);
-                        View view = snack.getView();
-                        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
-                        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                        snack.show();
+                        showStatus("Searching for beacons...");
                     }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STOPPED){
-                        View mainUI = MainActivity.this.findViewById(R.id.fragment);
-                        assert mainUI != null;
-                        Snackbar snack = Snackbar.make(mainUI, "Beacon service disabled.", Snackbar.LENGTH_LONG);
-                        View view = snack.getView();
-                        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
-                        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                        snack.show();
+                        showStatus("Beacon service disabled.");
+                    }else if (message == SharedConstants.MESSAGES.BEACON_WITHIN_RANGE){
+                        showStatus("Found beacon!");
                     }
                 }
             }

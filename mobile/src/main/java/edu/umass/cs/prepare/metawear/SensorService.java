@@ -49,6 +49,14 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     /** List of bound clients/activities to this service */
     private final ArrayList<Messenger> mClients = new ArrayList<>();
 
+    private ServiceManager serviceManager;
+
+    @Override
+    public void onCreate() {
+        serviceManager = ServiceManager.getInstance(this);
+        super.onCreate();
+    }
+
     /** Handler to handle incoming messages **/
     private static class IncomingHandler extends Handler {
         private final WeakReference<SensorService> mService;
@@ -95,6 +103,8 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         });
         queryBatteryLevel();
         sendMessageToClients(Constants.MESSAGE.CONNECTED);
+        serviceManager.startDataWriterService();
+        serviceManager.startRecordingService();
         super.onMetawearConnected();
     }
 

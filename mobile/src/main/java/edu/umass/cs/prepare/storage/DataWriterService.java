@@ -8,8 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -44,20 +42,17 @@ public class DataWriterService extends Service {
 
     private BufferedWriter accelerometerWearableWriter;
     private BufferedWriter gyroscopeWearableWriter;
-    private BufferedWriter accelerometerPhoneWriter;
-    private BufferedWriter gyroscopePhoneWriter;
     private BufferedWriter accelerometerMetawearWriter;
     private BufferedWriter gyroscopeMetawearWriter;
     private BufferedWriter rssiMetawearToPhoneWriter;
     private BufferedWriter rssiMetawearToWearableWriter;
 
+    /** The directory where the sensor data is stored. **/
     private File directory;
 
     public void initializeFileWriters(){
         accelerometerWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_WEARABLE", directory);
         gyroscopeWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "GYRO_WEARABLE", directory);
-        accelerometerPhoneWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_PHONE", directory);
-        gyroscopePhoneWriter = FileUtil.getFileWriter(DataWriterService.this, "GYRO_PHONE", directory);
         accelerometerMetawearWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_METAWEAR", directory);
         gyroscopeMetawearWriter = FileUtil.getFileWriter(DataWriterService.this, "GYRO_METAWEAR", directory);
         rssiMetawearToWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "WEARABLE_TO_METAWEAR_RSSI", directory);
@@ -115,16 +110,7 @@ public class DataWriterService extends Service {
                         synchronized (gyroscopeWearableWriter) {
                             FileUtil.writeToFile(line, gyroscopeWearableWriter);
                         }
-                    } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_PHONE){
-                        synchronized (accelerometerPhoneWriter) {
-                            FileUtil.writeToFile(line, accelerometerPhoneWriter);
-                        }
-                    } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_PHONE){
-                        synchronized (gyroscopePhoneWriter) {
-                            FileUtil.writeToFile(line, gyroscopePhoneWriter);
-                        }
-                    }
-                    else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
+                    } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
                         synchronized (accelerometerMetawearWriter) {
                             Log.d(TAG, line);
                             FileUtil.writeToFile(line, accelerometerMetawearWriter);
@@ -151,18 +137,25 @@ public class DataWriterService extends Service {
     public void onCreate(){
         loadPreferences();
         initializeFileWriters();
+    }
 
+    /**
+     * Registers a receiver with an intent filter for message
+     * {@link edu.umass.cs.prepare.constants.Constants.ACTION#BROADCAST_SENSOR_DATA}, i.e.
+     * the service listens for sensor data sent from another application component.
+     */
+    private void registerReceiver(){
         //the intent filter specifies the messages we are interested in receiving
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
-        registerReceiver(receiver, filter); //TODO: Do this in onStartCommand?
+        registerReceiver(receiver, filter);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
         if (intent == null) return START_STICKY;
         if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
-            Log.i(TAG, "Received Start Service Intent ");
+            registerReceiver();
 
             Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
             notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
@@ -197,15 +190,14 @@ public class DataWriterService extends Service {
         return START_STICKY;
     }
 
+    /**
+     * Closes all file open writers.
+     */
     private void closeAllWriters(){
         if (accelerometerWearableWriter != null)
             FileUtil.closeWriter(accelerometerWearableWriter);
         if (accelerometerWearableWriter != null)
             FileUtil.closeWriter(gyroscopeWearableWriter);
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(accelerometerPhoneWriter);
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(gyroscopePhoneWriter);
         if (accelerometerWearableWriter != null)
             FileUtil.closeWriter(accelerometerMetawearWriter);
         if (accelerometerWearableWriter != null)

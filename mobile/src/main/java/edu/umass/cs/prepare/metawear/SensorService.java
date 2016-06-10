@@ -140,17 +140,21 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
                 .setPriority(Notification.PRIORITY_MAX)
                 .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent);
 
-        if (batteryLevel > 0)
+        if (batteryLevel >= 0)
             notificationBuilder = notificationBuilder.addAction(BatteryUtil.getBatteryLevelIconId(batteryLevel),
                     "Battery Level", queryBatteryLevelPendingIntent);
 
         return notificationBuilder.build();
     }
 
+    private void showBatteryLowNotification(int percentage){
+        //TODO
+    }
+
     @Override
     protected void onBatteryLevelReceived(int percentage){
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, getUpdatedNotification(percentage));
+        if (percentage < 10)
+            showBatteryLowNotification(percentage);
     }
 
     @Override

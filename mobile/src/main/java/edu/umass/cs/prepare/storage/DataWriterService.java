@@ -180,7 +180,11 @@ public class DataWriterService extends Service {
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
             Log.i(TAG, "Received Stop Service Intent");
 
-            unregisterReceiver(receiver);
+            try {
+                unregisterReceiver(receiver);
+            }catch (IllegalArgumentException e){
+                e.printStackTrace();
+            }
             closeAllWriters();
 
             stopForeground(true);

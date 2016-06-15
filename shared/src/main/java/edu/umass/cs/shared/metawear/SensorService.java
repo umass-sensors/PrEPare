@@ -24,6 +24,7 @@ import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.data.CartesianShort;
 import com.mbientlab.metawear.module.Accelerometer;
+import com.mbientlab.metawear.module.Bma255Accelerometer;
 import com.mbientlab.metawear.module.Bmi160Accelerometer;
 import com.mbientlab.metawear.module.DataProcessor;
 import com.mbientlab.metawear.module.Gyro;
@@ -31,6 +32,10 @@ import com.mbientlab.metawear.module.IBeacon;
 import com.mbientlab.metawear.module.Led;
 import com.mbientlab.metawear.module.Logging;
 import com.mbientlab.metawear.module.Settings;
+import com.mbientlab.metawear.module.Switch;
+import com.mbientlab.metawear.processor.Accumulator;
+import com.mbientlab.metawear.processor.Comparison;
+import com.mbientlab.metawear.processor.Maths;
 
 import java.util.Map;
 
@@ -77,7 +82,7 @@ public class SensorService extends Service implements ServiceConnection {
 
     private IBeacon beaconModule;
 
-    private Bmi160Accelerometer motionModule;
+    private Bma255Accelerometer motionModule;
 
     private Logging loggingModule;
 
@@ -246,7 +251,7 @@ public class SensorService extends Service implements ServiceConnection {
                 }
             });
 
-            motionModule = mwBoard.getModule(Bmi160Accelerometer.class);
+            motionModule = mwBoard.getModule(Bma255Accelerometer.class);
 
             loggingModule = mwBoard.getModule(Logging.class);
 
@@ -258,15 +263,19 @@ public class SensorService extends Service implements ServiceConnection {
             gyroModule.setOutputDataRate((float) gyroscopeSamplingRate);
 
             ledModule = mwBoard.getModule(Led.class);
+            ledModule.stop(true);
 
             settingsModule = mwBoard.getModule(Settings.class);
+
+            switchModule = mwBoard.getModule(Switch.class);
 
             //handle disconnection from the board:
             mwBoard.getModule(Settings.class).handleEvent().fromDisconnect().monitor(new DataSignal.ActivityHandler() {
                 @Override
                 public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
-                    settingsModule.configure().setAdInterval((short) 100, (byte) 1).commit();
-                    startMotionDetection();
+//                    settingsModule.configure().setAdInterval((short) 1000, (byte) 0).commit();
+                    //turnOnLed(Led.ColorChannel.RED);
+                    //startMotionDetection();
                 }
             }).commit();
 
@@ -275,11 +284,14 @@ public class SensorService extends Service implements ServiceConnection {
         }
     }
 
+    Switch switchModule;
+
     /**
      * Called once the Metawear board is connected
      */
     protected void onMetawearConnected(){
         isRunning = true;
+        mwBoard.removeRoutes();
         ready();
         startNoMotionDetection();
     }
@@ -369,38 +381,90 @@ public class SensorService extends Service implements ServiceConnection {
     }
 
     private void startMotionDetection(){
-        motionModule.stop();
-        motionModule.disableMotionDetection();
-        motionModule.routeData().fromMotion().monitor(new DataSignal.ActivityHandler() {
+        //motionModule.stop();
+        //motionModule.disableMotionDetection();
+        motionModule.routeData().fromMotion().stream("wtf").commit()
+                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
             @Override
-            public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
-                //startSensors();
-                settingsModule.startAdvertisement();
-                mwBoard.connect();
-
-                Log.d(TAG, "MOTION DETECTED");
-                //beaconModule.configure().setAdPeriod(advertisementPeriod).commit();
-                //beaconModule.enable();
+            public void success(RouteManager result) {
+                result.subscribe("wtf", new RouteManager.MessageHandler() {
+                    @Override
+                    public void process(Message message) {
+                        Log.d(TAG, "MOTION DETECTED");
+                        turnOnLed(Led.ColorChannel.GREEN);
+//                        if (mwBoard.isConnected())
+//                            startNoMotionDetection();
+//                        else
+//                            mwBoard.connect();
+                    }
+                });
+                motionModule.enableMotionDetection(Bma255Accelerometer.MotionType.ANY_MOTION);
+                motionModule.configureAnyMotionDetection().setThreshold(0.2f).commit();
+                motionModule.start();
             }
         });
-        motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.ANY_MOTION);
-        motionModule.configureAnyMotionDetection().setThreshold(0.1f).commit();
-        motionModule.startLowPower();
+//        motionModule.routeData().fromMotion().monitor(new DataSignal.ActivityHandler() {
+//            @Override
+//            public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
+//                Log.d(TAG, "MOTION DETECTED");
+//                turnOnLed(Led.ColorChannel.GREEN);
+//                startNoMotionDetection();
+//            }
+//        }).commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+//            @Override
+//            public void success(RouteManager result) {
+//                motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.ANY_MOTION);
+//                motionModule.configureAnyMotionDetection().setThreshold(0.1f).commit();
+//                motionModule.startLowPower();
+//            }
+//        });
     }
 
     private void startNoMotionDetection(){
         motionModule.stop();
         motionModule.disableMotionDetection();
-        motionModule.routeData().fromMotion().monitor(new DataSignal.ActivityHandler() {
+        motionModule.routeData().fromMotion().stream("wtf2").commit()
+                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
             @Override
-            public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
-                Log.d(TAG, "NO MOTION DETECTED");
-                disconnect();
+            public void success(RouteManager result) {
+                result.subscribe("wtf2", new RouteManager.MessageHandler() {
+                    @Override
+                    public void process(Message message) {
+                        Log.d(TAG, String.valueOf(message.getData()[0]));
+                        Bmi160Accelerometer.MotionResponse response = message.getData(Bmi160Accelerometer.MotionResponse.class);
+                        Log.d(TAG, response.anyMotionSign().name());
+                        Log.d(TAG, String.valueOf(response.anyMotionDetected(Bmi160Accelerometer.Axis.X) ||
+                                response.anyMotionDetected(Bmi160Accelerometer.Axis.Y) || response.anyMotionDetected(Bmi160Accelerometer.Axis.Z)));
+                        if (message.getData()[0] == 0x4a) {
+                            turnOnLed(Led.ColorChannel.RED);
+                            //disconnect();
+                        }else{
+                            turnOnLed(Led.ColorChannel.GREEN);
+                        }
+                    }
+                });
+                motionModule.enableMotionDetection(Bma255Accelerometer.MotionType.NO_MOTION);
+                motionModule.configureNoMotionDetection().setThreshold(0.1f).setDuration(5000).commit();
+                motionModule.enableMotionDetection(Bma255Accelerometer.MotionType.ANY_MOTION);
+                motionModule.configureAnyMotionDetection().setThreshold(0.2f).commit();
+                motionModule.start();
             }
         });
-        motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.NO_MOTION);
-        motionModule.configureNoMotionDetection().setThreshold(0.005f).setDuration(5000).commit();
-        motionModule.startLowPower();
+//        motionModule.routeData().fromMotion().monitor(new DataSignal.ActivityHandler() {
+//            @Override
+//            public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
+//                Log.d(TAG, "NO MOTION DETECTED");
+//                turnOnLed(Led.ColorChannel.RED);
+//                startMotionDetection();
+//            }
+//        }).commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+//            @Override
+//            public void success(RouteManager result) {
+//                motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.NO_MOTION);
+//                motionModule.configureNoMotionDetection().setThreshold(0.005f).setDuration(5000).commit();
+//                motionModule.startLowPower();
+//            }
+//        });
     }
 
     private boolean streaming = true;
@@ -518,8 +582,8 @@ public class SensorService extends Service implements ServiceConnection {
         ledModule.stop(true);
         ledModule.configureColorChannel(color)
                 .setHighIntensity((byte) 15).setLowIntensity((byte) 0)
-                .setHighTime((short) 500).setPulseDuration((short) 2000)
-                .setRepeatCount((byte) -1)
+                .setHighTime((short) 1000).setPulseDuration((short) 1000)
+                .setRepeatCount((byte) 3)
                 .commit();
         ledModule.play(false);
     }
@@ -534,7 +598,7 @@ public class SensorService extends Service implements ServiceConnection {
             @Override
             public void success(final Byte result) {
                 if (result <= 10 && turnOnLedWhileRunning){
-                    turnOnLed(Led.ColorChannel.RED);
+                    //turnOnLed(Led.ColorChannel.RED); //TODO: Uncomment
                 }
                 onBatteryLevelReceived(result);
             }

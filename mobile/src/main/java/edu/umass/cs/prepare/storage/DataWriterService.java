@@ -17,7 +17,6 @@ import android.util.Log;
 import java.io.BufferedWriter;
 import java.io.File;
 
-import edu.umass.cs.prepare.MHLClient.MHLDataStructures.MHLBlockingSensorReadingQueue;
 import edu.umass.cs.prepare.MHLClient.MHLMobileIOClient;
 import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
 import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
@@ -45,6 +44,12 @@ public class DataWriterService extends Service {
     /** used for debugging purposes */
     private static final String TAG = DataWriterService.class.getName();
 
+    /** The IP address of the server where the data should be sent. **/
+    private static final String SERVER_IP_ADDRESS = "192.168.25.150";
+
+    /** The port for the server where the data should be sent. **/
+    private static final int SERVER_PORT = 9999;
+
     private BufferedWriter accelerometerWearableWriter;
     private BufferedWriter gyroscopeWearableWriter;
     private BufferedWriter accelerometerMetawearWriter;
@@ -52,6 +57,13 @@ public class DataWriterService extends Service {
     private BufferedWriter rssiMetawearToPhoneWriter;
     private BufferedWriter rssiMetawearToWearableWriter;
 
+    /** Indicates whether data should be written to storage. **/
+    private boolean writeLocal = true;
+
+    /** Indicates whether data should be sent to the server. **/
+    private boolean writeServer = true;
+
+    /** Client responsible for communicating to the server. **/
     private MHLMobileIOClient client;
 
     /** The directory where the sensor data is stored. **/
@@ -74,6 +86,8 @@ public class DataWriterService extends Service {
             directory = new File(defaultDirectory);
         else
             directory = new File(dir);
+        writeLocal = true;
+        writeServer = false;
     }
 
     /** used to receive messages from other components of the handheld app through intents, i.e. receive labels **/
@@ -87,17 +101,21 @@ public class DataWriterService extends Service {
                     float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
 
+                    StringBuilder builder = new StringBuilder(timestamps.length * (Constants.BYTES_PER_TIMESTAMP + Constants.BYTES_PER_SENSOR_READING + 6));
                     if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI ||
                             sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
 
                         for (int i = 0; i < timestamps.length; i++) {
                             long timestamp = timestamps[i];
                             int rssi = (int)values[i];
-                            client.sendSensorReading(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
-                            try {
-                                Thread.sleep(10);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
+                            if (writeLocal)
+                                builder.append(String.format("%s,%d\n", timestamp, rssi));
+                            if (writeServer) {
+                                client.sendSensorReading(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
+                                //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException ignored) {}
                             }
                         }
                     }else {
@@ -108,50 +126,56 @@ public class DataWriterService extends Service {
                             float y = values[3 * i + 1];
                             float z = values[3 * i + 2];
 
-                            Log.d(TAG, "got sensor data");
-                            if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
-                                client.sendSensorReading(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
-                            }else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR){
-                                client.sendSensorReading(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
-                            }else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE){
-                                client.sendSensorReading(new MHLAccelerometerReading(0, "Android-Wear", timestamp, x, y, z));
-                            }else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE){
-                                client.sendSensorReading(new MHLGyroscopeReading(0, "Android-Wear", timestamp, x, y, z));
+                            if (writeLocal)
+                                builder.append(String.format("%s,%f,%f,%f\n", timestamp, x, y, z));
+
+                            if (writeServer) {
+                                if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR) {
+                                    client.sendSensorReading(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
+                                } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR) {
+                                    client.sendSensorReading(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
+                                } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE) {
+                                    client.sendSensorReading(new MHLAccelerometerReading(0, "Android-Wear", timestamp, x, y, z));
+                                } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE) {
+                                    client.sendSensorReading(new MHLGyroscopeReading(0, "Android-Wear", timestamp, x, y, z));
+                                }
+                                //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException ignored) {}
                             }
                         }
                     }
 
-//                    String line = builder.toString();
-//                    if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR) {
-//                        synchronized (queue) {
-//                            queue.offer(new MHLAccelerometerReading(0, "Metawear", x, y, z));
-//                        }
-//                        synchronized (accelerometerWearableWriter) {
-//                            FileUtil.writeToFile(line, accelerometerWearableWriter);
-//                        }
-//                    }
-//                    } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE){
-//                        synchronized (gyroscopeWearableWriter) {
-//                            FileUtil.writeToFile(line, gyroscopeWearableWriter);
-//                        }
-//                    } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
-//                        synchronized (accelerometerMetawearWriter) {
-//                            Log.d(TAG, line);
-//                            FileUtil.writeToFile(line, accelerometerMetawearWriter);
-//                        }
-//                    } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR){
-//                        synchronized (gyroscopeMetawearWriter) {
-//                            FileUtil.writeToFile(line, gyroscopeMetawearWriter);
-//                        }
-//                    } else if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI){
-//                        synchronized (rssiMetawearToWearableWriter) {
-//                            FileUtil.writeToFile(line, rssiMetawearToWearableWriter);
-//                        }
-//                    } else if (sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
-//                        synchronized (rssiMetawearToPhoneWriter) {
-//                            FileUtil.writeToFile(line, rssiMetawearToPhoneWriter);
-//                        }
-//                    }
+                    if (!writeLocal) return;
+
+                    String line = builder.toString();
+                    if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE) {
+                        synchronized (accelerometerWearableWriter) {
+                            FileUtil.writeToFile(line, accelerometerWearableWriter);
+                        }
+                    } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE){
+                        synchronized (gyroscopeWearableWriter) {
+                            FileUtil.writeToFile(line, gyroscopeWearableWriter);
+                        }
+                    } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
+                        synchronized (accelerometerMetawearWriter) {
+                            Log.d(TAG, line);
+                            FileUtil.writeToFile(line, accelerometerMetawearWriter);
+                        }
+                    } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR){
+                        synchronized (gyroscopeMetawearWriter) {
+                            FileUtil.writeToFile(line, gyroscopeMetawearWriter);
+                        }
+                    } else if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI){
+                        synchronized (rssiMetawearToWearableWriter) {
+                            FileUtil.writeToFile(line, rssiMetawearToWearableWriter);
+                        }
+                    } else if (sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
+                        synchronized (rssiMetawearToPhoneWriter) {
+                            FileUtil.writeToFile(line, rssiMetawearToPhoneWriter);
+                        }
+                    }
                 }
             }
         }
@@ -160,9 +184,13 @@ public class DataWriterService extends Service {
     @Override
     public void onCreate(){
         loadPreferences();
-        //initializeFileWriters();
-        client = new MHLMobileIOClient("192.168.25.150", 9999);
-        client.connect();
+        //TODO: In onCreate or when started?
+        if (writeLocal)
+            initializeFileWriters();
+        if (writeServer) {
+            client = new MHLMobileIOClient(SERVER_IP_ADDRESS, SERVER_PORT);
+            client.connect();
+        }
     }
 
     /**
@@ -211,7 +239,8 @@ public class DataWriterService extends Service {
             }catch (IllegalArgumentException e){
                 e.printStackTrace();
             }
-            //closeAllWriters();
+            if (writeLocal)
+                closeAllWriters();
 
             stopForeground(true);
             stopSelf();

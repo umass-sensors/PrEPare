@@ -56,19 +56,19 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         client.sendMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
         setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR, timestamps.clone(), values.clone());
             }
         });
         setOnBufferFullCallback(gyroscopeBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR, timestamps.clone(), values.clone());
             }
         });
         setOnBufferFullCallback(rssiBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI, timestamps.clone(), values.clone());
             }
         });
@@ -77,7 +77,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     }
 
     @Override
-    protected void onRSSIReadingReceived(String timestamp, int rssi){
+    protected void onRSSIReadingReceived(long timestamp, int rssi){
         //Log.d(TAG, String.valueOf(rssi));
     }
 

@@ -67,7 +67,7 @@ public class DataReceiverService extends WearableListenerService {
 
                 if (path.equals(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH)) {
                     SharedConstants.SENSOR_TYPE sensorType = SharedConstants.SENSOR_TYPE.values()[dataMap.getInt(SharedConstants.KEY.SENSOR_TYPE)];
-                    String[] timestamps = dataMap.getStringArray(SharedConstants.KEY.TIMESTAMPS);
+                    long[] timestamps = dataMap.getLongArray(SharedConstants.KEY.TIMESTAMPS);
                     float[] values = dataMap.getFloatArray(SharedConstants.KEY.SENSOR_VALUES);
                     Log.d(TAG, "Data received on mobile application : " + sensorType.name());
                     broadcastSensorData(this, sensorType, timestamps, values);
@@ -95,7 +95,7 @@ public class DataReceiverService extends WearableListenerService {
      * @param timestamps list of timestamps corresponding to sensor events
      * @param values list of sensor readings
      */
-    public static void broadcastSensorData(Context context, SharedConstants.SENSOR_TYPE sensorType, String[] timestamps, float[] values){
+    public static void broadcastSensorData(Context context, SharedConstants.SENSOR_TYPE sensorType, long[] timestamps, float[] values){
         Intent intent = new Intent();
         DataLayerUtil.serialize(sensorType).to(intent);
         intent.putExtra(Constants.KEY.SENSOR_TYPE, sensorType);

@@ -15,7 +15,7 @@ public class SensorBuffer {
     private final int nDimensions;
 
     /** The list of timestamps associated with each sequential sensor reading. **/
-    private final String[] timestamps;
+    private final long[] timestamps;
 
     /** The [{@link #nDimensions} x {@link #bufferSize}]-length list of sensor readings.  **/
     private final float[] values;
@@ -27,7 +27,7 @@ public class SensorBuffer {
         this.bufferSize = bufferSize;
         this.nDimensions = nDimensions;
         index = 0;
-        timestamps = new String[bufferSize];
+        timestamps = new long[bufferSize];
         values = new float[nDimensions * bufferSize];
     }
 
@@ -35,7 +35,7 @@ public class SensorBuffer {
     private OnBufferFullCallback callback = null;
 
     public interface OnBufferFullCallback {
-        void onBufferFull(String[] timestamps, float[] values);
+        void onBufferFull(long[] timestamps, float[] values);
     }
 
     public void setOnBufferFullCallback(OnBufferFullCallback callback) {
@@ -49,7 +49,7 @@ public class SensorBuffer {
      * @param timestamp the timestamp at which the sensor event occurred
      * @param values sensor values, e.g. a single value or an xyz data point
      */
-    public void addReading(String timestamp, float... values) {
+    public void addReading(long timestamp, float... values) {
         timestamps[index] = timestamp;
         System.arraycopy(values, 0, this.values, nDimensions * index, values.length);
         index++;

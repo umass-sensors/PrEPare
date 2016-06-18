@@ -22,10 +22,10 @@ import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.RouteManager;
 import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
-import com.mbientlab.metawear.data.CartesianShort;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.mbientlab.metawear.module.Bmi160Accelerometer;
 import com.mbientlab.metawear.module.DataProcessor;
+import com.mbientlab.metawear.module.Debug;
 import com.mbientlab.metawear.module.Gyro;
 import com.mbientlab.metawear.module.IBeacon;
 import com.mbientlab.metawear.module.Led;
@@ -110,7 +110,7 @@ public class SensorService extends Service implements ServiceConnection {
     private short advertisementPeriod;
 
     /** Sensor buffer size. */
-    private static final int BUFFER_SIZE = 256;
+    private static final int BUFFER_SIZE = 1;
 
     /** The buffer containing the accelerometer readings. **/
     protected final SensorBuffer accelerometerBuffer = new SensorBuffer(BUFFER_SIZE, 3);
@@ -229,6 +229,8 @@ public class SensorService extends Service implements ServiceConnection {
      */
     private void ready() {
         try {
+            mwBoard.removeRoutes();
+
             beaconModule = mwBoard.getModule(IBeacon.class);
             assert beaconModule != null;
             beaconModule.readConfiguration().onComplete(new AsyncOperation.CompletionHandler<IBeacon.Configuration>() {
@@ -346,16 +348,15 @@ public class SensorService extends Service implements ServiceConnection {
         disconnect();
     }
 
-    protected void onAccelerometerReadingReceived(String timestamp, float x, float y, float z){
+    protected void onAccelerometerReadingReceived(long timestamp, float x, float y, float z){
         //DO NOTHING: this is meant for subclasses to override
     }
 
-    protected void onGyroscopeReadingReceived(@SuppressWarnings("unused") String timestamp, @SuppressWarnings("unused") float x,
-                                              @SuppressWarnings("unused") float y, @SuppressWarnings("unused") float z){
+    protected void onGyroscopeReadingReceived(long timestamp, float x, float y, float z){
         //DO NOTHING: this is meant for subclasses to override
     }
 
-    protected void onRSSIReadingReceived(String timestamp, int rssi){
+    protected void onRSSIReadingReceived(long timestamp, int rssi){
         //DO NOTHING: this is meant for subclasses to override
     }
 
@@ -425,9 +426,9 @@ public class SensorService extends Service implements ServiceConnection {
                                 @Override
                                 public void process(Message msg) {
                                     CartesianFloat reading = msg.getData(CartesianFloat.class);
-                                    onAccelerometerReadingReceived(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                    onAccelerometerReadingReceived(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
                                     synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
-                                        accelerometerBuffer.addReading(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                        accelerometerBuffer.addReading(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
                                     }
                                 }
                             });
@@ -445,7 +446,7 @@ public class SensorService extends Service implements ServiceConnection {
                                 @Override
                                 public void process(Message msg) {
                                     CartesianFloat reading = msg.getData(CartesianFloat.class);
-                                    onAccelerometerReadingReceived(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                    onAccelerometerReadingReceived(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
                                     //final CartesianShort axisData = msg.getData(CartesianShort.class);
                                     //Log.i(TAG, String.format("Log: %s", axisData.toString()));
                                 }
@@ -468,9 +469,9 @@ public class SensorService extends Service implements ServiceConnection {
                             @Override
                             public void process(Message msg) {
                                 CartesianFloat reading = msg.getData(CartesianFloat.class);
-                                onGyroscopeReadingReceived(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                onGyroscopeReadingReceived(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
                                 synchronized (gyroscopeBuffer) { //add sensor data to the appropriate buffer
-                                    gyroscopeBuffer.addReading(msg.getTimestampAsString(), reading.x(), reading.y(), reading.z());
+                                    gyroscopeBuffer.addReading(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
                                 }
                             }
                         });
@@ -499,8 +500,8 @@ public class SensorService extends Service implements ServiceConnection {
                 mwBoard.readRssi().onComplete(new AsyncOperation.CompletionHandler<Integer>() {
                     @Override
                     public void success(final Integer result) {
-                        //TODO: Can we not get timestamp for RSSI reading from Metawear board?
-                        String timestamp = String.valueOf(System.currentTimeMillis());
+                        //TODO: Can we not get timestamp for RSSI reading from Metawear board? Then make sure formatting matches that from board
+                        long timestamp = System.currentTimeMillis();
                         onRSSIReadingReceived(timestamp, result);
                         synchronized (rssiBuffer) { //add sensor data to the appropriate buffer
                             rssiBuffer.addReading(timestamp, (int)result);

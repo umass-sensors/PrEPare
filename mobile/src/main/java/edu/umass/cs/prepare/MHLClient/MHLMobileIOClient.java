@@ -3,7 +3,9 @@ package edu.umass.cs.prepare.MHLClient;
 import android.util.Log;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -24,6 +26,8 @@ public class MHLMobileIOClient {
 
     /** The thread responsible for the client-server connection. **/
     private final Thread clientThread;
+
+    private static final int CONNECTION_TIMEOUT = 5000;
 
     public MHLMobileIOClient(String ip, int port){
         this.sensorReadingQueue = new MHLBlockingSensorReadingQueue();
@@ -46,8 +50,8 @@ public class MHLMobileIOClient {
     }
 
     private class MHLClientThread implements Runnable {
-        String ip;
-        int port;
+        private String ip;
+        private int port;
 
         public MHLClientThread(String ip, int port){
             this.ip = ip;
@@ -59,21 +63,21 @@ public class MHLMobileIOClient {
             Socket socket;
             MHLTransmissionThread transmissionThread;
 
+            Log.d(TAG, "Opening socket.");
+            socket = new Socket();
             try {
-                Log.d(TAG, "Opening socket.");
-                socket = new Socket(ip, port);
+                socket.connect(new InetSocketAddress(ip, port), CONNECTION_TIMEOUT);
                 Log.d(TAG, "Connected");
 
                 transmissionThread = new MHLTransmissionThread(socket);
                 new Thread(transmissionThread).start();
-            }
-            catch (Exception e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    class MHLTransmissionThread implements Runnable {
+    private class MHLTransmissionThread implements Runnable {
         private Socket clientSocket;
         private BufferedWriter output;
 

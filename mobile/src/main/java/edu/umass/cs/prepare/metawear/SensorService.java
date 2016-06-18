@@ -1,7 +1,6 @@
 package edu.umass.cs.prepare.metawear;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -86,19 +85,19 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         showForegroundNotification();
         setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR, timestamps, values);
             }
         });
         setOnBufferFullCallback(gyroscopeBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR, timestamps, values);
             }
         });
         setOnBufferFullCallback(rssiBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI, timestamps, values);
             }
         });
@@ -164,12 +163,27 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     }
 
     @Override
-    protected void onAccelerometerReadingReceived(String timestamp, float x, float y, float z) {
+    protected void onRSSIReadingReceived(long timestamp, int rssi) {
+        super.onRSSIReadingReceived(timestamp, rssi);
+    }
+
+    @Override
+    protected void onGyroscopeReadingReceived(long timestamp, float x, float y, float z) {
+        super.onGyroscopeReadingReceived(timestamp, x, y, z);
+    }
+
+    @Override
+    protected void onAccelerometerReadingReceived(long timestamp, float x, float y, float z) {
+        sendAccelerometerReadingToClients(timestamp, x, y, z);
+        super.onAccelerometerReadingReceived(timestamp, x, y, z);
+    }
+
+    private void sendAccelerometerReadingToClients(long timestamp, float x, float y, float z){
         for (int i=mClients.size()-1; i>=0; i--) {
             try {
                 // Send message value
                 Bundle b = new Bundle();
-                b.putString(Constants.KEY.TIMESTAMP, timestamp);
+                b.putLong(Constants.KEY.TIMESTAMP, timestamp);
                 b.putFloatArray(Constants.KEY.ACCELEROMETER_READING, new float[]{x, y, z});
                 Message msg = Message.obtain(null, Constants.MESSAGE.ACCELEROMETER_READING);
                 msg.setData(b);
@@ -179,7 +193,6 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
                 mClients.remove(i);
             }
         }
-        super.onAccelerometerReadingReceived(timestamp, x, y, z);
     }
 
     /**

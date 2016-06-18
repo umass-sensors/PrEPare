@@ -20,13 +20,13 @@ public class MHLMobileIOClient {
     private static final String TAG = MHLMobileIOClient.class.getName();
 
     /** The blocking queue containing the sensor data. **/
-    private MHLBlockingSensorReadingQueue sensorReadingQueue;
+    private final MHLBlockingSensorReadingQueue sensorReadingQueue;
 
     /** The thread responsible for the client-server connection. **/
-    private Thread clientThread = null;
+    private final Thread clientThread;
 
-    public MHLMobileIOClient(MHLBlockingSensorReadingQueue q, String ip, int port){
-        this.sensorReadingQueue = q;
+    public MHLMobileIOClient(String ip, int port){
+        this.sensorReadingQueue = new MHLBlockingSensorReadingQueue();
         clientThread = new Thread(new MHLClientThread(ip, port));
     }
 
@@ -37,6 +37,13 @@ public class MHLMobileIOClient {
         clientThread.start();
     }
 
+    /**
+     * Adds the given sensor reading to the blocking queue, so that it will be sent to the server
+     * @param reading the sensor reading object
+     */
+    public void sendSensorReading(MHLSensorReading reading){
+        sensorReadingQueue.offer(reading);
+    }
 
     private class MHLClientThread implements Runnable {
         String ip;

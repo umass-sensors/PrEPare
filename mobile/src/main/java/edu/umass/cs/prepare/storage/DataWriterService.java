@@ -53,7 +53,6 @@ public class DataWriterService extends Service {
     private BufferedWriter rssiMetawearToWearableWriter;
 
     private MHLMobileIOClient client;
-    private final MHLBlockingSensorReadingQueue queue = new MHLBlockingSensorReadingQueue();
 
     /** The directory where the sensor data is stored. **/
     private File directory;
@@ -94,7 +93,7 @@ public class DataWriterService extends Service {
                         for (int i = 0; i < timestamps.length; i++) {
                             long timestamp = timestamps[i];
                             int rssi = (int)values[i];
-                            queue.offer(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
+                            client.sendSensorReading(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
                             try {
                                 Thread.sleep(10);
                             } catch (InterruptedException e) {
@@ -111,13 +110,13 @@ public class DataWriterService extends Service {
 
                             Log.d(TAG, "got sensor data");
                             if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
-                                queue.offer(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
+                                client.sendSensorReading(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
                             }else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR){
-                                queue.offer(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
+                                client.sendSensorReading(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
                             }else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE){
-                                queue.offer(new MHLAccelerometerReading(0, "Android-Wear", timestamp, x, y, z));
+                                client.sendSensorReading(new MHLAccelerometerReading(0, "Android-Wear", timestamp, x, y, z));
                             }else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE){
-                                queue.offer(new MHLGyroscopeReading(0, "Android-Wear", timestamp, x, y, z));
+                                client.sendSensorReading(new MHLGyroscopeReading(0, "Android-Wear", timestamp, x, y, z));
                             }
                         }
                     }
@@ -162,7 +161,7 @@ public class DataWriterService extends Service {
     public void onCreate(){
         loadPreferences();
         //initializeFileWriters();
-        client = new MHLMobileIOClient(queue, "192.168.25.150", 9999);
+        client = new MHLMobileIOClient("192.168.25.150", 9999);
         client.connect();
     }
 

@@ -46,7 +46,7 @@ public class DataWriterService extends Service {
     private static final String TAG = DataWriterService.class.getName();
 
     /** The IP address of the server where the data should be sent. **/
-    private static final String SERVER_IP_ADDRESS = "192.168.25.150";
+    private static final String SERVER_IP_ADDRESS = "192.168.26.217"; //"192.168.25.150"; //"192.168.26.217"
 
     /** The port for the server where the data should be sent. **/
     private static final int SERVER_PORT = 9999;
@@ -59,7 +59,7 @@ public class DataWriterService extends Service {
     private BufferedWriter rssiMetawearToWearableWriter;
 
     /** Indicates whether data should be written to storage. **/
-    private boolean writeLocal = true;
+    private boolean writeLocal = false;
 
     /** Indicates whether data should be sent to the server. **/
     private boolean writeServer = true;
@@ -185,6 +185,8 @@ public class DataWriterService extends Service {
     @Override
     public void onCreate(){
         loadPreferences();
+        if (writeLocal)
+            initializeFileWriters();
         if (writeServer) {
             client = new MHLMobileIOClient(SERVER_IP_ADDRESS, SERVER_PORT);
             client.setConnectionStateHandler(new MHLConnectionStateHandler() {
@@ -205,8 +207,6 @@ public class DataWriterService extends Service {
             });
             client.connect();
         }
-        if (writeLocal)
-            initializeFileWriters();
     }
 
     /**

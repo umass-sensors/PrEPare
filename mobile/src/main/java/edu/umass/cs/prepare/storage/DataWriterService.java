@@ -17,6 +17,7 @@ import android.util.Log;
 import java.io.BufferedWriter;
 import java.io.File;
 
+import edu.umass.cs.prepare.MHLClient.MHLConnectionStateHandler;
 import edu.umass.cs.prepare.MHLClient.MHLMobileIOClient;
 import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
 import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
@@ -86,8 +87,8 @@ public class DataWriterService extends Service {
             directory = new File(defaultDirectory);
         else
             directory = new File(dir);
-        writeLocal = true;
-        writeServer = false;
+        writeLocal = false;
+        writeServer = true;
     }
 
     /** used to receive messages from other components of the handheld app through intents, i.e. receive labels **/
@@ -184,13 +185,28 @@ public class DataWriterService extends Service {
     @Override
     public void onCreate(){
         loadPreferences();
-        //TODO: In onCreate or when started?
-        if (writeLocal)
-            initializeFileWriters();
         if (writeServer) {
             client = new MHLMobileIOClient(SERVER_IP_ADDRESS, SERVER_PORT);
+            client.setConnectionStateHandler(new MHLConnectionStateHandler() {
+                @Override
+                public void onConnected() {
+
+                }
+
+                @Override
+                public void onConnectionFailed() {
+                    // if the connection fails, then write locally instead
+                    if (!writeLocal) {
+                        initializeFileWriters();
+                        writeLocal = true;
+                    }
+                    writeServer = false;
+                }
+            });
             client.connect();
         }
+        if (writeLocal)
+            initializeFileWriters();
     }
 
     /**

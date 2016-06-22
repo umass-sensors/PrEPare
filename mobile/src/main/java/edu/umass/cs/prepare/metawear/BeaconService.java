@@ -27,6 +27,6 @@ public class BeaconService extends edu.umass.cs.shared.metawear.BeaconService {
         Log.d(TAG, "address: " + address);
         Log.d(TAG, "distance: " + distance);
 
-        serviceManager.startMetawearService(address);
+        //serviceManager.startMetawearService();
     }
 }

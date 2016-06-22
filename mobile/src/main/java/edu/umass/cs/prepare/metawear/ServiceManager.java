@@ -136,9 +136,8 @@ public class ServiceManager {
         context.startService(startIntent);
     }
 
-    public void startMetawearService(String address){
+    public void startMetawearService(){
         Intent startServiceIntent = new Intent(context, SensorService.class);
-        startServiceIntent.putExtra(SharedConstants.KEY.UUID, address);
         startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
         context.startService(startServiceIntent);
     }

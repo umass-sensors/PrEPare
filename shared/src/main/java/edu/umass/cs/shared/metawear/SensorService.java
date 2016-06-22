@@ -25,12 +25,16 @@ import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.mbientlab.metawear.module.Bmi160Accelerometer;
 import com.mbientlab.metawear.module.DataProcessor;
-import com.mbientlab.metawear.module.Debug;
 import com.mbientlab.metawear.module.Gyro;
-import com.mbientlab.metawear.module.IBeacon;
 import com.mbientlab.metawear.module.Led;
 import com.mbientlab.metawear.module.Logging;
 import com.mbientlab.metawear.module.Settings;
+import com.mbientlab.metawear.processor.Average;
+import com.mbientlab.metawear.processor.Comparison;
+import com.mbientlab.metawear.processor.Counter;
+import com.mbientlab.metawear.processor.Maths;
+import com.mbientlab.metawear.processor.Rss;
+import com.mbientlab.metawear.processor.Time;
 
 import java.util.Map;
 
@@ -66,20 +70,23 @@ public class SensorService extends Service implements ServiceConnection {
     /** A handle to the Metawear board **/
     private MetaWearBoard mwBoard;
 
-    /** Module that handles streaming accelerometer data from the Metawear board **/
-    private Accelerometer accModule;
+        /** Detects motion events to minimize overall power consumption of the Metawear board. **/
+        private Bmi160Accelerometer motionModule;
 
-    /** Module that handles streaming accelerometer data from the Metawear board **/
-    private Gyro gyroModule;
+        /** Module that handles streaming accelerometer data from the Metawear board. **/
+        private Accelerometer accModule;
 
-    /** Module that handles LED state for on-board notifications. **/
-    private Led ledModule;
+        /** Module that handles streaming accelerometer data from the Metawear board. **/
+        private Gyro gyroModule;
 
-    private IBeacon beaconModule;
+        /** Module that handles LED state for on-board notifications. **/
+        private Led ledModule;
 
-    private Bmi160Accelerometer motionModule;
+        /** Module that handles logging of sensor data on the Metawear board. **/
+        private Logging loggingModule;
 
-    private Logging loggingModule;
+        /** Module responsible for the advertisement settings on the Metawear board. **/
+        private Settings settingsModule;
 
     /** The approximate sampling rate of the accelerometer. If the sampling rate is not supported by
      * the Metawear device, then the closest supported sampling rate is used. **/
@@ -95,19 +102,13 @@ public class SensorService extends Service implements ServiceConnection {
     /** Indicates whether the LED on the Metawear device should be turned on during streaming.
      * This is useful for notifying the user when data is being collected; however, it decreases
      * the battery life of the device. **/
-    private boolean turnOnLedWhileRunning;
-
-    /** Indicates whether accelerometer is enabled on the Metawear. **/
-    private boolean enableAccelerometer;
+    private boolean blinkLedWhileRunning;
 
     /** Indicates whether phone-to-Metawear received signal strength indicator (RSSI) is enabled. **/
     private boolean enableRSSI;
 
     /** Indicates whether gyroscope is enabled on the Metawear. **/
     private boolean enableGyroscope;
-
-    /** The period of time between advertisements when the Metawear device is in beacon mode. **/
-    private short advertisementPeriod;
 
     /** Sensor buffer size. */
     private static final int BUFFER_SIZE = 1;
@@ -121,11 +122,17 @@ public class SensorService extends Service implements ServiceConnection {
     /** The buffer containing the RSSI readings. **/
     protected final SensorBuffer rssiBuffer = new SensorBuffer(BUFFER_SIZE, 1);
 
-    /** Indicates whether the sensor service is currently running, i.e. collecting sensor data from the Metawear tag. **/
-    private boolean isRunning = false;
+    /** Indicates whether the sensor service is currently connected to the Metawear board. **/
+    private boolean isConnected = false;
 
     /** The unique address of the Metawear device. **/
     private String mwMacAddress;
+
+    /** Handles the recurring RSSI requests. **/
+    private Handler handler;
+
+    /** Thread for the RSSI request handler. **/
+    private HandlerThread hThread;
 
     @Override
     public void onDestroy(){
@@ -134,6 +141,7 @@ public class SensorService extends Service implements ServiceConnection {
     }
 
     protected void disconnect(){
+        isConnected = false;
         if (mwBoard != null)
             mwBoard.disconnect();
     }
@@ -152,7 +160,6 @@ public class SensorService extends Service implements ServiceConnection {
         if (intent != null)
             if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)){
                 loadPreferences();
-                mwMacAddress = intent.getStringExtra(SharedConstants.KEY.UUID);
                 onServiceStarted();
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)){
                 onServiceStopped();
@@ -160,48 +167,6 @@ public class SensorService extends Service implements ServiceConnection {
                 disconnect();
             }
         return START_STICKY;
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-        if (mwBoard == null)
-            mwBoard= ((MetaWearBleService.LocalBinder) service).getMetaWearBoard(btDevice);
-
-        mwBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
-            @Override
-            public void connected() {
-                Log.d(TAG, "Connected!");
-                onMetawearConnected();
-            }
-
-            @Override
-            public void disconnected() {
-                Log.d(TAG, "Disconnected!");
-                if (isRunning)
-                    mwBoard.connect(); //try reconnecting
-                else {
-                    if (mIsBound) {
-                        getApplicationContext().unbindService(SensorService.this);
-                        mIsBound = false;
-                    }
-                    if (hThread != null)
-                        hThread.quitSafely();
-                    stopForeground(true);
-                    stopSelf();
-                }
-            }
-
-            @Override
-            public void failure(int status, Throwable error) {
-                mwBoard.connect();
-            }
-        });
-        mwBoard.connect();
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-
     }
 
     /**
@@ -215,114 +180,10 @@ public class SensorService extends Service implements ServiceConnection {
                 getString(R.string.pref_gyroscope_sampling_rate_default)));
         rssiSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_rssi_sampling_rate_key),
                 getString(R.string.pref_rssi_sampling_rate_default)));
-        advertisementPeriod = Short.parseShort(preferences.getString(getString(R.string.pref_advertisement_period_key),
-                getString(R.string.pref_advertisement_period_default)));
-        turnOnLedWhileRunning = preferences.getBoolean(getString(R.string.pref_led_key), getResources().getBoolean(R.bool.pref_led_default));
-        enableAccelerometer = preferences.getBoolean(getString(R.string.pref_accelerometer_key), getResources().getBoolean(R.bool.pref_accelerometer_default));
+        blinkLedWhileRunning = preferences.getBoolean(getString(R.string.pref_led_key), getResources().getBoolean(R.bool.pref_led_default));
         enableGyroscope = preferences.getBoolean(getString(R.string.pref_gyroscope_key), getResources().getBoolean(R.bool.pref_gyroscope_default));
         enableRSSI = preferences.getBoolean(getString(R.string.pref_rssi_key), getResources().getBoolean(R.bool.pref_rssi_default));
-        //mwMacAddress = preferences.getString(getString(R.string.pref_device_key), getString(R.string.pref_device_default));
-    }
-
-    /**
-     * Prepares the Metawear board for sensor data collection.
-     */
-    private void ready() {
-        try {
-            mwBoard.removeRoutes();
-
-            beaconModule = mwBoard.getModule(IBeacon.class);
-            assert beaconModule != null;
-            beaconModule.readConfiguration().onComplete(new AsyncOperation.CompletionHandler<IBeacon.Configuration>() {
-                @Override
-                public void success(IBeacon.Configuration result) {
-                    super.success(result);
-                }
-
-                @Override
-                public void failure(Throwable error) {
-                    Log.d(TAG, "ERROR reading IBeacon configuration.");
-                    super.failure(error);
-                }
-            });
-
-            motionModule = mwBoard.getModule(Bmi160Accelerometer.class);
-
-            loggingModule = mwBoard.getModule(Logging.class);
-
-            accModule = mwBoard.getModule(Accelerometer.class);
-            // Set the output data rate to 25Hz or closet valid value
-            accModule.setOutputDataRate((float) accelerometerSamplingRate);
-
-            gyroModule = mwBoard.getModule(Gyro.class);
-            gyroModule.setOutputDataRate((float) gyroscopeSamplingRate);
-
-            ledModule = mwBoard.getModule(Led.class);
-
-            //handle disconnection from the board:
-            mwBoard.getModule(Settings.class).handleEvent().fromDisconnect().monitor(new DataSignal.ActivityHandler() {
-                @Override
-                public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
-                    stopSensors();
-                    if (motionModule != null) {
-                        motionModule.stop();
-                        motionModule.disableMotionDetection();
-                    }
-                    beaconModule.configure().setAdPeriod(advertisementPeriod).commit();
-                    beaconModule.enable();
-                }
-            }).commit();
-
-        } catch (UnsupportedModuleException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Called once the Metawear board is connected
-     */
-    protected void onMetawearConnected(){
-        isRunning = true;
-        ready();
-        startMotionDetection();
-    }
-
-    private void startSensors(){
-        if (enableAccelerometer)
-            startAccelerometer();
-        if (enableGyroscope)
-            startGyroscope();
-        if (enableRSSI)
-            startRSSI();
-        if (turnOnLedWhileRunning)
-            turnOnLed(Led.ColorChannel.GREEN);
-    }
-
-    private void stopSensors(){
-        if (ledModule != null) {
-            ledModule.stop(true);
-        }
-        if (loggingModule != null) {
-            loggingModule.stopLogging();
-        }
-        if (gyroModule != null) {
-            gyroModule.stop();
-        }
-        if (accModule != null) {
-            accModule.stop();
-            accModule.disableAxisSampling();
-        }
-        if (handler != null)
-            handler.removeCallbacksAndMessages(null);
-    }
-
-
-    protected void onGyroscopeStarted(){
-        //DO NOTHING: this is meant for subclasses to override
-    }
-
-    protected void onAccelerometerStarted(){
-        //DO NOTHING: this is meant for subclasses to override
+        mwMacAddress = preferences.getString(getString(R.string.pref_device_key), getString(R.string.pref_device_default));
     }
 
     /**
@@ -340,124 +201,200 @@ public class SensorService extends Service implements ServiceConnection {
         mIsBound = getApplicationContext().bindService(new Intent(this, MetaWearBleService.class), this, Context.BIND_AUTO_CREATE);
     }
 
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        if (mwBoard == null)
+            mwBoard= ((MetaWearBleService.LocalBinder) service).getMetaWearBoard(btDevice);
+
+        mwBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
+            @Override
+            public void connected() {
+                Log.d(TAG, "Connected!");
+                onMetawearConnected();
+            }
+
+            @Override
+            public void disconnected() {
+                Log.d(TAG, "Disconnected!");
+                if (isConnected)
+                    mwBoard.connect();
+                else {
+                    if (handler != null)
+                        handler.removeCallbacksAndMessages(null);
+
+                    Handler reconnectionHandler = new Handler(hThread.getLooper());
+                    Runnable reconnectAfterDelayTask = new Runnable() {
+                        @Override
+                        public void run() {
+                            mwBoard.connect();
+                        }
+                    };
+                    reconnectionHandler.postDelayed(reconnectAfterDelayTask, 3000);
+                }
+            }
+
+            @Override
+            public void failure(int status, Throwable error) {
+                mwBoard.connect();
+            }
+        });
+        mwBoard.connect();
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+
+    }
+
     /**
-     * Called when the sensor service is stopped, by command from the handheld application.
+     * Called once the Metawear board is connected
      */
-    protected void onServiceStopped(){
-        isRunning = false;
-        disconnect();
+    protected void onMetawearConnected(){
+        isConnected = true;
+        getModules();
+        stopSensors();
+        mwBoard.removeRoutes();
+        handleBoardDisconnectionEvent();
+        setSamplingRates();
+        startSensors();
     }
 
-    protected void onAccelerometerReadingReceived(long timestamp, float x, float y, float z){
-        //DO NOTHING: this is meant for subclasses to override
+    /**
+     * Requests the relevant modules from the Metawear board.
+     */
+    private void getModules(){
+        try {
+            mwBoard.removeRoutes();
+            motionModule = mwBoard.getModule(Bmi160Accelerometer.class);
+            loggingModule = mwBoard.getModule(Logging.class);
+            accModule = mwBoard.getModule(Accelerometer.class);
+            gyroModule = mwBoard.getModule(Gyro.class);
+            ledModule = mwBoard.getModule(Led.class);
+            settingsModule = mwBoard.getModule(Settings.class);
+        } catch (UnsupportedModuleException e) {
+            e.printStackTrace();
+        }
     }
 
-    protected void onGyroscopeReadingReceived(long timestamp, float x, float y, float z){
-        //DO NOTHING: this is meant for subclasses to override
+    /**
+     * Prepares the Metawear board for sensor data collection.
+     */
+    private void setSamplingRates() {
+        accModule.setOutputDataRate((float) accelerometerSamplingRate);
+        gyroModule.setOutputDataRate((float) gyroscopeSamplingRate);
     }
 
-    protected void onRSSIReadingReceived(long timestamp, int rssi){
-        //DO NOTHING: this is meant for subclasses to override
+    /**
+     * Sends commands to the board upon disconnection. When the board is disconnected, we specifically
+     * want to start low power motion detection, stop all other sensors and stop advertisements.
+     */
+    private void handleBoardDisconnectionEvent(){
+        settingsModule.handleEvent().fromDisconnect().monitor(new DataSignal.ActivityHandler() {
+            @Override
+            public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
+                stopSensors();
+
+                // start low power motion detection on the board
+                motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.ANY_MOTION);
+                motionModule.configureAnyMotionDetection().setDuration(10).commit();
+                motionModule.startLowPower();
+
+                // stop advertisements
+                settingsModule.configure().setAdInterval((short) 100, (byte) 2).commit();
+            }
+        }).commit();
     }
 
-    protected void onBatteryLevelReceived(int percentage){
-        //DO NOTHING: this is meant for subclasses to override
+    private void startSensors() {
+        if (blinkLedWhileRunning)
+            turnOnLed(Led.ColorChannel.GREEN, true);
+        if (enableGyroscope)
+            startGyroscope();
+        if (enableRSSI)
+            startRSSI();
+        startAccelerometerWithNoMotionDetection();
     }
 
-    private void startMotionDetection(){
-        if (turnOnLedWhileRunning)
-            turnOnLed(Led.ColorChannel.BLUE);
-        motionModule.stop();
-        motionModule.disableMotionDetection();
-        motionModule.routeData().fromMotion().stream("streaming-motion").commit()
+    private void stopSensors(){
+        if (ledModule != null) {
+            ledModule.stop(true);
+        }
+        if (loggingModule != null) {
+            loggingModule.stopLogging();
+        }
+        if (gyroModule != null) {
+            gyroModule.stop();
+        }
+        if (accModule != null) {
+            accModule.stop();
+            accModule.disableAxisSampling();
+        }
+        if (motionModule != null){
+            motionModule.stop();
+            motionModule.disableMotionDetection();
+        }
+    }
+
+    /**
+     * Starts collecting accelerometer data from the Metawear board until a no motion event has
+     * been detected.
+     */
+    private void startAccelerometerWithNoMotionDetection(){
+        accModule.routeData().fromAxes()
+                .split()
+                .branch()
+                    .process(new Rss())
+                    .process(new Maths(Maths.Operation.SUBTRACT, 1))
+                    .process(new Maths(Maths.Operation.ABS_VALUE, 0))
+                    .process(new Average((byte) 127))
+                    .process(new Time(Time.OutputMode.ABSOLUTE, 2000))
+                    .process(new Comparison(Comparison.Operation.LT, 0.006))
+                    .stream("no-motion")
+                .branch()
+                    .stream("accelerometer-stream")
+                .end()
+                .commit()
                 .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                     @Override
                     public void success(RouteManager result) {
-                        result.subscribe("streaming-motion", new RouteManager.MessageHandler() {
+                        result.subscribe("no-motion", new RouteManager.MessageHandler() {
                             @Override
                             public void process(Message msg) {
-                                Log.d(TAG, "MOTION DETECTED");
-                                startSensors();
-                                startNoMotionDetection();
-                            }
-                        });
-                        motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.ANY_MOTION);
-                        motionModule.configureAnyMotionDetection().setThreshold(0.1f).commit();
-                        motionModule.startLowPower();
-                    }
-                });
-
-    }
-
-    private void startNoMotionDetection(){
-        motionModule.stop();
-        motionModule.disableMotionDetection();
-        motionModule.routeData().fromMotion().stream("streaming-no-motion").commit()
-                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
-                    @Override
-                    public void success(RouteManager result) {
-                        result.subscribe("streaming-no-motion", new RouteManager.MessageHandler() {
-                            @Override
-                            public void process(Message msg) {
-                                Log.d(TAG, "NO MOTION DETECTED");
                                 stopSensors();
                                 startMotionDetection();
                             }
                         });
-                        motionModule.enableMotionDetection(Bmi160Accelerometer.MotionType.NO_MOTION);
-                        motionModule.configureNoMotionDetection().setThreshold(0.005f).setDuration(5000).commit();
-                        motionModule.startLowPower();
+                        result.subscribe("accelerometer-stream", new RouteManager.MessageHandler() {
+                            @Override
+                            public void process(Message msg) {
+                                CartesianFloat reading = msg.getData(CartesianFloat.class);
+                                onAccelerometerReadingReceived(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
+                                synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
+                                    accelerometerBuffer.addReading(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
+                                }
+                            }
+                        });
+                        accModule.enableAxisSampling();
+                        accModule.start();
+                        onAccelerometerStarted();
                     }
                 });
-
     }
 
-    private boolean streaming = true;
-    private final String LOG_KEY = "logging";
-    private boolean overwrite = true;
-
-    private void startAccelerometer(){
-        if (streaming) {
-            accModule.routeData().fromAxes().stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER).commit()
-                    .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
-                        @Override
-                        public void success(RouteManager result) {
-                            result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER, new RouteManager.MessageHandler() {
-                                @Override
-                                public void process(Message msg) {
-                                    CartesianFloat reading = msg.getData(CartesianFloat.class);
-                                    onAccelerometerReadingReceived(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
-                                    synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
-                                        accelerometerBuffer.addReading(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
-                                    }
-                                }
-                            });
-                            accModule.enableAxisSampling();
-                            accModule.start();
-                            onAccelerometerStarted();
-                        }
-                    });
-        }else{
-            accModule.routeData().fromAxes().log(LOG_KEY).commit()
-                    .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
-                        @Override
-                        public void success(RouteManager result) {
-                            result.setLogMessageHandler(LOG_KEY, new RouteManager.MessageHandler() {
-                                @Override
-                                public void process(Message msg) {
-                                    CartesianFloat reading = msg.getData(CartesianFloat.class);
-                                    onAccelerometerReadingReceived(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
-                                    //final CartesianShort axisData = msg.getData(CartesianShort.class);
-                                    //Log.i(TAG, String.format("Log: %s", axisData.toString()));
-                                }
-                            });
-                            loggingModule.startLogging(overwrite);
-                            accModule.enableAxisSampling();
-                            accModule.start();
-                            onAccelerometerStarted();
-                        }
-                    });
-        }
+    private void startMotionDetection(){
+        motionModule.routeData().fromMotion().process(new Counter())
+                .monitor(new DataSignal.ActivityHandler() {
+                    @Override
+                    public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
+                        turnOnLed(Led.ColorChannel.GREEN, false);
+                        settingsModule.startAdvertisement();
+                    }
+                }).commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+            @Override
+            public void success(RouteManager result) {
+                disconnect();
+            }
+        });
     }
 
     private void startGyroscope() {
@@ -480,10 +417,6 @@ public class SensorService extends Service implements ServiceConnection {
                     }
                 });
     }
-
-
-    private Handler handler;
-    private HandlerThread hThread;
 
     /**
      * Streams received signal strength indicator (RSSI) between the Metawear board and the wearable.
@@ -510,7 +443,7 @@ public class SensorService extends Service implements ServiceConnection {
 
                     @Override
                     public void failure(Throwable error) {
-                        Log.e("Metawear Error", error.toString());
+                        error.printStackTrace();
                     }
                 });
 
@@ -520,15 +453,42 @@ public class SensorService extends Service implements ServiceConnection {
         handler.postDelayed(queryRSSITask, delay);
     }
 
+    protected void onAccelerometerStarted(){
+        //DO NOTHING: this is meant for subclasses to override
+    }
+
+    protected void onGyroscopeStarted(){
+        //DO NOTHING: this is meant for subclasses to override
+    }
+
+    protected void onAccelerometerReadingReceived(long timestamp, float x, float y, float z){
+        //DO NOTHING: this is meant for subclasses to override
+    }
+
+    protected void onGyroscopeReadingReceived(long timestamp, float x, float y, float z){
+        //DO NOTHING: this is meant for subclasses to override
+    }
+
+    protected void onRSSIReadingReceived(long timestamp, int rssi){
+        //DO NOTHING: this is meant for subclasses to override
+    }
+
+    protected void onBatteryLevelReceived(int percentage){
+        //DO NOTHING: this is meant for subclasses to override
+    }
+
     /**
      * Turns on the LED on the Metawear device.
      */
-    private void turnOnLed(Led.ColorChannel color){
+    private void turnOnLed(Led.ColorChannel color, boolean ongoing){
         ledModule.stop(true);
+        byte repeat = -1;
+        if (!ongoing)
+            repeat = 1;
         ledModule.configureColorChannel(color)
                 .setHighIntensity((byte) 15).setLowIntensity((byte) 0)
-                .setHighTime((short) 500).setPulseDuration((short) 2000)
-                .setRepeatCount((byte) -1)
+                .setHighTime((short) 1000).setPulseDuration((short) 500)
+                .setRepeatCount(repeat)
                 .commit();
         ledModule.play(false);
     }
@@ -542,8 +502,8 @@ public class SensorService extends Service implements ServiceConnection {
         mwBoard.readBatteryLevel().onComplete(new AsyncOperation.CompletionHandler<Byte>() {
             @Override
             public void success(final Byte result) {
-                if (result <= 10 && turnOnLedWhileRunning){
-                    turnOnLed(Led.ColorChannel.RED);
+                if (result <= 10) {
+                    turnOnLed(Led.ColorChannel.RED, true);
                 }
                 onBatteryLevelReceived(result);
             }
@@ -553,6 +513,24 @@ public class SensorService extends Service implements ServiceConnection {
                 Log.e("Metawear Error", error.toString());
             }
         });
+    }
+
+    /**
+     * Called when the sensor service is stopped, by command from the handheld application.
+     */
+    protected void onServiceStopped(){
+        isConnected = false;
+        disconnect();
+        if (hThread != null) {
+            hThread.interrupt(); //TODO: I believe this will cancel the reconnection attempt, but make sure of this!
+            hThread.quitSafely();
+        }
+        if (mIsBound) {
+            getApplicationContext().unbindService(SensorService.this);
+            mIsBound = false;
+        }
+        stopForeground(true);
+        stopSelf();
     }
 
     @Override

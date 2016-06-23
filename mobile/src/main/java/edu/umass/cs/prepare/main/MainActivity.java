@@ -579,6 +579,7 @@ public class MainActivity extends AppCompatActivity {
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
+                        cancelConnectingDialog();
                         showConnectingDialog();
                     }else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         cancelConnectingDialog();

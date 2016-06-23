@@ -56,8 +56,8 @@ public class BeaconService extends Service implements BeaconConsumer {
 
     private void loadPreferences(){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        beaconDistanceThreshold = Integer.parseInt(preferences.getString(getString(R.string.pref_beacon_distance_key),
-                getString(R.string.pref_beacon_distance_default)));
+//        beaconDistanceThreshold = Integer.parseInt(preferences.getString(getString(R.string.pref_beacon_distance_key),
+//                getString(R.string.pref_beacon_distance_default)));
     }
 
     protected void setBroadcaster(BroadcastInterface broadcaster){

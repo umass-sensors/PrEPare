@@ -46,7 +46,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import edu.umass.cs.prepare.metawear.DataReceiverService;
+import edu.umass.cs.prepare.metawear.SelectMetawearActivity;
 import edu.umass.cs.prepare.metawear.ServiceManager;
+import edu.umass.cs.prepare.recording.RecordingService;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
@@ -87,9 +89,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private final Messenger mMessenger = new Messenger(new IncomingHandler(this));
 
-    /** whether the application should record video during data collection **/
-    private boolean record_video;
-
     /** whether video recording should include audio **/
     private boolean record_audio;
 
@@ -101,6 +100,9 @@ public class MainActivity extends AppCompatActivity {
     /** code to post/handler request for permission */
     private final static int WINDOW_OVERLAY_REQUEST = 2;
 
+    /** Request code to identify that the user selected the device address when the activity called for result returns. **/
+    private static final int SELECT_DEVICE_REQUEST_CODE = 3;
+
     /** The sensor manager which handles sensors on the wearable device remotely */
     private RemoteSensorManager remoteSensorManager;
 
@@ -108,6 +110,9 @@ public class MainActivity extends AppCompatActivity {
     private ServiceManager serviceManager;
 
     public SurfaceView mSurfaceView;
+
+    /** The unique address of the Metawear device. **/
+    private String mwMacAddress;
 
     /**
      * Handler to handle incoming messages
@@ -252,12 +257,12 @@ public class MainActivity extends AppCompatActivity {
      */
     private void loadPreferences(){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        record_video = preferences.getBoolean(getString(R.string.pref_video_key),
-                getResources().getBoolean(R.bool.pref_video_default));
         record_audio = preferences.getBoolean(getString(R.string.pref_audio_key),
                 getResources().getBoolean(R.bool.pref_audio_default));
         runServiceOverWearable = preferences.getBoolean(getString(R.string.pref_wearable_key),
                 getResources().getBoolean(R.bool.pref_wearable_default));
+        mwMacAddress = preferences.getString(getString(R.string.pref_device_key),
+                getString(R.string.pref_device_default));
     }
 
     @Override
@@ -272,20 +277,22 @@ public class MainActivity extends AppCompatActivity {
         serviceManager.minimizeVideo();
     }
 
+    private Button startButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        loadPreferences();
+        if (!runServiceOverWearable)
+            doBindService();
 
         //the intent filter specifies the messages we are interested in receiving
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
         filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
         registerReceiver(receiver, filter);
-
-        loadPreferences();
-        if (!runServiceOverWearable)
-            doBindService();
 
         remoteSensorManager = RemoteSensorManager.getInstance(this);
         //TODO: Is this necessary?
@@ -298,54 +305,67 @@ public class MainActivity extends AppCompatActivity {
 
         serviceManager = ServiceManager.getInstance(this);
 
-        Button startButton = (Button) findViewById(R.id.start_button);
-        assert startButton != null;
+        startButton = (Button) findViewById(R.id.start_button);
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO: Do Android versions prior to M require run-time permission request for overlay?
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                    requestPermissions();
-                else
-                    onPermissionsGranted();
+                if (!RecordingService.isRecording){
+                    //TODO: Do Android versions prior to M require run-time permission request for overlay?
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        requestPermissions();
+                    else
+                        onPermissionsGranted();
+                }else{
+                    serviceManager.stopRecordingService();
+                }
+
             }
         });
-        Button stopButton = (Button) findViewById(R.id.stop_button);
-        assert stopButton != null;
-        stopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopServices();
-            }
-        });
+        if (RecordingService.isRecording)
+            startButton.setBackgroundResource(android.R.drawable.ic_media_pause);
+//        Button stopButton = (Button) findViewById(R.id.stop_button);
+//        assert stopButton != null;
+//        stopButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                stopServices();
+//            }
+//        });
         txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
         txtAccelerometer.setText(String.format(getString(R.string.initial_sensor_readings), 0f, 0f, 0f));
         mSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
-    }
 
-    /**
-     * Stops all ongoing services
-     */
-    private void stopServices(){
-        if (runServiceOverWearable)
-            remoteSensorManager.stopBeaconService();
-        else
-            serviceManager.stopLocalBeaconService();
-
-        serviceManager.stopRecordingService();
-        serviceManager.stopDataWriterService();
+        if (mwMacAddress.equals(getString(R.string.pref_device_default))){
+            startActivityForResult(new Intent(MainActivity.this, SelectMetawearActivity.class), SELECT_DEVICE_REQUEST_CODE);
+        }
         stopMetawearService();
+        startMetawearService();
     }
 
     /**
      * Called when all required permissions have been granted.
      */
     private void onPermissionsGranted(){
+        int[] position = new int[2];
+        mSurfaceView.getLocationInWindow(position);
+        int w = mSurfaceView.getWidth();
+        int h = mSurfaceView.getHeight();
+        serviceManager.startRecordingService(position[0], position[1], w, h);
+    }
+
+    /**
+     * Stops all ongoing services
+     */
+    private void stopServices(){
+        serviceManager.stopDataWriterService();
+        stopMetawearService();
+    }
+
+    private void startMetawearService(){
         if (runServiceOverWearable)
-            remoteSensorManager.startBeaconService();
+            remoteSensorManager.startMetawearService();
         else
             serviceManager.startMetawearService(); //CE:03:BF:17:58:41 //DC:00:25:17:8E:CF //F6:8D:FC:1A:E4:50
-            //serviceManager.startLocalBeaconService();
     }
 
     @Override
@@ -376,6 +396,13 @@ public class MainActivity extends AppCompatActivity {
                 doUnbindService();
             else
                 doBindService();
+        }else if (requestCode == SELECT_DEVICE_REQUEST_CODE){
+            mwMacAddress = data.getStringExtra(SharedConstants.KEY.UUID);
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putString(getString(R.string.pref_device_key), mwMacAddress);
+            editor.apply();
+            startMetawearService();
         }
     }
 
@@ -453,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
     @TargetApi(Build.VERSION_CODES.M)
     private void checkDrawOverlayPermission() {
         /** check if we already  have permission to draw over other apps */
-        if (record_video && !Settings.canDrawOverlays(getApplicationContext())) {
+        if (!Settings.canDrawOverlays(getApplicationContext())) {
             /** if not construct intent to request permission */
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
@@ -477,12 +504,11 @@ public class MainActivity extends AppCompatActivity {
                     if (grantResults[i] != PackageManager.PERMISSION_GRANTED){
                         switch (permissions[i]) {
                             case Manifest.permission.CAMERA:
-                                record_video = false;
-                                //updateStatus("Permission Denied : Continuing with video disabled.");
-                                break;
+                                showStatus("Video Permission Denied!");
+                                return;
                             case Manifest.permission.RECORD_AUDIO:
                                 record_audio = false;
-                                //updateStatus("Permission Denied : Continuing with audio disabled.");
+                                showStatus("Audio Permission Denied : Continuing with audio disabled.");
                                 break;
                             default:
                                 //required permission not granted, abort
@@ -511,15 +537,12 @@ public class MainActivity extends AppCompatActivity {
     @TargetApi(Build.VERSION_CODES.M)
     private void requestPermissions(){
         List<String> permissionGroup = new ArrayList<>(Arrays.asList(new String[]{
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
         }));
 
-        if (record_video) {
-            permissionGroup.add(Manifest.permission.CAMERA);
-            if (record_audio){
-                permissionGroup.add(Manifest.permission.RECORD_AUDIO);
-            }
+        if (record_audio){
+            permissionGroup.add(Manifest.permission.RECORD_AUDIO);
         }
 
         String[] permissions = permissionGroup.toArray(new String[permissionGroup.size()]);
@@ -579,16 +602,23 @@ public class MainActivity extends AppCompatActivity {
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
-                        cancelConnectingDialog();
-                        showConnectingDialog();
+                        showStatus("Listening for movement...");
+//                        cancelConnectingDialog();
+//                        showConnectingDialog();
                     }else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
-                        cancelConnectingDialog();
+                        showStatus("Connected to pill bottle.");
+//                        cancelConnectingDialog();
                     }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STARTED){
                         showStatus("Searching for beacons...");
                     }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STOPPED){
                         showStatus("Beacon service disabled.");
                     }else if (message == SharedConstants.MESSAGES.BEACON_WITHIN_RANGE){
                         showStatus("Found beacon!");
+                    }else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
+                        startButton.setBackgroundResource(android.R.drawable.ic_media_pause);
+                    }
+                    else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
+                        startButton.setBackgroundResource(android.R.drawable.ic_media_play);
                     }
                 }
             }

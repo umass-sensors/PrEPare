@@ -27,6 +27,7 @@ import java.io.IOException;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.main.MainActivity;
+import edu.umass.cs.prepare.metawear.DataReceiverService;
 import edu.umass.cs.shared.SharedConstants;
 
 /**
@@ -70,7 +71,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     private String save_directory;
 
     /** indicates whether the service is currently recording video **/
-    private boolean isRecording = false;
+    public static boolean isRecording = false;
 
     /** width in pixels of the {@link SurfaceView} which displays the video recording preview **/
     private int width;
@@ -154,6 +155,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
 
         }else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE) && isRecording){
             stopRecording();
+            DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED);
             stopSelf();
         }else if (intent.getAction().equals(Constants.ACTION.MINIMIZE_VIDEO) && isRecording){
             //there is no functionality to minimize the video, but setting the surface size to 1x1 pixel should suffice
@@ -201,6 +203,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
 
         mMediaRecorder.start();
         isRecording = true;
+        DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED);
     }
 
     /**

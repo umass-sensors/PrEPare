@@ -47,7 +47,7 @@ public class ServiceManager {
     /**
      * Starts the {@link RecordingService} via an {@link Intent}
      */
-    public void startRecordingService(){
+    public void startRecordingService(int x, int y, int width, int height){
 
         Log.d(TAG, "start recording service");
 
@@ -56,14 +56,10 @@ public class ServiceManager {
         //identify the intent by the START_SERVICE action, defined in the Constants class
         startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
 
-        int[] position = new int[2];
-        //mSurfaceView.getLocationInWindow(position);
-        position[0] = 0;
-        position[1] = 0;
-        startServiceIntent.putExtra(Constants.KEY.SURFACE_WIDTH, 100); //mSurfaceView.getWidth());
-        startServiceIntent.putExtra(Constants.KEY.SURFACE_HEIGHT, 100); //mSurfaceView.getHeight());
-        startServiceIntent.putExtra(Constants.KEY.SURFACE_X, position[0]);
-        startServiceIntent.putExtra(Constants.KEY.SURFACE_Y, position[1]);
+        startServiceIntent.putExtra(Constants.KEY.SURFACE_WIDTH, width);
+        startServiceIntent.putExtra(Constants.KEY.SURFACE_HEIGHT, height);
+        startServiceIntent.putExtra(Constants.KEY.SURFACE_X, x);
+        startServiceIntent.putExtra(Constants.KEY.SURFACE_Y, y);
 
         //start sensor service
         context.startService(startServiceIntent);

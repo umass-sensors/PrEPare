@@ -103,13 +103,13 @@ public class SensorService extends Service implements SensorEventListener {
     private void registerSensors(){
         accelerometerBuffer.setOnBufferFullCallback(new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE, timestamps.clone(), values.clone());
             }
         });
         gyroscopeBuffer.setOnBufferFullCallback(new SensorBuffer.OnBufferFullCallback() {
             @Override
-            public void onBufferFull(String[] timestamps, float[] values) {
+            public void onBufferFull(long[] timestamps, float[] values) {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE, timestamps.clone(), values.clone());
             }
         });
@@ -153,11 +153,11 @@ public class SensorService extends Service implements SensorEventListener {
         //TODO: When the service is ended, the remaining data is not saved because it does not fill buffer
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
-                accelerometerBuffer.addReading(String.valueOf(event.timestamp), event.values);
+                accelerometerBuffer.addReading(event.timestamp, event.values);
             }
         }else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             synchronized (gyroscopeBuffer) {
-                gyroscopeBuffer.addReading(String.valueOf(event.timestamp), event.values);
+                gyroscopeBuffer.addReading(event.timestamp, event.values);
             }
         }else{
             Log.w(TAG, "Sensor Not Supported!");

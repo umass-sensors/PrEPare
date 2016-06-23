@@ -78,7 +78,6 @@ public class DataReceiverService extends WearableListenerService {
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         Log.d(TAG, "Received message CONNECTED.");
                         serviceManager.startDataWriterService();
-                        serviceManager.startRecordingService();
                     }
 //                    if (dataMap.getInt(SharedConstants.KEY.MESSAGE) == SharedConstants.MESSAGES.BEACON_WITHIN_RANGE) {
 //                        RemoteSensorManager.getInstance(this).startMetawearService();

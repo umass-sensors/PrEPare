@@ -4,19 +4,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A received signal strength indicator (RSSI) reading.
+ * Created by erikrisinger on 6/15/16.
  */
 public class MHLRSSIReading extends MHLSensorReading {
 
     private long timestamp;
     private int rssi;
 
-    private static final String SENSOR_TYPE = "SENSOR_RSSI";
+    public MHLRSSIReading(int userID, String deviceType, long t, int rssi){
+        super(userID, deviceType, "SENSOR_RSSI");
 
-    public MHLRSSIReading(int userID, String deviceType, long timestamp, int rssi){
-        super(userID, deviceType, SENSOR_TYPE);
-
-        this.timestamp = timestamp;
+        this.timestamp = t;
         this.rssi = rssi;
     }
 

@@ -4,26 +4,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A 3-axis gyroscope reading.
+ * Created by erikrisinger on 6/14/16.
  */
 public class MHLGyroscopeReading extends MHLSensorReading {
 
-    /** Gyroscope reading along the x-axis. **/
-    private float x;
-    /** Gyroscope reading along the y-axis. **/
-    private float y;
-    /** Gyroscope reading along the z-axis. **/
-    private float z;
-
-    /** The formatted timestamp of the sensor event. **/
+    private double x, y, z;
     private long timestamp;
 
-    private static final String SENSOR_TYPE = "SENSOR_GYRO";
+    public MHLGyroscopeReading(int userID, String deviceType, long t, float x, float y, float z){
+        super(userID, deviceType, "SENSOR_GYRO");
 
-    public MHLGyroscopeReading(int userID, String deviceType, long timestamp, float x, float y, float z){
-        super(userID, deviceType, SENSOR_TYPE);
-
-        this.timestamp = timestamp;
+        this.timestamp = t;
         this.x = x;
         this.y = y;
         this.z = z;

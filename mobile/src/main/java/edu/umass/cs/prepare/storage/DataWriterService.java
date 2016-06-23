@@ -112,7 +112,7 @@ public class DataWriterService extends Service {
                             if (writeLocal)
                                 builder.append(String.format("%s,%d\n", timestamp, rssi));
                             if (writeServer) {
-                                client.sendSensorReading(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
+                                client.addSensorReading(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
                                 //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
                                 try {
                                     Thread.sleep(10);
@@ -132,13 +132,13 @@ public class DataWriterService extends Service {
 
                             if (writeServer) {
                                 if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR) {
-                                    client.sendSensorReading(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
                                 } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR) {
-                                    client.sendSensorReading(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
                                 } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE) {
-                                    client.sendSensorReading(new MHLAccelerometerReading(0, "Android-Wear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLAccelerometerReading(0, "Android-Wear", timestamp, x, y, z));
                                 } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE) {
-                                    client.sendSensorReading(new MHLGyroscopeReading(0, "Android-Wear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLGyroscopeReading(0, "Android-Wear", timestamp, x, y, z));
                                 }
                                 //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
                                 try {
@@ -188,7 +188,7 @@ public class DataWriterService extends Service {
         if (writeLocal)
             initializeFileWriters();
         if (writeServer) {
-            client = new MHLMobileIOClient(SERVER_IP_ADDRESS, SERVER_PORT);
+            client = new MHLMobileIOClient(SERVER_IP_ADDRESS, SERVER_PORT, 0);
             client.setConnectionStateHandler(new MHLConnectionStateHandler() {
                 @Override
                 public void onConnected() {

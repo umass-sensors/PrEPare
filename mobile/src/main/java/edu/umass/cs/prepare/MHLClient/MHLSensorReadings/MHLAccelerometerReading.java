@@ -4,26 +4,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A 3-axis accelerometer reading.
+ * Created by erikrisinger on 6/14/16.
  */
 public class MHLAccelerometerReading extends MHLSensorReading {
 
-    /** Acceleration along the x-axis. **/
-    private float x;
-    /** Acceleration along the y-axis. **/
-    private float y;
-    /** Acceleration along the z-axis. **/
-    private float z;
-
-    /** The formatted timestamp of the sensor event. **/
+    private double x, y, z;
     private long timestamp;
 
-    private static final String SENSOR_TYPE = "SENSOR_ACCEL";
+    //constructor for string payload -- removed
 
-    public MHLAccelerometerReading(int userID, String deviceType, long timestamp, float x, float y, float z){
-        super(userID, deviceType, SENSOR_TYPE);
+    //constructor for discrete payload values
+    public MHLAccelerometerReading(int userID, String deviceType, long t, double x, double y, double z){
+        super(userID, deviceType, "SENSOR_ACCEL");
 
-        this.timestamp = timestamp;
+        this.timestamp = t;
         this.x = x;
         this.y = y;
         this.z = z;

@@ -54,6 +54,24 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     @Override
     public void onCreate() {
         serviceManager = ServiceManager.getInstance(this);
+        setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
+            @Override
+            public void onBufferFull(long[] timestamps, float[] values) {
+                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR, timestamps, values);
+            }
+        });
+        setOnBufferFullCallback(gyroscopeBuffer, new SensorBuffer.OnBufferFullCallback() {
+            @Override
+            public void onBufferFull(long[] timestamps, float[] values) {
+                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR, timestamps, values);
+            }
+        });
+        setOnBufferFullCallback(rssiBuffer, new SensorBuffer.OnBufferFullCallback() {
+            @Override
+            public void onBufferFull(long[] timestamps, float[] values) {
+                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI, timestamps, values);
+            }
+        });
         super.onCreate();
     }
 
@@ -82,30 +100,11 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
     @Override
     protected void onMetawearConnected(){
-        showForegroundNotification();
-        setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
-            @Override
-            public void onBufferFull(long[] timestamps, float[] values) {
-                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR, timestamps, values);
-            }
-        });
-        setOnBufferFullCallback(gyroscopeBuffer, new SensorBuffer.OnBufferFullCallback() {
-            @Override
-            public void onBufferFull(long[] timestamps, float[] values) {
-                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR, timestamps, values);
-            }
-        });
-        setOnBufferFullCallback(rssiBuffer, new SensorBuffer.OnBufferFullCallback() {
-            @Override
-            public void onBufferFull(long[] timestamps, float[] values) {
-                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI, timestamps, values);
-            }
-        });
+        serviceManager.startDataWriterService();
+        super.onMetawearConnected();
         queryBatteryLevel();
         sendMessageToClients(Constants.MESSAGE.CONNECTED);
-        serviceManager.startDataWriterService();
-        serviceManager.startRecordingService();
-        super.onMetawearConnected();
+        showForegroundNotification();
     }
 
     private void showForegroundNotification(){
@@ -157,9 +156,9 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     }
 
     @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
+    protected void onConnectionRequest(){
         sendMessageToClients(Constants.MESSAGE.CONNECTING);
-        super.onServiceConnected(name, service);
+        super.onConnectionRequest();
     }
 
     @Override

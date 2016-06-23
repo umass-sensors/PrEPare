@@ -1,13 +1,8 @@
 <resources>
     <string name="pref_wearable_key">run-over-wearable</string>
-    <string name="pref_wearable_title">Wearable-to-Metawear RSSI</string>
-    <string name="pref_wearable_desc">If checked, RSSI will indicate signal strength between wearable and Metawear; otherwise, the phone-to-Metawear RSSI will be used.</string>
+    <string name="pref_wearable_title">Android Wear</string>
+    <string name="pref_wearable_desc">If checked, the pill bottle will communicate to an Android wear instead of an Android mobile device.</string>
     <bool name="pref_wearable_default">true</bool>
-
-    <string name="pref_video_key">enable-video</string>
-    <string name="pref_video_title">Enable Video</string>
-    <string name="pref_video_desc">If checked, video will be recorded during data collection.</string>
-    <bool name="pref_video_default">true</bool>
 
     <string name="pref_audio_key">enable-audio</string>
     <string name="pref_audio_title">Enable Audio</string>
@@ -16,18 +11,18 @@
 
     <string name="pref_rssi_sampling_rate_key">rssi-sampling-rate</string>
     <string name="pref_rssi_sampling_rate_title">RSSI Sampling Rate</string>
-    <string name="pref_rssi_sampling_rate_desc">Rate at which Metawear-to-Phone signal strength is sampled: %s</string>
-    <string name="pref_rssi_sampling_rate_default">60</string>
+    <string name="pref_rssi_sampling_rate_desc">Rate at which signal strength is sampled: %s</string>
+    <string name="pref_rssi_sampling_rate_default">25</string>
 
     <string name="pref_accelerometer_sampling_rate_key">accelerometer-sampling-rate</string>
     <string name="pref_accelerometer_sampling_rate_title">Accelerometer Sampling Rate</string>
-    <string name="pref_accelerometer_sampling_rate_desc">Rate at which Metawear accelerometer is sampled: %s</string>
-    <string name="pref_accelerometer_sampling_rate_default">60</string>
+    <string name="pref_accelerometer_sampling_rate_desc">Rate at which pill bottle accelerometer is sampled: %s</string>
+    <string name="pref_accelerometer_sampling_rate_default">25</string>
 
     <string name="pref_gyroscope_sampling_rate_key">gyroscope-sampling-rate</string>
     <string name="pref_gyroscope_sampling_rate_title">Gyroscope Sampling Rate</string>
-    <string name="pref_gyroscope_sampling_rate_desc">Rate at which Metawear gyroscope is sampled: %s</string>
-    <string name="pref_gyroscope_sampling_rate_default">60</string>
+    <string name="pref_gyroscope_sampling_rate_desc">Rate at which pill bottle gyroscope is sampled: %s</string>
+    <string name="pref_gyroscope_sampling_rate_default">25</string>
 
     <string-array name="pref_sampling_rate_options">
         <item>15</item>
@@ -45,66 +40,28 @@
     <string name="pref_directory_title">Select Directory</string>
 
     <string name="pref_device_key">device</string>
-    <string name="pref_device_title">Select Metawear Device</string>
+    <string name="pref_device_title">Select Pill Bottle</string>
     <string name="pref_device_default">00:00:00:00:00</string>
 
     <string name="pref_led_key">metawear-led-while-running</string>
-    <string name="pref_led_title">Enable Metawear LED</string>
-    <string name="pref_led_desc">If checked, the Metawear LED will be turned on during data collection. Note this increases battery consumption on the Metawear device.</string>
+    <string name="pref_led_title">Blink LED</string>
+    <string name="pref_led_desc">If checked, the pill bottle LED will be turned on during data collection. Note this will decrease its battery lifetime.</string>
     <bool name="pref_led_default">true</bool>
 
-    <!-- Indicates whether the accelerometer on the Metawear device is enabled. -->
-    <string name="pref_accelerometer_key">metawear-accelerometer</string>
-    <string name="pref_accelerometer_title">Enable Metawear Accelerometer</string>
-    <string name="pref_accelerometer_desc">If checked, Metawear accelerometer data will be sampled.</string>
-    <bool name="pref_accelerometer_default">true</bool>
-
     <string name="pref_gyroscope_key">metawear-gyroscope</string>
-    <string name="pref_gyroscope_title">Enable Metawear Gyroscope</string>
-    <string name="pref_gyroscope_desc">If checked, Metawear gyroscope data will be sampled.</string>
+    <string name="pref_gyroscope_title">Enable Gyroscope</string>
+    <string name="pref_gyroscope_desc">If checked, gyroscope data will be sampled.</string>
     <bool name="pref_gyroscope_default">false</bool>
 
     <string name="pref_rssi_key">metawear-rssi</string>
     <string name="pref_rssi_title">Enable RSSI</string>
-    <string name="pref_rssi_desc">If checked, Metawear signal strength data will be sampled.</string>
+    <string name="pref_rssi_desc">If checked, signal strength data will be sampled.</string>
     <bool name="pref_rssi_default">true</bool>
 
     <string name="pref_group_video_key">video-settings</string>
     <string name="pref_group_video_title">Video Settings</string>
 
     <string name="pref_group_metawear_key">metawear-settings</string>
-    <string name="pref_group_metawear_title">Metawear Settings</string>
-
-    <string-array name="pref_beacon_distance_options">
-        <item>5</item>
-        <item>10</item>
-        <item>15</item>
-        <item>20</item>
-        <item>25</item>
-        <item>30</item>
-        <item>35</item>
-        <item>40</item>
-    </string-array>
-    <string name="pref_beacon_distance_key">beacon-distance-threshold</string>
-    <string name="pref_beacon_distance_title">Trigger Distance</string>
-    <string name="pref_beacon_distance_desc">When the wearable is within %s meters of the Metawear tag, automatically begin data collection.</string>
-    <string name="pref_beacon_distance_default">5</string>
-
-    <string-array name="pref_advertisement_period_options">
-        <item>100</item>
-        <item>250</item>
-        <item>500</item>
-        <item>750</item>
-        <item>1000</item>
-        <item>1500</item>
-        <item>2000</item>
-        <item>2500</item>
-        <item>3000</item>
-        <item>5000</item>
-    </string-array>
-    <string name="pref_advertisement_period_key">beacon-advertisement-period</string>
-    <string name="pref_advertisement_period_title">Beacon Advertisement Period</string>
-    <string name="pref_advertisement_period_desc">When in beacon mode, the Metawear advertises packets every %s milliseconds.</string>
-    <string name="pref_advertisement_period_default">500</string>
+    <string name="pref_group_metawear_title">Pill Bottle Settings</string>
 
 </resources>

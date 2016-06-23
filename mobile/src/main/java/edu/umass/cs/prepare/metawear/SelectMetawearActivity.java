@@ -13,36 +13,48 @@ import java.util.UUID;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
 
-/**
- * This activity allows the user to select an available Metawear device by its unique identifier.
- * All BLE Metawear devices are listed, along with their signal strength and address.
- *
- * @author Sean Noran
- * @affiliation University of Massachusetts Amherst
- *
- * @see BleScannerFragment
- */
-public class SelectMetawearActivity extends AppCompatActivity implements BleScannerFragment.ScannerCommunicationBus {
+import android.content.ComponentName;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+
+import com.mbientlab.bletoolbox.scanner.BleScannerFragment.*;
+import com.mbientlab.metawear.MetaWearBleService;
+
+public class SelectMetawearActivity extends AppCompatActivity implements ScannerCommunicationBus, ServiceConnection {
+    private final static UUID[] serviceUuids;
+    public static final int REQUEST_START_APP= 1;
+
+    static {
+        serviceUuids= new UUID[] {
+                MetaWearBoard.METAWEAR_SERVICE_UUID,
+                MetaWearBoard.METABOOT_SERVICE_UUID
+        };
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_metawear);
+
+        getApplicationContext().bindService(new Intent(this, MetaWearBleService.class), this, BIND_AUTO_CREATE);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        ///< Unbind the service when the activity is destroyed
+        getApplicationContext().unbindService(this);
     }
 
     @Override
-    public UUID[] getFilterServiceUuids() {
-        return new UUID[] {MetaWearBoard.METAWEAR_SERVICE_UUID};
-    }
-
-    @Override
-    public long getScanDuration() {
-        return 10000L;
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode) {
+            case REQUEST_START_APP:
+                ((BleScannerFragment) getFragmentManager().findFragmentById(R.id.scanner_fragment)).startBleScan();
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -51,5 +63,26 @@ public class SelectMetawearActivity extends AppCompatActivity implements BleScan
         data.putExtra(SharedConstants.KEY.UUID, device.getAddress());
         setResult(RESULT_OK, data);
         finish();
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+        MetaWearBleService.LocalBinder serviceBinder = (MetaWearBleService.LocalBinder) iBinder;
+        serviceBinder.executeOnUiThread();
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName componentName) {
+
+    }
+
+    @Override
+    public UUID[] getFilterServiceUuids() {
+        return serviceUuids;
+    }
+
+    @Override
+    public long getScanDuration() {
+        return 10000L;
     }
 }

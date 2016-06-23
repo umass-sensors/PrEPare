@@ -39,21 +39,6 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     public void onCreate() {
         super.onCreate();
         client = DataClient.getInstance(this);
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null)
-            if (intent.getAction().equals(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL)){
-                queryBatteryLevel();
-            }
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
-    protected void onMetawearConnected(){
-        startForeground();
-        client.sendMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
         setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
             public void onBufferFull(long[] timestamps, float[] values) {
@@ -72,8 +57,23 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI, timestamps.clone(), values.clone());
             }
         });
-        queryBatteryLevel();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null)
+            if (intent.getAction().equals(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL)){
+                queryBatteryLevel();
+            }
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    protected void onMetawearConnected(){
         super.onMetawearConnected();
+        client.sendMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
+        queryBatteryLevel();
+        startForeground();
     }
 
     @Override

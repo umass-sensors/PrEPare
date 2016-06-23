@@ -34,19 +34,9 @@
             <Button
                 style="?android:attr/buttonBarButtonStyle"
                 android:id="@+id/start_button"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:text="@string/start"
-                />
-
-            <Button
-                style="?android:attr/buttonBarButtonStyle"
-                android:id="@+id/stop_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:text="@string/stop"
+                android:background="@android:drawable/ic_media_play"
                 />
         </LinearLayout>
 

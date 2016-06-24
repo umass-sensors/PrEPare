@@ -20,7 +20,7 @@ import android.os.IBinder;
 import com.mbientlab.bletoolbox.scanner.BleScannerFragment.*;
 import com.mbientlab.metawear.MetaWearBleService;
 
-public class SelectMetawearActivity extends AppCompatActivity implements ScannerCommunicationBus, ServiceConnection {
+public class SelectDeviceActivity extends AppCompatActivity implements ScannerCommunicationBus, ServiceConnection {
     private final static UUID[] serviceUuids;
     public static final int REQUEST_START_APP= 1;
 

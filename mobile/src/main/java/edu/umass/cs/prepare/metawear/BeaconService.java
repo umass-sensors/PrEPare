@@ -7,6 +7,7 @@ import android.util.Log;
  * It is an always-on service that triggers the Metawear {@link SensorService} when the beacon is
  * in range.
  */
+@Deprecated
 public class BeaconService extends edu.umass.cs.shared.metawear.BeaconService {
 
     @SuppressWarnings("unused")

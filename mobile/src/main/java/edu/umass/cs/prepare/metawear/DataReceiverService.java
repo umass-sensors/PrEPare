@@ -3,6 +3,7 @@ package edu.umass.cs.prepare.metawear;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.wearable.DataEvent;
@@ -113,6 +114,7 @@ public class DataReceiverService extends WearableListenerService {
         Intent intent = new Intent();
         intent.putExtra(SharedConstants.KEY.MESSAGE, message);
         intent.setAction(Constants.ACTION.BROADCAST_MESSAGE);
-        context.sendBroadcast(intent);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(context);
+        manager.sendBroadcast(intent);
     }
 }

@@ -12,16 +12,17 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
 
-import edu.umass.cs.shared.MHLClient.MHLConnectionStateHandler;
-import edu.umass.cs.shared.MHLClient.MHLMobileIOClient;
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLRSSIReading;
+import edu.umass.cs.prepare.MHLClient.MHLConnectionStateHandler;
+import edu.umass.cs.prepare.MHLClient.MHLMobileIOClient;
+import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
+import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
+import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLRSSIReading;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
@@ -213,10 +214,23 @@ public class DataWriterService extends Service {
      * the service listens for sensor data sent from another application component.
      */
     private void registerReceiver(){
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
         //the intent filter specifies the messages we are interested in receiving
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
-        registerReceiver(receiver, filter);
+        broadcastManager.registerReceiver(receiver, filter);
+    }
+
+    /**
+     * Unregisters the broadcast receiver.
+     */
+    private void unregisterReceiver(){
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
+        try {
+            broadcastManager.unregisterReceiver(receiver);
+        }catch(IllegalArgumentException e){
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -248,11 +262,7 @@ public class DataWriterService extends Service {
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
             Log.i(TAG, "Received Stop Service Intent");
 
-            try {
-                unregisterReceiver(receiver);
-            }catch (IllegalArgumentException e){
-                e.printStackTrace();
-            }
+            unregisterReceiver();
             if (writeLocal)
                 closeAllWriters();
 

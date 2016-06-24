@@ -28,6 +28,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -199,17 +200,19 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
         //the intent filter specifies the messages we are interested in receiving
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
         filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
-        registerReceiver(receiver, filter);
+        broadcastManager.registerReceiver(receiver, filter);
     }
 
     @Override
     protected void onStop() {
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
         try {
-            unregisterReceiver(receiver);
+            broadcastManager.unregisterReceiver(receiver);
         }catch (IllegalArgumentException e){
             e.printStackTrace();
         }

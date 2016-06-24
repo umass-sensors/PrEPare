@@ -17,11 +17,11 @@ import android.util.Log;
 import java.io.BufferedWriter;
 import java.io.File;
 
-import edu.umass.cs.prepare.MHLClient.MHLConnectionStateHandler;
-import edu.umass.cs.prepare.MHLClient.MHLMobileIOClient;
-import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
-import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
-import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLRSSIReading;
+import edu.umass.cs.shared.MHLClient.MHLConnectionStateHandler;
+import edu.umass.cs.shared.MHLClient.MHLMobileIOClient;
+import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
+import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
+import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLRSSIReading;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
@@ -44,12 +44,6 @@ public class DataWriterService extends Service {
     @SuppressWarnings("unused")
     /** used for debugging purposes */
     private static final String TAG = DataWriterService.class.getName();
-
-    /** The IP address of the server where the data should be sent. **/
-    private static final String SERVER_IP_ADDRESS = "192.168.26.217"; //"192.168.25.150"; //"192.168.26.217"
-
-    /** The port for the server where the data should be sent. **/
-    private static final int SERVER_PORT = 9999;
 
     private BufferedWriter accelerometerWearableWriter;
     private BufferedWriter gyroscopeWearableWriter;
@@ -87,8 +81,6 @@ public class DataWriterService extends Service {
             directory = new File(defaultDirectory);
         else
             directory = new File(dir);
-        writeLocal = false;
-        writeServer = true;
     }
 
     /** used to receive messages from other components of the handheld app through intents, i.e. receive labels **/
@@ -127,18 +119,24 @@ public class DataWriterService extends Service {
                             float y = values[3 * i + 1];
                             float z = values[3 * i + 2];
 
+                            if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
+                                x *= SharedConstants.GRAVITY;
+                                y *= SharedConstants.GRAVITY;
+                                z *= SharedConstants.GRAVITY;
+                            }
+
                             if (writeLocal)
                                 builder.append(String.format("%s,%f,%f,%f\n", timestamp, x, y, z));
 
                             if (writeServer) {
                                 if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR) {
-                                    client.addSensorReading(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLAccelerometerReading(0, "METAWEAR", timestamp, x, y, z));
                                 } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR) {
-                                    client.addSensorReading(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLGyroscopeReading(0, "METAWEAR", timestamp, x, y, z));
                                 } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE) {
-                                    client.addSensorReading(new MHLAccelerometerReading(0, "Android-Wear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLAccelerometerReading(0, "WEARABLE", System.currentTimeMillis(), x, y, z)); //TODO: Get event timestamp from wearable, not in nanoseconds since boot
                                 } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE) {
-                                    client.addSensorReading(new MHLGyroscopeReading(0, "Android-Wear", timestamp, x, y, z));
+                                    client.addSensorReading(new MHLGyroscopeReading(0, "WEARABLE", System.currentTimeMillis(), x, y, z));
                                 }
                                 //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
                                 try {
@@ -188,7 +186,7 @@ public class DataWriterService extends Service {
         if (writeLocal)
             initializeFileWriters();
         if (writeServer) {
-            client = new MHLMobileIOClient(SERVER_IP_ADDRESS, SERVER_PORT, 0);
+            client = new MHLMobileIOClient(SharedConstants.SERVER_IP_ADDRESS, SharedConstants.SERVER_PORT, 0);
             client.setConnectionStateHandler(new MHLConnectionStateHandler() {
                 @Override
                 public void onConnected() {

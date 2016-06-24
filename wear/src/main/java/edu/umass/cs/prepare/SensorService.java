@@ -48,7 +48,7 @@ public class SensorService extends Service implements SensorEventListener {
     private DataClient client;
 
     /** Buffer size */
-    private static final int BUFFER_SIZE = 256;
+    private static final int BUFFER_SIZE = 1;
 
     /** The buffer containing the accelerometer readings **/
     private final SensorBuffer accelerometerBuffer = new SensorBuffer(BUFFER_SIZE, 3);
@@ -70,28 +70,31 @@ public class SensorService extends Service implements SensorEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)){
-            Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_pill);
+        if (intent != null) {
+            if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
+                Log.d(TAG, "Started sensor service.");
+                Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_pill);
 
-            //notify the user that the application has started
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setTicker(getString(R.string.app_name))
-                    .setContentText(getString(R.string.notification_text))
-                    .setSmallIcon(R.drawable.ic_pill)
-                    .setLargeIcon(Bitmap.createScaledBitmap(icon, 128, 128, false))
-                    .setOngoing(true)
-                    .setVibrate(new long[]{0, 50, 100, 150, 200})
-                    .setPriority(Notification.PRIORITY_MAX)
-                    .build();
+                //notify the user that the application has started
+                Notification notification = new NotificationCompat.Builder(this)
+                        .setContentTitle(getString(R.string.app_name))
+                        .setTicker(getString(R.string.app_name))
+                        .setContentText(getString(R.string.notification_text))
+                        .setSmallIcon(R.drawable.ic_pill)
+                        .setLargeIcon(Bitmap.createScaledBitmap(icon, 128, 128, false))
+                        .setOngoing(true)
+                        .setVibrate(new long[]{0, 50, 100, 150, 200})
+                        .setPriority(Notification.PRIORITY_MAX)
+                        .build();
 
-            startForeground(SharedConstants.NOTIFICATION_ID.WEARABLE_SENSOR_SERVICE, notification); //id is arbitrary, so we choose id=1
+                startForeground(SharedConstants.NOTIFICATION_ID.WEARABLE_SENSOR_SERVICE, notification); //id is arbitrary, so we choose id=1
 
-            registerSensors();
-        } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
-            unregisterSensors();
-            stopForeground(true);
-            stopSelf();
+                registerSensors();
+            } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
+                unregisterSensors();
+                stopForeground(true);
+                stopSelf();
+            }
         }
 
         return START_STICKY;
@@ -107,12 +110,12 @@ public class SensorService extends Service implements SensorEventListener {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE, timestamps.clone(), values.clone());
             }
         });
-        gyroscopeBuffer.setOnBufferFullCallback(new SensorBuffer.OnBufferFullCallback() {
-            @Override
-            public void onBufferFull(long[] timestamps, float[] values) {
-                client.sendSensorData(SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE, timestamps.clone(), values.clone());
-            }
-        });
+//        gyroscopeBuffer.setOnBufferFullCallback(new SensorBuffer.OnBufferFullCallback() {
+//            @Override
+//            public void onBufferFull(long[] timestamps, float[] values) {
+//                client.sendSensorData(SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE, timestamps.clone(), values.clone());
+//            }
+//        });
 
         //get handles to the hardware sensors
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -122,7 +125,7 @@ public class SensorService extends Service implements SensorEventListener {
             return;
         }
 
-        gyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+//        gyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         if (accelerometer != null) {
@@ -131,11 +134,11 @@ public class SensorService extends Service implements SensorEventListener {
             Log.w(TAG, "No Accelerometer found");
         }
 
-        if (gyroscope != null) {
-            mSensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME);
-        } else {
-            Log.w(TAG, "No gyroscope found");
-        }
+//        if (gyroscope != null) {
+//            mSensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME);
+//        } else {
+//            Log.w(TAG, "No gyroscope found");
+//        }
     }
 
     /**
@@ -144,7 +147,7 @@ public class SensorService extends Service implements SensorEventListener {
     private void unregisterSensors() {
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this, accelerometer);
-            mSensorManager.unregisterListener(this, gyroscope);
+//            mSensorManager.unregisterListener(this, gyroscope);
         }
     }
 
@@ -155,11 +158,13 @@ public class SensorService extends Service implements SensorEventListener {
             synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
                 accelerometerBuffer.addReading(event.timestamp, event.values);
             }
-        }else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            synchronized (gyroscopeBuffer) {
-                gyroscopeBuffer.addReading(event.timestamp, event.values);
-            }
-        }else{
+        }
+//        else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+//            synchronized (gyroscopeBuffer) {
+//                gyroscopeBuffer.addReading(event.timestamp, event.values);
+//            }
+//        }
+        else{
             Log.w(TAG, "Sensor Not Supported!");
         }
     }

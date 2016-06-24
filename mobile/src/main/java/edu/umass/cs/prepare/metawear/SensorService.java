@@ -2,7 +2,6 @@ package edu.umass.cs.prepare.metawear;
 
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +14,8 @@ import android.support.v4.app.NotificationCompat;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
+import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.main.MainActivity;
 import edu.umass.cs.shared.BatteryUtil;
 import edu.umass.cs.shared.SharedConstants;

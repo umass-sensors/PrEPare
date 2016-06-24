@@ -2,6 +2,9 @@ package edu.umass.cs.prepare.metawear;
 
 import android.util.Log;
 
+import edu.umass.cs.prepare.communication.local.Broadcaster;
+import edu.umass.cs.prepare.communication.local.ServiceManager;
+
 /**
  * The Beacon service is responsible for monitoring the Metawear device while it is in beacon mode.
  * It is an always-on service that triggers the Metawear {@link SensorService} when the beacon is

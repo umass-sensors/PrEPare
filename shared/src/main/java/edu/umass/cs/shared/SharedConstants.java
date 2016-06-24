@@ -11,6 +11,8 @@ import android.content.Intent;
  */
 public class SharedConstants {
 
+    public static final float GRAVITY = 9.8f;
+
     /**
      * Tags that define the type of communication between the handheld and wearable application.
      * These are used as keys to identify data packages sent over Bluetooth to the mobile device.
@@ -38,10 +40,11 @@ public class SharedConstants {
         int BEACON_WITHIN_RANGE = 0;
         int METAWEAR_CONNECTED = 1;
         int METAWEAR_CONNECTING = 2;
-        int BEACON_SERVICE_STARTED = 3;
-        int BEACON_SERVICE_STOPPED = 4;
-        int RECORDING_SERVICE_STARTED = 5;
-        int RECORDING_SERVICE_STOPPED = 6;
+        int METAWEAR_DISCONNECTED = 3;
+        int BEACON_SERVICE_STARTED = 4;
+        int BEACON_SERVICE_STOPPED = 5;
+        int RECORDING_SERVICE_STARTED = 6;
+        int RECORDING_SERVICE_STOPPED = 7;
     }
 
     /**
@@ -95,4 +98,10 @@ public class SharedConstants {
         int RECORDING_SERVICE = 104;
         int BEACON_SERVICE = 105;
     }
+
+    /** The IP address of the server where the data should be sent. **/
+    public static final String SERVER_IP_ADDRESS = "192.168.25.150"; //"192.168.25.150"; //"192.168.26.217"
+
+    /** The port for the server where the data should be sent. **/
+    public static final int SERVER_PORT = 9999;
 }

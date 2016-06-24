@@ -14,7 +14,7 @@ import android.support.v4.app.NotificationCompat;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
+import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.main.MainActivity;
 import edu.umass.cs.shared.BatteryUtil;
@@ -58,19 +58,19 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
             public void onBufferFull(long[] timestamps, float[] values) {
-                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR, timestamps, values);
+                Broadcaster.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR, timestamps, values);
             }
         });
         setOnBufferFullCallback(gyroscopeBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
             public void onBufferFull(long[] timestamps, float[] values) {
-                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR, timestamps, values);
+                Broadcaster.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR, timestamps, values);
             }
         });
         setOnBufferFullCallback(rssiBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
             public void onBufferFull(long[] timestamps, float[] values) {
-                DataReceiverService.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI, timestamps, values);
+                Broadcaster.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI, timestamps, values);
             }
         });
         super.onCreate();
@@ -105,14 +105,14 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         super.onMetawearConnected();
         queryBatteryLevel();
         sendMessageToClients(Constants.MESSAGE.CONNECTED);
-        DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_CONNECTED);
+        Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_CONNECTED);
         showForegroundNotification();
     }
 
     @Override
     protected void onDisconnect() {
         stopForeground(true);
-        DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
+        Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
         super.onDisconnect();
     }
 

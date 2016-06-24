@@ -12,10 +12,6 @@ import android.support.v4.app.NotificationCompat;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.shared.BatteryUtil;
-import edu.umass.cs.shared.MHLClient.MHLMobileIOClient;
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLRSSIReading;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.shared.SensorBuffer;
 import edu.umass.cs.prepare.DataClient;
@@ -36,8 +32,6 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
     /** used to communicate with the handheld application */
     private DataClient client;
-
-    private MHLMobileIOClient serverClient;
 
     @Override
     public void onCreate() {
@@ -81,8 +75,6 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     protected void onMetawearConnected(){
         super.onMetawearConnected();
         client.sendMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
-        //serverClient = new MHLMobileIOClient(SharedConstants.SERVER_IP_ADDRESS, SharedConstants.SERVER_PORT, 0);
-        //serverClient.connect();
         //queryBatteryLevel();
         startForeground();
     }
@@ -96,17 +88,14 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     @Override
     protected void onRSSIReadingReceived(long timestamp, int rssi){
         //Log.d(TAG, String.valueOf(rssi));
-        //serverClient.addSensorReading(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
     }
 
     @Override
     protected void onAccelerometerReadingReceived(long timestamp, float x, float y, float z) {
-        //serverClient.addSensorReading(new MHLAccelerometerReading(0, "Metawear", timestamp, x, y, z));
     }
 
     @Override
     protected void onGyroscopeReadingReceived(long timestamp, float x, float y, float z) {
-        //serverClient.addSensorReading(new MHLGyroscopeReading(0, "Metawear", timestamp, x, y, z));
     }
 
     private void startForeground(){

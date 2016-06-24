@@ -1,4 +1,4 @@
-package edu.umass.cs.shared.MHLClient;
+package edu.umass.cs.prepare.MHLClient;
 
 public interface MHLConnectionStateHandler {
     void onConnected();

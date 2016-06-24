@@ -1,4 +1,4 @@
-package edu.umass.cs.shared.MHLClient;
+package edu.umass.cs.prepare.MHLClient;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,8 +9,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 
-import edu.umass.cs.shared.MHLClient.MHLDataStructures.MHLBlockingSensorReadingQueue;
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLSensorReading;
+import edu.umass.cs.prepare.MHLClient.MHLDataStructures.MHLBlockingSensorReadingQueue;
+import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLSensorReading;
 
 public class MHLMobileIOClient {
 

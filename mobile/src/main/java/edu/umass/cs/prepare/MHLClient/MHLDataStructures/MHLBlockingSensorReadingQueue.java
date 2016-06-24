@@ -1,8 +1,8 @@
-package edu.umass.cs.shared.MHLClient.MHLDataStructures;
+package edu.umass.cs.prepare.MHLClient.MHLDataStructures;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
-import edu.umass.cs.shared.MHLClient.MHLSensorReadings.MHLSensorReading;
+import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLSensorReading;
 
 /**
  * Created by erikrisinger on 6/14/16.

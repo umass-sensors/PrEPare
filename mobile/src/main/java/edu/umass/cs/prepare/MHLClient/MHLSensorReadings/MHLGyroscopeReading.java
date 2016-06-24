@@ -1,4 +1,4 @@
-package edu.umass.cs.shared.MHLClient.MHLSensorReadings;
+package edu.umass.cs.prepare.MHLClient.MHLSensorReadings;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -6,16 +6,13 @@ import org.json.JSONObject;
 /**
  * Created by erikrisinger on 6/14/16.
  */
-public class MHLAccelerometerReading extends MHLSensorReading {
+public class MHLGyroscopeReading extends MHLSensorReading {
 
     private double x, y, z;
     private long timestamp;
 
-    //constructor for string payload -- removed
-
-    //constructor for discrete payload values
-    public MHLAccelerometerReading(int userID, String deviceType, long t, double x, double y, double z){
-        super(userID, deviceType, "SENSOR_" + deviceType + "_ACCEL");
+    public MHLGyroscopeReading(int userID, String deviceType, long t, float x, float y, float z){
+        super(userID, deviceType, "SENSOR_" + deviceType + "_GYRO");
 
         this.timestamp = t;
         this.x = x;

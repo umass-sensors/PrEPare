@@ -1,4 +1,4 @@
-package edu.umass.cs.shared.MHLClient.MHLSensorReadings;
+package edu.umass.cs.prepare.MHLClient.MHLSensorReadings;
 
 import org.json.JSONException;
 import org.json.JSONObject;

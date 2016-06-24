@@ -64,13 +64,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".metawear.DataReceiverService">
+        <service android:name=".communication.wearable.DataReceiverService">
             <intent-filter>
                 <action
                     android:name="com.google.android.gms.wearable.BIND_LISTENER"/>
             </intent-filter>
         </service>
-        <activity android:name=".metawear.SelectMetawearActivity"/>
+        <activity android:name=".metawear.SelectDeviceActivity"/>
         <activity android:name="edu.umass.cs.prepare.preferences.SettingsActivity"/>
         <activity android:name="net.rdrei.android.dirchooser.DirectoryChooserActivity" />
     </application>

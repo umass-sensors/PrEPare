@@ -1,9 +1,6 @@
 package edu.umass.cs.prepare.communication.wearable;
 
-import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.wearable.DataEvent;
@@ -14,10 +11,9 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
-import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
-import edu.umass.cs.prepare.constants.Constants;
 
 /**
  * The Data Receiver Service listens for data sent from the wearable to the handheld device. In
@@ -72,11 +68,11 @@ public class DataReceiverService extends WearableListenerService {
                     long[] timestamps = dataMap.getLongArray(SharedConstants.KEY.TIMESTAMPS);
                     float[] values = dataMap.getFloatArray(SharedConstants.KEY.SENSOR_VALUES);
                     Log.d(TAG, "Data received on mobile application : " + sensorType.name());
-                    broadcastSensorData(this, sensorType, timestamps, values);
+                    Broadcaster.broadcastSensorData(this, sensorType, timestamps, values);
                 }
                 else if (path.equals(SharedConstants.DATA_LAYER_CONSTANTS.MESSAGE_PATH)){
                     int message = dataMap.getInt(SharedConstants.KEY.MESSAGE);
-                    broadcastMessage(this, message);
+                    Broadcaster.broadcastMessage(this, message);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         Log.d(TAG, "Received message CONNECTED.");
                         serviceManager.startDataWriterService();
@@ -89,33 +85,4 @@ public class DataReceiverService extends WearableListenerService {
         }
     }
 
-    /**
-     * Broadcasts sensor data to send to other mobile application components.
-     * @param context the context from which the sensor data is sent.
-     * @param sensorType the type of sensor, corresponding to the Sensor class constants, i.e. Sensor.TYPE_ACCELEROMETER
-     * @param timestamps list of timestamps corresponding to sensor events
-     * @param values list of sensor readings
-     */
-    public static void broadcastSensorData(Context context, SharedConstants.SENSOR_TYPE sensorType, long[] timestamps, float[] values){
-        Intent intent = new Intent();
-        DataLayerUtil.serialize(sensorType).to(intent);
-        intent.putExtra(Constants.KEY.SENSOR_TYPE, sensorType);
-        intent.putExtra(Constants.KEY.SENSOR_DATA, values);
-        intent.putExtra(Constants.KEY.TIMESTAMP, timestamps);
-        intent.setAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
-        context.sendBroadcast(intent);
-    }
-
-    /**
-     * Broadcasts a message to send to other mobile application components.
-     * @param context the context from which the message is sent.
-     * @param message the message being broadcast
-     */
-    public static void broadcastMessage(Context context, int message){
-        Intent intent = new Intent();
-        intent.putExtra(SharedConstants.KEY.MESSAGE, message);
-        intent.setAction(Constants.ACTION.BROADCAST_MESSAGE);
-        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(context);
-        manager.sendBroadcast(intent);
-    }
 }

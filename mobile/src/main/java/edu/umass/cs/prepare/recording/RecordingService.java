@@ -23,9 +23,9 @@ import java.io.File;
 import java.io.IOException;
 
 import edu.umass.cs.prepare.R;
+import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.main.MainActivity;
-import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
 import edu.umass.cs.shared.SharedConstants;
 
 /**
@@ -153,7 +153,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
 
         }else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE) && isRecording){
             stopRecording();
-            DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED);
+            Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED);
             stopSelf();
         }else if (intent.getAction().equals(Constants.ACTION.MINIMIZE_VIDEO) && isRecording){
             //there is no functionality to minimize the video, but setting the surface size to 1x1 pixel should suffice
@@ -201,7 +201,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
 
         mMediaRecorder.start();
         isRecording = true;
-        DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED);
+        Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED);
     }
 
     /**

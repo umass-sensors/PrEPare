@@ -6,8 +6,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.media.MediaRecorder;
@@ -27,7 +25,7 @@ import java.io.IOException;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.main.MainActivity;
-import edu.umass.cs.prepare.metawear.DataReceiverService;
+import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
 import edu.umass.cs.shared.SharedConstants;
 
 /**

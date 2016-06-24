@@ -10,7 +10,7 @@ import android.preference.PreferenceManager;
 
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
-import edu.umass.cs.prepare.metawear.SelectMetawearActivity;
+import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
 
 import net.rdrei.android.dirchooser.DirectoryChooserActivity;
 import net.rdrei.android.dirchooser.DirectoryChooserConfig;
@@ -93,7 +93,7 @@ public class SettingsActivity extends PreferenceActivity {
 
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                startActivityForResult(new Intent(SettingsActivity.this, SelectMetawearActivity.class), SELECT_DEVICE_REQUEST_CODE);
+                startActivityForResult(new Intent(SettingsActivity.this, SelectDeviceActivity.class), SELECT_DEVICE_REQUEST_CODE);
                 return true;
             }
         });

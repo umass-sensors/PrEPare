@@ -28,7 +28,7 @@ import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.main.MainActivity;
-import edu.umass.cs.prepare.metawear.DataReceiverService;
+import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
 
 /**
  * The Data Writer Service is responsible for writing all sensor data to their respective files.

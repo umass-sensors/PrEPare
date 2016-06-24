@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare.metawear;
+package edu.umass.cs.prepare.communication.wearable;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +14,7 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.constants.Constants;

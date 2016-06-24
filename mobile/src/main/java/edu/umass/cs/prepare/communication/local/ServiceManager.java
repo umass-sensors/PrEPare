@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare.metawear;
+package edu.umass.cs.prepare.communication.local;
 
 import android.app.Service;
 import android.content.Context;
@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.util.Log;
 
 import edu.umass.cs.prepare.constants.Constants;
+import edu.umass.cs.prepare.metawear.BeaconService;
+import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.recording.RecordingService;
 import edu.umass.cs.prepare.storage.DataWriterService;
 import edu.umass.cs.shared.SharedConstants;

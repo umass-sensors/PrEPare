@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare.metawear;
+package edu.umass.cs.prepare.communication.wearable;
 
 import android.content.Context;
 import android.support.annotation.NonNull;

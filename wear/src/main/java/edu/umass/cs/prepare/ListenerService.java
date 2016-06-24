@@ -1,6 +1,7 @@
 package edu.umass.cs.prepare;
 
 import android.content.Intent;
+import android.util.Log;
 
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
@@ -24,6 +25,7 @@ public class ListenerService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         if (messageEvent.getPath().equals(SharedConstants.COMMANDS.START_SENSOR_SERVICE)) {
+            Log.d(TAG, "Got start sensor service command.");
             Intent startServiceIntent = new Intent(this, SensorService.class);
             startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
             startService(startServiceIntent);
@@ -37,14 +39,6 @@ public class ListenerService extends WearableListenerService {
             startService(startServiceIntent);
         }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.STOP_METAWEAR_SERVICE)) {
             Intent stopServiceIntent = new Intent(this, edu.umass.cs.prepare.metawear.SensorService.class);
-            stopServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-            startService(stopServiceIntent);
-        }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.START_BEACON_SERVICE)) {
-            Intent startPermissionsActivity = new Intent(this, PermissionsActivity.class);
-            startPermissionsActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(startPermissionsActivity);
-        }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.STOP_BEACON_SERVICE)) {
-            Intent stopServiceIntent = new Intent(this, edu.umass.cs.prepare.metawear.BeaconService.class);
             stopServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
             startService(stopServiceIntent);
         }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.CANCEL_METAWEAR_CONNECTION)) {

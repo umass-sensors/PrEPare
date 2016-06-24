@@ -171,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog connectDialog;
 
     private void showConnectingDialog(){
+        if (connectDialog != null && connectDialog.isShowing())
+            connectDialog.cancel();
         connectDialog = new ProgressDialog(this);
         connectDialog.setTitle(getString(R.string.title_connecting));
         connectDialog.setMessage(getString(R.string.message_wait));
@@ -184,13 +186,35 @@ public class MainActivity extends AppCompatActivity {
                     Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
                     startServiceIntent.setAction(SharedConstants.ACTIONS.CANCEL_CONNECTING);
                     startService(startServiceIntent);
-                }else{
+                } else {
                     remoteSensorManager.cancelMetawearConnection();
                 }
 
             }
         });
         connectDialog.show();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        //the intent filter specifies the messages we are interested in receiving
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
+        filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
+        registerReceiver(receiver, filter);
+    }
+
+    @Override
+    protected void onStop() {
+        try {
+            unregisterReceiver(receiver);
+        }catch (IllegalArgumentException e){
+            e.printStackTrace();
+        }
+
+        super.onStop();
     }
 
     private void cancelConnectingDialog() {
@@ -259,8 +283,9 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         record_audio = preferences.getBoolean(getString(R.string.pref_audio_key),
                 getResources().getBoolean(R.bool.pref_audio_default));
-        runServiceOverWearable = preferences.getBoolean(getString(R.string.pref_wearable_key),
-                getResources().getBoolean(R.bool.pref_wearable_default));
+        runServiceOverWearable = false;
+//        preferences.getBoolean(getString(R.string.pref_wearable_key),
+//                getResources().getBoolean(R.bool.pref_wearable_default)); //TODO uncomment
         mwMacAddress = preferences.getString(getString(R.string.pref_device_key),
                 getString(R.string.pref_device_default));
     }
@@ -287,12 +312,6 @@ public class MainActivity extends AppCompatActivity {
         loadPreferences();
         if (!runServiceOverWearable)
             doBindService();
-
-        //the intent filter specifies the messages we are interested in receiving
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
-        filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
-        registerReceiver(receiver, filter);
 
         remoteSensorManager = RemoteSensorManager.getInstance(this);
         //TODO: Is this necessary?
@@ -338,7 +357,6 @@ public class MainActivity extends AppCompatActivity {
         if (mwMacAddress.equals(getString(R.string.pref_device_default))){
             startActivityForResult(new Intent(MainActivity.this, SelectMetawearActivity.class), SELECT_DEVICE_REQUEST_CODE);
         }
-        stopMetawearService();
         startMetawearService();
     }
 
@@ -397,12 +415,15 @@ public class MainActivity extends AppCompatActivity {
             else
                 doBindService();
         }else if (requestCode == SELECT_DEVICE_REQUEST_CODE){
-            mwMacAddress = data.getStringExtra(SharedConstants.KEY.UUID);
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putString(getString(R.string.pref_device_key), mwMacAddress);
-            editor.apply();
-            startMetawearService();
+            if (data != null) {
+                mwMacAddress = data.getStringExtra(SharedConstants.KEY.UUID);
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putString(getString(R.string.pref_device_key), mwMacAddress);
+                editor.apply();
+            }else{
+                finish(); //can't return to the main UI if there is no device available
+            }
         }
     }
 
@@ -603,21 +624,18 @@ public class MainActivity extends AppCompatActivity {
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
                         showStatus("Listening for movement...");
-//                        cancelConnectingDialog();
-//                        showConnectingDialog();
-                    }else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
+                        cancelConnectingDialog();
+                        showConnectingDialog();
+                    } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         showStatus("Connected to pill bottle.");
-//                        cancelConnectingDialog();
-                    }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STARTED){
-                        showStatus("Searching for beacons...");
-                    }else if (message == SharedConstants.MESSAGES.BEACON_SERVICE_STOPPED){
-                        showStatus("Beacon service disabled.");
-                    }else if (message == SharedConstants.MESSAGES.BEACON_WITHIN_RANGE){
-                        showStatus("Found beacon!");
-                    }else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
+                        cancelConnectingDialog();
+//                        remoteSensorManager.startSensorService(); //TODO uncomment
+                    } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
+                        serviceManager.stopDataWriterService();
+//                        remoteSensorManager.stopSensorService(); //TODO uncomment
+                    } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
                         startButton.setBackgroundResource(android.R.drawable.ic_media_pause);
-                    }
-                    else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
+                    } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
                         startButton.setBackgroundResource(android.R.drawable.ic_media_play);
                     }
                 }

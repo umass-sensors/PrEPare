@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare;
+package edu.umass.cs.prepare.communication;
 
 import android.content.Context;
 import edu.umass.cs.shared.BroadcastInterface;

@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare;
+package edu.umass.cs.prepare.permissions;
 
 import android.Manifest;
 import android.annotation.TargetApi;

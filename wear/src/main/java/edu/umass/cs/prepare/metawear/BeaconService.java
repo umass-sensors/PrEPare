@@ -3,7 +3,7 @@ package edu.umass.cs.prepare.metawear;
 import android.content.Intent;
 import android.util.Log;
 
-import edu.umass.cs.prepare.Broadcaster;
+import edu.umass.cs.prepare.communication.Broadcaster;
 import edu.umass.cs.shared.SharedConstants;
 
 /**

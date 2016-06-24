@@ -14,7 +14,7 @@ import edu.umass.cs.prepare.R;
 import edu.umass.cs.shared.BatteryUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.shared.SensorBuffer;
-import edu.umass.cs.prepare.DataClient;
+import edu.umass.cs.prepare.communication.DataClient;
 
 /**
  * The Sensor Service is responsible for streaming sensor data from the Metawear tag to the

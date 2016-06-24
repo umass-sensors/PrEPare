@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare;
+package edu.umass.cs.prepare.communication;
 
 import android.content.Intent;
 import android.util.Log;
@@ -6,6 +6,7 @@ import android.util.Log;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import edu.umass.cs.prepare.sensors.SensorService;
 import edu.umass.cs.shared.SharedConstants;
 
 /**

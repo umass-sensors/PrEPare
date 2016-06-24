@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare;
+package edu.umass.cs.prepare.sensors;
 
 import android.app.Notification;
 import android.app.Service;
@@ -13,6 +13,8 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import edu.umass.cs.prepare.R;
+import edu.umass.cs.prepare.communication.DataClient;
 import edu.umass.cs.shared.SensorBuffer;
 import edu.umass.cs.shared.SharedConstants;
 

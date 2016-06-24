@@ -104,7 +104,15 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         super.onMetawearConnected();
         queryBatteryLevel();
         sendMessageToClients(Constants.MESSAGE.CONNECTED);
+        DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_CONNECTED);
         showForegroundNotification();
+    }
+
+    @Override
+    protected void onDisconnect() {
+        stopForeground(true);
+        DataReceiverService.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
+        super.onDisconnect();
     }
 
     private void showForegroundNotification(){

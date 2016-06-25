@@ -220,8 +220,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (mwMacAddress.equals(getString(R.string.pref_device_default))){
             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), SELECT_DEVICE_REQUEST_CODE);
+        }else {
+            startMetawearService();
         }
-        startMetawearService();
     }
 
     /**
@@ -270,6 +271,7 @@ public class MainActivity extends AppCompatActivity {
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putString(getString(R.string.pref_device_key), mwMacAddress);
                 editor.apply();
+                startMetawearService();
             }else{
                 finish(); //can't return to the main UI if there is no device available
             }

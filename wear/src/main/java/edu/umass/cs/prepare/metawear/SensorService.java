@@ -3,14 +3,13 @@ package edu.umass.cs.prepare.metawear;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
 import edu.umass.cs.prepare.R;
+import edu.umass.cs.prepare.communication.Broadcaster;
 import edu.umass.cs.shared.BatteryUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.shared.SensorBuffer;
@@ -36,6 +35,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     @Override
     public void onCreate() {
         super.onCreate();
+        setBroadcaster(new Broadcaster(this));
         client = DataClient.getInstance(this);
         setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
@@ -67,35 +67,10 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     }
 
     @Override
-    protected void onConnectionRequest() {
-        client.sendMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTING);
-    }
-
-    @Override
     protected void onMetawearConnected(){
         super.onMetawearConnected();
-        client.sendMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
         //queryBatteryLevel();
         startForeground();
-    }
-
-    @Override
-    protected void onDisconnect() {
-        stopForeground(true);
-        super.onDisconnect();
-    }
-
-    @Override
-    protected void onRSSIReadingReceived(long timestamp, int rssi){
-        //Log.d(TAG, String.valueOf(rssi));
-    }
-
-    @Override
-    protected void onAccelerometerReadingReceived(long timestamp, float x, float y, float z) {
-    }
-
-    @Override
-    protected void onGyroscopeReadingReceived(long timestamp, float x, float y, float z) {
     }
 
     private void startForeground(){
@@ -137,11 +112,5 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     protected void onBatteryLevelReceived(int percentage){
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, getUpdatedNotification(percentage));
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-        client.sendMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTING);
-        super.onServiceConnected(name, service);
     }
 }

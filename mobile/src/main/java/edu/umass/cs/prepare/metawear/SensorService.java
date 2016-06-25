@@ -1,18 +1,10 @@
 package edu.umass.cs.prepare.metawear;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
-
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 
 import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
@@ -44,16 +36,12 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     /** used for debugging purposes */
     private static final String TAG = SensorService.class.getName();
 
-    /** Messenger used by clients */
-    private final Messenger mMessenger = new Messenger(new IncomingHandler(this));
-
-    /** List of bound clients/activities to this service */
-    private final ArrayList<Messenger> mClients = new ArrayList<>();
-
+    /** Responsible for managing the services, e.g. sensor service, on the mobile application **/
     private ServiceManager serviceManager;
 
     @Override
     public void onCreate() {
+        setBroadcaster(new Broadcaster(this));
         serviceManager = ServiceManager.getInstance(this);
         setOnBufferFullCallback(accelerometerBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
@@ -76,44 +64,12 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         super.onCreate();
     }
 
-    /** Handler to handle incoming messages **/
-    private static class IncomingHandler extends Handler {
-        private final WeakReference<SensorService> mService;
-
-        IncomingHandler(SensorService service) {
-            mService = new WeakReference<>(service);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE.REGISTER_CLIENT:
-                    mService.get().mClients.add(msg.replyTo);
-                    break;
-                case Constants.MESSAGE.UNREGISTER_CLIENT:
-                    mService.get().mClients.remove(msg.replyTo);
-                    break;
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-    }
-
     @Override
     protected void onMetawearConnected(){
         serviceManager.startDataWriterService();
         super.onMetawearConnected();
         queryBatteryLevel();
-        sendMessageToClients(Constants.MESSAGE.CONNECTED);
-        Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_CONNECTED);
         showForegroundNotification();
-    }
-
-    @Override
-    protected void onDisconnect() {
-        stopForeground(true);
-        Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
-        super.onDisconnect();
     }
 
     private void showForegroundNotification(){
@@ -155,75 +111,14 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     }
 
     private void showBatteryLowNotification(int percentage){
-        //TODO
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, getUpdatedNotification(percentage));
     }
 
     @Override
     protected void onBatteryLevelReceived(int percentage){
         if (percentage < 10)
             showBatteryLowNotification(percentage);
-    }
-
-    @Override
-    protected void onConnectionRequest(){
-        sendMessageToClients(Constants.MESSAGE.CONNECTING);
-        super.onConnectionRequest();
-    }
-
-    @Override
-    protected void onRSSIReadingReceived(long timestamp, int rssi) {
-        super.onRSSIReadingReceived(timestamp, rssi);
-    }
-
-    @Override
-    protected void onGyroscopeReadingReceived(long timestamp, float x, float y, float z) {
-        super.onGyroscopeReadingReceived(timestamp, x, y, z);
-    }
-
-    @Override
-    protected void onAccelerometerReadingReceived(long timestamp, float x, float y, float z) {
-        sendAccelerometerReadingToClients(timestamp, x, y, z);
-        super.onAccelerometerReadingReceived(timestamp, x, y, z);
-    }
-
-    private void sendAccelerometerReadingToClients(long timestamp, float x, float y, float z){
-        for (int i=mClients.size()-1; i>=0; i--) {
-            try {
-                // Send message value
-                Bundle b = new Bundle();
-                b.putLong(Constants.KEY.TIMESTAMP, timestamp);
-                b.putFloatArray(Constants.KEY.ACCELEROMETER_READING, new float[]{x, y, z});
-                Message msg = Message.obtain(null, Constants.MESSAGE.ACCELEROMETER_READING);
-                msg.setData(b);
-                mClients.get(i).send(msg);
-            } catch (RemoteException e) {
-                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
-                mClients.remove(i);
-            }
-        }
-    }
-
-    /**
-     * Sends the specified message to attached clients
-     */
-    private void sendMessageToClients(int message) {
-        for (int i=mClients.size()-1; i>=0; i--) {
-            try {
-                // Send message value
-                Bundle b = new Bundle();
-                Message msg = Message.obtain(null, message);
-                msg.setData(b);
-                mClients.get(i).send(msg);
-            } catch (RemoteException e) {
-                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
-                mClients.remove(i);
-            }
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mMessenger.getBinder();
     }
 
 }

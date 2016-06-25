@@ -4,12 +4,10 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -18,11 +16,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -39,22 +32,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.android.gms.wearable.MessageApi;
-
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import edu.umass.cs.prepare.metawear.DataReceiverService;
-import edu.umass.cs.prepare.metawear.SelectMetawearActivity;
-import edu.umass.cs.prepare.metawear.ServiceManager;
+import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
+import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
+import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.recording.RecordingService;
 import edu.umass.cs.shared.DataLayerUtil;
 import edu.umass.cs.shared.SharedConstants;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
-import edu.umass.cs.prepare.metawear.RemoteSensorManager;
+import edu.umass.cs.prepare.communication.wearable.RemoteSensorManager;
 import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.preferences.SettingsActivity;
 
@@ -74,21 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
     /** View which displays the accelerometer readings from the Metawear tag TODO: make array adapter list view for displaying multiple modalities **/
     private TextView txtAccelerometer;
-
-    /**
-     * Messenger service for exchanging messages with the background service
-     */
-    private Messenger mService = null;
-
-    /**
-     * indicates if this activity is bound to the {@link SensorService}
-     */
-    private boolean mIsBound;
-
-    /**
-     * Messenger receiving messages from the background service to update UI
-     */
-    private final Messenger mMessenger = new Messenger(new IncomingHandler(this));
 
     /** whether video recording should include audio **/
     private boolean record_audio;
@@ -115,61 +90,17 @@ public class MainActivity extends AppCompatActivity {
     /** The unique address of the Metawear device. **/
     private String mwMacAddress;
 
-    /**
-     * Handler to handle incoming messages
-     */
-    static class IncomingHandler extends Handler {
-        private final WeakReference<MainActivity> mMainActivity;
-
-        IncomingHandler(MainActivity mainActivity) {
-            mMainActivity = new WeakReference<>(mainActivity);
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE.SENSOR_STARTED:
-                {
-                    //mMainActivity.get().updateStatus("sensor started.");
-                    //mMainActivity.get().onSensorStarted();
-                    break;
-                }
-                case Constants.MESSAGE.SENSOR_STOPPED:
-                {
-                    //mMainActivity.get().updateStatus("sensor stopped.");
-                    break;
-                }
-                case Constants.MESSAGE.STATUS:
-                {
-                    //mMainActivity.get().updateStatus(msg.getData().getString(Constants.KEY.STATUS));
-                    break;
-                }
-                case Constants.MESSAGE.ACCELEROMETER_READING:
-                {
-                    mMainActivity.get().displayAccelerometerReading(msg.getData().getFloatArray(Constants.KEY.ACCELEROMETER_READING));
-                    break;
-                }
-                case Constants.MESSAGE.BATTERY_LEVEL:
-                {
-                    mMainActivity.get().updateBatteryLevel(msg.getData().getInt(Constants.KEY.BATTERY_LEVEL));
-                    break;
-                }
-                case Constants.MESSAGE.CONNECTING:
-                {
-                    mMainActivity.get().showConnectingDialog();
-                    break;
-                }
-                case Constants.MESSAGE.CONNECTED:
-                {
-                    mMainActivity.get().cancelConnectingDialog();
-                    break;
-                }
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-    }
-
+    /** Notifies the user that the mobile device is attempting to connect to the Metawear board. **/
     private ProgressDialog connectDialog;
+
+    /** Button that controls video recording, i.e. on/off switch. **/
+    private Button recordingButton;
+
+    /** Image corresponding to the current Metawear battery level. **/
+    private Bitmap batteryLevelBitmap;
+
+    /** The action bar at the top of the main UI **/
+    private ActionBar actionBar;
 
     private void showConnectingDialog(){
         if (connectDialog != null && connectDialog.isShowing())
@@ -196,6 +127,13 @@ public class MainActivity extends AppCompatActivity {
         connectDialog.show();
     }
 
+    /**
+     * Cancel the connection notification dialog.
+     */
+    private void cancelConnectingDialog() {
+        connectDialog.dismiss();
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -209,6 +147,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        serviceManager.maximizeVideo();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        serviceManager.minimizeVideo();
+    }
+
+    @Override
     protected void onStop() {
         LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
         try {
@@ -218,65 +168,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         super.onStop();
-    }
-
-    private void cancelConnectingDialog() {
-        connectDialog.dismiss();
-    }
-
-    /**
-     * Connection with the service
-     */
-    private final ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            //TODO: Change mService to a list to contain multiple services, try using log cat with className to check this holds for DataReceiverService
-            mService = new Messenger(service);
-            //updateStatus("Attached to the sensor service.");
-            mIsBound = true;
-            try {
-                Message msg = Message.obtain(null, Constants.MESSAGE.REGISTER_CLIENT);
-                msg.replyTo = mMessenger;
-                mService.send(msg);
-            } catch (RemoteException e) {
-                // In this case the service has crashed before we could even do anything with it
-            }
-        }
-
-        public void onServiceDisconnected(ComponentName className) {
-            // This is called when the connection with the service has been unexpectedly disconnected - process crashed.
-            mIsBound = false;
-            mService = null;
-            //updateStatus("Disconnected from the sensor service.");
-        }
-    };
-
-    /**
-     * Binds the activity to the background service
-     */
-    private void doBindService() {
-        bindService(new Intent(this, SensorService.class), mConnection, Context.BIND_AUTO_CREATE);
-        //updateStatus("Binding to Service...");
-    }
-
-    /**
-     * Unbind this activity from the background service
-     */
-    private void doUnbindService() {
-        if (mIsBound) {
-            // If we have received the service, and hence registered with it, then now is the time to unregister.
-            if (mService != null) {
-                try {
-                    Message msg = Message.obtain(null, Constants.MESSAGE.UNREGISTER_CLIENT);
-                    msg.replyTo = mMessenger;
-                    mService.send(msg);
-                } catch (RemoteException e) {
-                    // There is nothing special we need to do if the service has crashed.
-                }
-            }
-            // Detach our existing connection.
-            unbindService(mConnection);
-            //updateStatus("Unbinding from Service...");
-        }
     }
 
     /**
@@ -294,71 +185,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        serviceManager.maximizeVideo();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        serviceManager.minimizeVideo();
-    }
-
-    private Button startButton;
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         loadPreferences();
-        if (!runServiceOverWearable)
-            doBindService();
 
         remoteSensorManager = RemoteSensorManager.getInstance(this);
-        //TODO: Is this necessary?
-        remoteSensorManager.setRemoteSensorListener(new RemoteSensorManager.RemoteSensorListener() {
-            @Override
-            public void onMessageResult(String path, byte[] msg, MessageApi.SendMessageResult sendMessageResult) {
-
-            }
-        });
-
         serviceManager = ServiceManager.getInstance(this);
 
-        startButton = (Button) findViewById(R.id.start_button);
-        startButton.setOnClickListener(new View.OnClickListener() {
+        recordingButton = (Button) findViewById(R.id.start_button);
+        recordingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!RecordingService.isRecording){
+                if (!RecordingService.isRecording) {
                     //TODO: Do Android versions prior to M require run-time permission request for overlay?
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                         requestPermissions();
                     else
                         onPermissionsGranted();
-                }else{
+                } else {
                     serviceManager.stopRecordingService();
                 }
 
             }
         });
         if (RecordingService.isRecording)
-            startButton.setBackgroundResource(android.R.drawable.ic_media_pause);
-//        Button stopButton = (Button) findViewById(R.id.stop_button);
-//        assert stopButton != null;
-//        stopButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                stopServices();
-//            }
-//        });
+            recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
+
         txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
         txtAccelerometer.setText(String.format(getString(R.string.initial_sensor_readings), 0f, 0f, 0f));
         mSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
+        actionBar = getSupportActionBar();
 
         if (mwMacAddress.equals(getString(R.string.pref_device_default))){
-            startActivityForResult(new Intent(MainActivity.this, SelectMetawearActivity.class), SELECT_DEVICE_REQUEST_CODE);
+            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), SELECT_DEVICE_REQUEST_CODE);
         }
         startMetawearService();
     }
@@ -374,25 +235,11 @@ public class MainActivity extends AppCompatActivity {
         serviceManager.startRecordingService(position[0], position[1], w, h);
     }
 
-    /**
-     * Stops all ongoing services
-     */
-    private void stopServices(){
-        serviceManager.stopDataWriterService();
-        stopMetawearService();
-    }
-
     private void startMetawearService(){
         if (runServiceOverWearable)
             remoteSensorManager.startMetawearService();
         else
             serviceManager.startMetawearService(); //CE:03:BF:17:58:41 //DC:00:25:17:8E:CF //F6:8D:FC:1A:E4:50
-    }
-
-    @Override
-    public void onDestroy() {
-        doUnbindService();
-        super.onDestroy();
     }
 
     private void stopMetawearService(){
@@ -412,11 +259,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }else if (requestCode == Constants.ACTION.REQUEST_SET_PREFERENCES){
+            //TODO: May not be enough to stop and start it, what if the user changes preferences during movement? Unlikely??
+            stopMetawearService();
             loadPreferences();
-            if (runServiceOverWearable)
-                doUnbindService();
-            else
-                doBindService();
+            startMetawearService();
         }else if (requestCode == SELECT_DEVICE_REQUEST_CODE){
             if (data != null) {
                 mwMacAddress = data.getStringExtra(SharedConstants.KEY.UUID);
@@ -447,8 +293,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private Bitmap batteryLevelBitmap;
-
     /**
      * display the battery level in the UI
      * @param percentage battery level in the range of [0,100]
@@ -470,8 +314,6 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ActionBar actionBar = getSupportActionBar();
-                assert actionBar != null;
                 actionBar.setDisplayShowHomeEnabled(true);
                 actionBar.setIcon(icon);
                 actionBar.setTitle("");
@@ -520,10 +362,8 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case PERMISSION_REQUEST: {
                 //If the request is cancelled, the result array is empty.
-                if (grantResults.length == 0) {
-                    //updateStatus("Permission Request Cancelled.");
-                    return;
-                }
+                if (grantResults.length == 0) return;
+
                 for (int i = 0; i < permissions.length; i++){
                     if (grantResults[i] != PackageManager.PERMISSION_GRANTED){
                         switch (permissions[i]) {
@@ -637,9 +477,9 @@ public class MainActivity extends AppCompatActivity {
                         serviceManager.stopDataWriterService();
 //                        remoteSensorManager.stopSensorService(); //TODO uncomment
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
-                        startButton.setBackgroundResource(android.R.drawable.ic_media_pause);
+                        recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
-                        startButton.setBackgroundResource(android.R.drawable.ic_media_play);
+                        recordingButton.setBackgroundResource(android.R.drawable.ic_media_play);
                     }
                 }
             }

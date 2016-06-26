@@ -54,5 +54,6 @@ public class Constants {
         int BATTERY_LEVEL = 6;
         int CONNECTING = 7;
         int CONNECTED = 8;
+        int DISCONNECTED = 9;
     }
 }

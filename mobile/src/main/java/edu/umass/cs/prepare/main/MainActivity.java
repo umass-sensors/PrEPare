@@ -131,7 +131,8 @@ public class MainActivity extends AppCompatActivity {
      * Cancel the connection notification dialog.
      */
     private void cancelConnectingDialog() {
-        connectDialog.dismiss();
+        if (connectDialog != null)
+            connectDialog.dismiss();
     }
 
     @Override
@@ -167,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        cancelConnectingDialog();
         super.onStop();
     }
 
@@ -469,7 +471,6 @@ public class MainActivity extends AppCompatActivity {
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
                         showStatus("Listening for movement...");
-                        cancelConnectingDialog();
                         showConnectingDialog();
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         showStatus("Connected to pill bottle.");

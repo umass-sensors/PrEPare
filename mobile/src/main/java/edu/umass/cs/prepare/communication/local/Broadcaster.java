@@ -68,6 +68,7 @@ public class Broadcaster implements BroadcastInterface {
         Intent intent = new Intent();
         intent.putExtra(SharedConstants.KEY.MESSAGE, message);
         intent.setAction(Constants.ACTION.BROADCAST_MESSAGE);
-        context.sendBroadcast(intent);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(context);
+        manager.sendBroadcast(intent);
     }
 }

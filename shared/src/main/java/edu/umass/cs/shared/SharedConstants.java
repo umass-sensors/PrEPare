@@ -66,7 +66,6 @@ public class SharedConstants {
         String TIMESTAMPS = "edu.umass.cs.prepare.key.timestamps";
         String SENSOR_VALUES = "edu.umass.cs.prepare.key.sensor-values";
         String SENSOR_TYPE = "edu.umass.cs.prepare.key.sensor-type";
-        String PREFERENCES = "edu.umass.cs.prepare.key.preferences";
         String MESSAGE = "edu.umass.cs.prepare.key.message";
     }
 
@@ -96,11 +95,10 @@ public class SharedConstants {
         int METAWEAR_SENSOR_SERVICE = 102;
         int DATA_WRITER_SERVICE = 103;
         int RECORDING_SERVICE = 104;
-        int BEACON_SERVICE = 105;
     }
 
     /** The IP address of the server where the data should be sent. **/
-    public static final String SERVER_IP_ADDRESS = "192.168.25.150"; //"192.168.25.150"; //"192.168.26.217"
+    public static final String SERVER_IP_ADDRESS = "172.30.161.169"; //"192.168.25.150"; //"192.168.26.217"
 
     /** The port for the server where the data should be sent. **/
     public static final int SERVER_PORT = 9999;

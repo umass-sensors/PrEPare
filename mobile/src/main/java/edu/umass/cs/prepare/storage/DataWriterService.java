@@ -140,9 +140,9 @@ public class DataWriterService extends Service {
                                     client.addSensorReading(new MHLGyroscopeReading(0, "WEARABLE", System.currentTimeMillis(), x, y, z));
                                 }
                                 //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
-                                try {
-                                    Thread.sleep(10);
-                                } catch (InterruptedException ignored) {}
+//                                try {
+//                                    Thread.sleep(10);
+//                                } catch (InterruptedException ignored) {} //TODO: Should I be doing this on main UI thread?
                             }
                         }
                     }
@@ -197,10 +197,10 @@ public class DataWriterService extends Service {
                 @Override
                 public void onConnectionFailed() {
                     // if the connection fails, then write locally instead
-                    if (!writeLocal) {
-                        initializeFileWriters();
-                        writeLocal = true;
-                    }
+//                    if (!writeLocal) {
+//                        initializeFileWriters();
+//                        writeLocal = true;
+//                    }
                     writeServer = false;
                 }
             });
@@ -237,37 +237,47 @@ public class DataWriterService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId){
         if (intent == null) return START_STICKY;
         if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
-            registerReceiver();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    registerReceiver();
 
-            Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
-            notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
-            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+                    Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
+                    notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
+                    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
 
-            Intent stopIntent = new Intent(this, DataWriterService.class);
-            stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-            PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+                    Intent stopIntent = new Intent(DataWriterService.this, DataWriterService.class);
+                    stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
+                    PendingIntent stopPendingIntent = PendingIntent.getService(DataWriterService.this, 0, stopIntent, 0);
 
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setTicker(getString(R.string.app_name))
-                    .setContentText(getString(R.string.notification_text))
-                    .setSmallIcon(android.R.drawable.ic_menu_save)
-                    .setContentIntent(pendingIntent)
-                    .setPriority(Notification.PRIORITY_MAX) //otherwise buttons will not show up!
-                    .setOngoing(true)
-                    .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent).build();
+                    Notification notification = new NotificationCompat.Builder(DataWriterService.this)
+                            .setContentTitle(getString(R.string.app_name))
+                            .setTicker(getString(R.string.app_name))
+                            .setContentText(getString(R.string.notification_text))
+                            .setSmallIcon(android.R.drawable.ic_menu_save)
+                            .setContentIntent(pendingIntent)
+                            .setPriority(Notification.PRIORITY_MAX) //otherwise buttons will not show up!
+                            .setOngoing(true)
+                            .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent).build();
 
-            startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
+                    startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
+                }
+            }).start();
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
             Log.i(TAG, "Received Stop Service Intent");
 
-            unregisterReceiver();
-            if (writeLocal)
-                closeAllWriters();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    unregisterReceiver();
+                    if (writeLocal)
+                        closeAllWriters();
 
-            stopForeground(true);
-            stopSelf();
+                    stopForeground(true);
+                    stopSelf();
+                }
+            }).start();
         }
 
         return START_STICKY;

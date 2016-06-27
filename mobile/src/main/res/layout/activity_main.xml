@@ -38,6 +38,15 @@
                 android:layout_height="wrap_content"
                 android:background="@android:drawable/ic_media_play"
                 />
+
+            <Button
+                style="?android:attr/buttonBarButtonStyle"
+                android:id="@+id/label_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/ic_menu_edit"
+                />
+            
         </LinearLayout>
 
         <TextView

@@ -27,6 +27,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
@@ -96,11 +97,15 @@ public class MainActivity extends AppCompatActivity {
     /** Button that controls video recording, i.e. on/off switch. **/
     private Button recordingButton;
 
+    private Button labelButton;
+
     /** Image corresponding to the current Metawear battery level. **/
     private Bitmap batteryLevelBitmap;
 
     /** The action bar at the top of the main UI **/
     private ActionBar actionBar;
+
+    public static int label = 0;
 
     private void showConnectingDialog(){
         if (connectDialog != null && connectDialog.isShowing())
@@ -214,6 +219,24 @@ public class MainActivity extends AppCompatActivity {
         });
         if (RecordingService.isRecording)
             recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
+
+        labelButton = (Button) findViewById(R.id.label_button);
+        labelButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        showStatus("Labeling event");
+                        label = 1;
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        showStatus("No event");
+                        label = 0;
+                        return true;
+                }
+                return false;
+            }
+        });
 
         txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
         txtAccelerometer.setText(String.format(getString(R.string.initial_sensor_readings), 0f, 0f, 0f));

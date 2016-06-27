@@ -71,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean runServiceOverWearable;
 
+    private boolean serviceEnabled;
+
     /** Permission request identifier **/
     private static final int PERMISSION_REQUEST = 1;
 
@@ -184,11 +186,12 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         record_audio = preferences.getBoolean(getString(R.string.pref_audio_key),
                 getResources().getBoolean(R.bool.pref_audio_default));
-        runServiceOverWearable = false;
-//        preferences.getBoolean(getString(R.string.pref_wearable_key),
-//                getResources().getBoolean(R.bool.pref_wearable_default)); //TODO uncomment
+        runServiceOverWearable = preferences.getBoolean(getString(R.string.pref_wearable_key),
+                getResources().getBoolean(R.bool.pref_wearable_default)); //TODO uncomment
         mwMacAddress = preferences.getString(getString(R.string.pref_device_key),
                 getString(R.string.pref_device_default));
+        serviceEnabled = preferences.getBoolean(getString(R.string.pref_connect_key),
+                getResources().getBoolean(R.bool.pref_connect_default));
     }
 
     @Override
@@ -245,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (mwMacAddress.equals(getString(R.string.pref_device_default))){
             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), SELECT_DEVICE_REQUEST_CODE);
-        }else {
+        } else {
             startMetawearService();
         }
     }
@@ -262,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startMetawearService(){
+        if (!serviceEnabled) return;
         if (runServiceOverWearable)
             remoteSensorManager.startMetawearService();
         else

@@ -82,4 +82,14 @@
 
     </PreferenceScreen>
 
+    <CheckBoxPreference
+        android:enabled="true"
+        android:title="@string/pref_connect_title"
+        android:key="@string/pref_connect_key"
+        android:defaultValue="@bool/pref_connect_default"
+
+        android:summaryOn="@string/pref_connect_summaryOn"
+        android:summaryOff="@string/pref_connect_summaryOff" />
+
+
 </PreferenceScreen>

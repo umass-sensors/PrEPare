@@ -87,6 +87,7 @@ public class SharedConstants {
 
     public interface METAWEAR_STREAM_KEY{
         String ACCELEROMETER = "edu.umass.cs.prepare.metawear-accelerometer-stream";
+        String NO_MOTION = "edu.umass.cs.prepare.metawear-no-motion-stream";
         String GYROSCOPE = "edu.umass.cs.prepare.metawear-gyroscope-stream";
     }
 

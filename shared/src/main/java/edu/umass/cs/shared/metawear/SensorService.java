@@ -454,7 +454,7 @@ public class SensorService extends Service implements ServiceConnection {
      */
     private void startAccelerometerWithNoMotionDetection(){
         accModule.routeData().fromAxes()
-                .stream("accelerometer-stream")
+                .stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER)
                 .process(new Rss())
                 .process(new Maths(Maths.Operation.SUBTRACT, 1))
                 .process(new Maths(Maths.Operation.ABS_VALUE, 0))
@@ -462,12 +462,12 @@ public class SensorService extends Service implements ServiceConnection {
                 .process(new Time(Time.OutputMode.ABSOLUTE, 2000))
                 //.stream("debug")
                 .process(new Comparison(Comparison.Operation.LT, 0.015))
-                .stream("no-motion")
+                .stream(SharedConstants.METAWEAR_STREAM_KEY.NO_MOTION)
                 .commit()
                 .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                     @Override
                     public void success(RouteManager result) {
-                        result.subscribe("no-motion", new RouteManager.MessageHandler() {
+                        result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.NO_MOTION, new RouteManager.MessageHandler() {
                             @Override
                             public void process(Message msg) {
                                 stopSensors();
@@ -480,7 +480,7 @@ public class SensorService extends Service implements ServiceConnection {
 //                                Log.d(TAG, String.valueOf(msg.getData(Float.class)));
 //                            }
 //                        });
-                        result.subscribe("accelerometer-stream", new RouteManager.MessageHandler() {
+                        result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER, new RouteManager.MessageHandler() {
                             @Override
                             public void process(Message msg) {
                                 CartesianFloat reading = msg.getData(CartesianFloat.class);

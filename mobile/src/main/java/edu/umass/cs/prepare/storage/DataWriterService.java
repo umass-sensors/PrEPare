@@ -140,9 +140,9 @@ public class DataWriterService extends Service {
                                     client.addSensorReading(new MHLGyroscopeReading(0, "WEARABLE", System.currentTimeMillis(), x, y, z));
                                 }
                                 //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
-//                                try {
-//                                    Thread.sleep(10);
-//                                } catch (InterruptedException ignored) {} //TODO: Should I be doing this on main UI thread?
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException ignored) {} //TODO: Should I be doing this on main UI thread?
                             }
                         }
                     }
@@ -247,19 +247,13 @@ public class DataWriterService extends Service {
                     notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
 
-                    Intent stopIntent = new Intent(DataWriterService.this, DataWriterService.class);
-                    stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-                    PendingIntent stopPendingIntent = PendingIntent.getService(DataWriterService.this, 0, stopIntent, 0);
-
                     Notification notification = new NotificationCompat.Builder(DataWriterService.this)
                             .setContentTitle(getString(R.string.app_name))
                             .setTicker(getString(R.string.app_name))
-                            .setContentText(getString(R.string.notification_text))
+                            .setContentText(getString(R.string.data_writer_notification))
                             .setSmallIcon(android.R.drawable.ic_menu_save)
                             .setContentIntent(pendingIntent)
-                            .setPriority(Notification.PRIORITY_MAX) //otherwise buttons will not show up!
-                            .setOngoing(true)
-                            .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent).build();
+                            .setOngoing(true).build();
 
                     startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
                 }

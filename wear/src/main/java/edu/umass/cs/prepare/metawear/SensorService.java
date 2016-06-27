@@ -93,7 +93,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setContentTitle(getString(R.string.app_name))
                 .setTicker(getString(R.string.app_name))
-                .setContentText(getString(R.string.notification_text))
+                .setContentText(getString(R.string.sensor_service_notification))
                 .setSmallIcon(R.drawable.ic_pill)
                 .setLargeIcon(Bitmap.createScaledBitmap(icon, 128, 128, false))
                 .setOngoing(true)

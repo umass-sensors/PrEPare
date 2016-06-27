@@ -40,6 +40,15 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     private ServiceManager serviceManager;
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null)
+            if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)){
+                showForegroundNotification(false);
+            }
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
     public void onCreate() {
         setBroadcaster(new Broadcaster(this));
         serviceManager = ServiceManager.getInstance(this);
@@ -68,20 +77,23 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     protected void onMetawearConnected(){
         serviceManager.startDataWriterService();
         super.onMetawearConnected();
+        showForegroundNotification(true);
         queryBatteryLevel();
-        showForegroundNotification();
     }
 
-    private void showForegroundNotification(){
-        Notification notification = getUpdatedNotification(-1);
+    @Override
+    protected void onDisconnect() {
+        super.onDisconnect();
+        serviceManager.stopDataWriterService();
+        showForegroundNotification(false);
+    }
+
+    private void showForegroundNotification(boolean connected){
+        Notification notification = getUpdatedNotification(-1, connected);
         startForeground(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, notification);
     }
 
-    private Notification getUpdatedNotification(int batteryLevel){
-        Intent stopIntent = new Intent(this, SensorService.class);
-        stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
-
+    private Notification getUpdatedNotification(int batteryLevel, boolean connected){
         Intent queryBatteryLevelIntent = new Intent(this, SensorService.class);
         queryBatteryLevelIntent.setAction(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL);
         PendingIntent queryBatteryLevelPendingIntent = PendingIntent.getService(this, 0, queryBatteryLevelIntent, 0);
@@ -95,13 +107,20 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setContentTitle(getString(R.string.app_name))
                 .setTicker(getString(R.string.app_name))
-                .setContentText(getString(R.string.notification_text))
                 .setSmallIcon(R.drawable.ic_notification)
                 .setOngoing(true)
                 .setContentIntent(pendingIntent)
-                .setVibrate(new long[]{0, 50, 150, 200})
-                .setPriority(Notification.PRIORITY_MAX)
-                .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent);
+                .setVibrate(new long[]{0, 50, 150, 200});
+
+        String contentText;
+        if (connected){
+            contentText = getString(R.string.connection_notification);
+        }else {
+            contentText = getString(R.string.sensor_service_notification);
+        }
+        if (batteryLevel >= 0)
+            contentText += String.format("(battery: %d%%)", batteryLevel);
+        notificationBuilder = notificationBuilder.setContentText(contentText);
 
         if (batteryLevel >= 0)
             notificationBuilder = notificationBuilder.addAction(BatteryUtil.getBatteryLevelIconId(batteryLevel),
@@ -110,15 +129,14 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         return notificationBuilder.build();
     }
 
-    private void showBatteryLowNotification(int percentage){
+    private void showBatteryLevelNotification(int percentage){
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, getUpdatedNotification(percentage));
+        notificationManager.notify(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, getUpdatedNotification(percentage, true));
     }
 
     @Override
-    protected void onBatteryLevelReceived(int percentage){
-        if (percentage < 10)
-            showBatteryLowNotification(percentage);
+    protected void onBatteryLevelReceived(int percentage) {
+        showBatteryLevelNotification(percentage);
     }
 
 }

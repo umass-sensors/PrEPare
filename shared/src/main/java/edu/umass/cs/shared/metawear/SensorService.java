@@ -222,6 +222,7 @@ public class SensorService extends Service implements ServiceConnection {
      * Called when the sensor service is started, by command from the handheld application.
      */
     protected void onServiceStarted(){
+        if (isRunning) return;
         new Thread(new Runnable() {
             public void run() {
                 loadPreferences();

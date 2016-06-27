@@ -98,7 +98,7 @@ public class SharedConstants {
     }
 
     /** The IP address of the server where the data should be sent. **/
-    public static final String SERVER_IP_ADDRESS = "172.30.161.169"; //"192.168.25.150"; //"192.168.26.217"
+    public static final String SERVER_IP_ADDRESS = "192.168.25.150"; //"192.168.25.150"; //"192.168.26.217"
 
     /** The port for the server where the data should be sent. **/
     public static final int SERVER_PORT = 9999;

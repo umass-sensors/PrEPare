@@ -172,14 +172,18 @@ public class SensorService extends Service implements ServiceConnection {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null)
-            if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)){
+        if (intent != null) {
+            if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
                 onServiceStarted();
-            } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)){
+            } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
                 onServiceStopped();
-            } else if (intent.getAction().equals(SharedConstants.ACTIONS.CANCEL_CONNECTING)){
-                disconnect();
+            } else if (intent.getAction().equals(SharedConstants.ACTIONS.CANCEL_CONNECTING)) {
+                if (!isConnected)
+                    disconnect();
             }
+        } else {
+            Log.d(TAG, "System restarted service due to memory usage.");
+        }
         return START_STICKY;
     }
 
@@ -243,8 +247,7 @@ public class SensorService extends Service implements ServiceConnection {
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        if (mwBoard == null)
-            mwBoard= ((MetaWearBleService.LocalBinder) service).getMetaWearBoard(btDevice);
+        mwBoard = ((MetaWearBleService.LocalBinder) service).getMetaWearBoard(btDevice);
 
         mwBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
             @Override
@@ -294,6 +297,7 @@ public class SensorService extends Service implements ServiceConnection {
             handler.removeCallbacksAndMessages(null);
 
         if (isRunning) {
+            Log.d(TAG, "No motion or out of range.");
             if (hThread == null) {
                 hThread = new HandlerThread("HandlerThread");
                 hThread.start();
@@ -317,8 +321,11 @@ public class SensorService extends Service implements ServiceConnection {
                 mIsBound = false;
             }
             if (btConnected) {
+                Log.d(TAG, "Explicit disconnect.");
                 stopForeground(true);
                 stopSelf();
+            }else{
+                Log.d(TAG, "Bluetooth disconnect interrupt.");
             }
         }
         if (broadcaster != null)
@@ -385,6 +392,8 @@ public class SensorService extends Service implements ServiceConnection {
      * want to start low power motion detection, stop all other sensors and stop advertisements.
      */
     private void handleBoardDisconnectionEvent(){
+        //ensures that if the disconnect monitor event does not properly get called, then we can reconnect to the board
+        //settingsModule.configure().setAdInterval((short) 1000, (byte) 0).commit();
         settingsModule.handleEvent().fromDisconnect()
                 .monitor(new DataSignal.ActivityHandler() {
                     @Override
@@ -450,7 +459,8 @@ public class SensorService extends Service implements ServiceConnection {
                 .process(new Maths(Maths.Operation.ABS_VALUE, 0))
                 .process(new Average((byte) 127))
                 .process(new Time(Time.OutputMode.ABSOLUTE, 2000))
-                .process(new Comparison(Comparison.Operation.LT, 0.01))
+                //.stream("debug")
+                .process(new Comparison(Comparison.Operation.LT, 0.015))
                 .stream("no-motion")
                 .commit()
                 .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
@@ -463,6 +473,12 @@ public class SensorService extends Service implements ServiceConnection {
                                 startMotionDetection();
                             }
                         });
+//                        result.subscribe("debug", new RouteManager.MessageHandler() {
+//                            @Override
+//                            public void process(Message msg) {
+//                                Log.d(TAG, String.valueOf(msg.getData(Float.class)));
+//                            }
+//                        });
                         result.subscribe("accelerometer-stream", new RouteManager.MessageHandler() {
                             @Override
                             public void process(Message msg) {

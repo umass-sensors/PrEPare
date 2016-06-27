@@ -24,7 +24,6 @@ import java.io.File;
  * the {@link cs.umass.edu.shared.R.string#pref_accelerometer_sampling_rate_key accelerometer},
  * {@link cs.umass.edu.shared.R.string#pref_gyroscope_sampling_rate_key gyroscope} and
  * {@link cs.umass.edu.shared.R.string#pref_rssi_sampling_rate_key RSSI} sampling rates as
- * well as the {@link cs.umass.edu.shared.R.string#pref_accelerometer_key accelerometer},
  * {@link cs.umass.edu.shared.R.string#pref_gyroscope_key gyroscope} and
  * {@link cs.umass.edu.shared.R.string#pref_rssi_key RSSI} enabled states.
  *

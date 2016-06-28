@@ -129,13 +129,24 @@ public class SensorService extends Service implements ServiceConnection {
     /** The buffer containing the RSSI readings. **/
     protected final SensorBuffer rssiBuffer = new SensorBuffer(BUFFER_SIZE, 1);
 
-    /** Indicates whether the sensor service is currently connected to the Metawear board. **/
-    private boolean isConnected = false;
+    /**
+     * Possible sources of disconnection from the Metawear board.
+     */
+    private enum DISCONNECT_SOURCE {
+        /** No known source of disconnection **/
+        UNKNOWN,
+        /** The Metawear board is no longer in motion and need not be connected to the phone **/
+        NO_MOTION_DETECTED,
+        /** Bluetooth has been disabled and a connection cannot be established **/
+        BLUETOOTH_DISABLED,
+        /** The device is no longer in range **/
+        OUT_OF_RANGE,
+        /** The user requested a disconnection explicitly **/
+        DISCONNECT_REQUESTED
+    }
 
-    /** Indicates whether the sensor service is currently running. **/
-    private boolean isRunning = false;
-
-    private boolean btConnected = true;
+    /** The source of disconnection from the Metawear board. **/
+    private DISCONNECT_SOURCE disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
 
     /** The unique address of the Metawear device. **/
     private String mwMacAddress;
@@ -178,8 +189,7 @@ public class SensorService extends Service implements ServiceConnection {
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
                 onServiceStopped();
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.CANCEL_CONNECTING)) {
-                if (!isConnected)
-                    disconnect();
+                onServiceStopped();
             }
         } else {
             Log.d(TAG, "System restarted service due to memory usage.");
@@ -222,28 +232,19 @@ public class SensorService extends Service implements ServiceConnection {
      * Called when the sensor service is started, by command from the handheld application.
      */
     protected void onServiceStarted(){
-        if (isRunning) return;
-        new Thread(new Runnable() {
-            public void run() {
-                loadPreferences();
-                //TODO : If BT is off?
-                BluetoothManager btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
-                try {
-                    btDevice = btManager.getAdapter().getRemoteDevice(mwMacAddress);
-                }catch(IllegalArgumentException e){
-                    e.printStackTrace();
-                    //TODO: Notify user that address is not valid
-                    return;
-                }
-                if (mIsBound) {
-                    getApplicationContext().unbindService(SensorService.this);
-                    mIsBound = false;
-                }
-                mIsBound = getApplicationContext().bindService(new Intent(SensorService.this, MetaWearBleService.class),
-                        SensorService.this, Context.BIND_AUTO_CREATE);
-                isRunning = true;
-            }
-        }).start();
+        if (mIsBound) return;
+        loadPreferences();
+        //TODO : If BT is off?
+        BluetoothManager btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+        try {
+            btDevice = btManager.getAdapter().getRemoteDevice(mwMacAddress);
+        }catch(IllegalArgumentException e){
+            e.printStackTrace();
+            //TODO: Notify user that address is not valid
+            return;
+        }
+        mIsBound = getApplicationContext().bindService(new Intent(SensorService.this, MetaWearBleService.class),
+                SensorService.this, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -260,75 +261,59 @@ public class SensorService extends Service implements ServiceConnection {
             @Override
             public void disconnected() {
                 Log.d(TAG, "Disconnected!");
-                if (isConnected) { //temporary disconnect
-                    new Thread(new Runnable() {
-                        public void run() {
-                            mwBoard.connect();
-                            onConnectionRequest();
-                        }
-                    }).start();
+                if (disconnectSource == DISCONNECT_SOURCE.UNKNOWN) { //retry
+                    connect();
                 } else {
-                    onDisconnect();
+                    onMetawearDisconnected();
                 }
             }
 
             @Override
             public void failure(int status, Throwable error) {
-                new Thread(new Runnable() {
-                    public void run() {
-                        mwBoard.connect();
-                        onConnectionRequest();
-                    }
-                }).start();
+                error.printStackTrace();
+                if (disconnectSource == DISCONNECT_SOURCE.UNKNOWN)
+                    connect();
             }
         });
-        new Thread(new Runnable() {
-            public void run() {
-                mwBoard.connect();
-                onConnectionRequest();
-            }
-        }).start();
+        Log.d(TAG, "Service connected...");
+        connect();
+    }
+
+    private void doUnbind(){
+        if (mIsBound) {
+            getApplicationContext().unbindService(SensorService.this);
+            mIsBound = false;
+        }
     }
 
     /**
      * Called when the application disconnects from the Metawear board.
      */
-    protected void onDisconnect(){
-        if (handler != null)
-            handler.removeCallbacksAndMessages(null);
-
-        if (isRunning) {
-            Log.d(TAG, "No motion or out of range.");
-            if (hThread == null) {
-                hThread = new HandlerThread("HandlerThread");
-                hThread.start();
-            }
-            Handler reconnectionHandler = new Handler(hThread.getLooper());
-            Runnable reconnectAfterDelayTask = new Runnable() {
-                @Override
-                public void run() {
-                    mwBoard.connect();
-                    onConnectionRequest();
-                }
-            };
-            reconnectionHandler.postDelayed(reconnectAfterDelayTask, 2000);
-        }else {
-            if (hThread != null) {
-                hThread.interrupt(); //TODO: I believe this will cancel the reconnection attempt, but make sure of this!
-                hThread.quitSafely();
-            }
-            if (mIsBound) {
-                getApplicationContext().unbindService(SensorService.this);
-                mIsBound = false;
-            }
-            if (btConnected) {
-                Log.d(TAG, "Explicit disconnect.");
+    protected void onMetawearDisconnected(){
+        Log.d(TAG, "onDisconnected(): " + disconnectSource.name());
+        switch (disconnectSource){
+            case BLUETOOTH_DISABLED:
+                if (handler != null)
+                    handler.removeCallbacksAndMessages(null);
+                doUnbind();
+                break;
+            case DISCONNECT_REQUESTED:
+                if (handler != null)
+                    handler.removeCallbacksAndMessages(null);
+                doUnbind();
+                if (broadcaster != null)
+                    broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
                 stopForeground(true);
                 stopSelf();
-            }else{
-                Log.d(TAG, "Bluetooth disconnect interrupt.");
-            }
+                return;
+            case NO_MOTION_DETECTED:
+                postReconnect();
+                break;
+            case UNKNOWN:
+                connect();
+                return;
         }
+        disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
         if (broadcaster != null)
             broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
     }
@@ -347,20 +332,15 @@ public class SensorService extends Service implements ServiceConnection {
      * Called once the Metawear board is connected
      */
     protected void onMetawearConnected(){
-        new Thread(new Runnable() {
-            public void run() {
-                isConnected = true;
-                loadPreferences();
-                getModules();
-                stopSensors();
-                mwBoard.removeRoutes();
-                handleBoardDisconnectionEvent();
-                setSamplingRates();
-                startSensors();
-                if (broadcaster != null)
-                    broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
-            }
-        }).start();
+        //loadPreferences(); //TODO: This could be expensive? register preference changed listener instead (add action to onStartCommand)
+        getModules();
+        stopSensors();
+        mwBoard.removeRoutes();
+        handleBoardDisconnectionEvent();
+        setSamplingRates();
+        startSensors();
+        if (broadcaster != null)
+            broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
     }
 
     /**
@@ -449,6 +429,16 @@ public class SensorService extends Service implements ServiceConnection {
     }
 
     /**
+     * Called when the Metawear board is no longer in motion. At this point, the sensors
+     * will be stopped, the board will listen for motion and the phone and board will disconnect.
+     */
+    private void onNoMotionDetected(){
+        disconnectSource = DISCONNECT_SOURCE.NO_MOTION_DETECTED;
+        stopSensors();
+        startMotionDetectionThenDisconnect();
+    }
+
+    /**
      * Starts collecting accelerometer data from the Metawear board until a no motion event has
      * been detected.
      */
@@ -470,8 +460,7 @@ public class SensorService extends Service implements ServiceConnection {
                         result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.NO_MOTION, new RouteManager.MessageHandler() {
                             @Override
                             public void process(Message msg) {
-                                stopSensors();
-                                startMotionDetection();
+                                onNoMotionDetected();
                             }
                         });
 //                        result.subscribe("debug", new RouteManager.MessageHandler() {
@@ -500,13 +489,13 @@ public class SensorService extends Service implements ServiceConnection {
     /**
      * Starts motion detection on the Metawear board, then disconnects from the board.
      */
-    private void startMotionDetection(){
+    private void startMotionDetectionThenDisconnect(){
         if (motionModule != null)
             motionModule.routeData().fromMotion().process(new Counter())
                     .monitor(new DataSignal.ActivityHandler() {
                         @Override
                         public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
-                            turnOnLed(Led.ColorChannel.GREEN, false);
+                            turnOnLed(Led.ColorChannel.GREEN, false); //TODO: Don't turn on LED in final system due to high battery consumption
                             settingsModule.startAdvertisement();
                         }
                     }).commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
@@ -649,12 +638,37 @@ public class SensorService extends Service implements ServiceConnection {
      * Called when the sensor service is stopped, by command from the handheld application.
      */
     protected void onServiceStopped(){
-        isRunning = false;
-        startMotionDetection();
+        Log.d(TAG, "Request service stopped");
+        disconnectSource = DISCONNECT_SOURCE.DISCONNECT_REQUESTED;
+        if (mwBoard != null && mwBoard.isConnected()) {
+            startMotionDetectionThenDisconnect();
+        } else {
+            disconnect();
+            onMetawearDisconnected();
+        }
+    }
+
+    protected void connect(){
+        mwBoard.connect();
+        onConnectionRequest();
+    }
+
+    protected void postReconnect(){
+        if (hThread == null) {
+            hThread = new HandlerThread("HandlerThread");
+            hThread.start();
+        }
+        Handler reconnectionHandler = new Handler(hThread.getLooper());
+        Runnable reconnectAfterDelayTask = new Runnable() {
+            @Override
+            public void run() {
+                connect();
+            }
+        };
+        reconnectionHandler.postDelayed(reconnectAfterDelayTask, 2000);
     }
 
     protected void disconnect(){
-        isConnected = false;
         if (mwBoard != null)
             mwBoard.disconnect();
     }
@@ -665,13 +679,16 @@ public class SensorService extends Service implements ServiceConnection {
     }
 
     protected void onBluetoothDisabled(){
-        btConnected = false;
-        isRunning = false;
-        disconnect();
+        disconnectSource = DISCONNECT_SOURCE.BLUETOOTH_DISABLED;
+        if (mwBoard != null && mwBoard.isConnected()) {
+            startMotionDetectionThenDisconnect();
+        } else {
+            disconnect();
+            onMetawearDisconnected();
+        }
     }
 
     protected void onBluetoothEnabled(){
-        btConnected = true;
         onServiceStarted();
     }
 

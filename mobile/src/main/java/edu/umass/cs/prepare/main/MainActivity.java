@@ -25,16 +25,20 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
@@ -63,8 +67,14 @@ import edu.umass.cs.prepare.preferences.SettingsActivity;
  */
 public class MainActivity extends AppCompatActivity {
 
+    @SuppressWarnings("unused")
+    /** used for debugging purposes */
+    private static final String TAG = MainActivity.class.getName();
+
     /** View which displays the accelerometer readings from the Metawear tag TODO: make array adapter list view for displaying multiple modalities **/
-    private TextView txtAccelerometer;
+    private ArrayList<String> sensorReadings;
+
+    private ArrayAdapter<String> sensorReadingAdapter;
 
     /** whether video recording should include audio **/
     private boolean record_audio;
@@ -227,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
         labelButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()) {
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         showStatus("Labeling event");
                         label = 1;
@@ -241,14 +251,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        txtAccelerometer = ((TextView) findViewById(R.id.sensor_readings));
-        txtAccelerometer.setText(String.format(getString(R.string.initial_sensor_readings), 0f, 0f, 0f));
+        sensorReadings = new ArrayList<>();
+        for (int i = 0; i < SharedConstants.SENSOR_TYPE.values().length; i++)
+            sensorReadings.add(SharedConstants.SENSOR_TYPE.values()[i].name() + ": unavailable.");
+        sensorReadingAdapter = new ArrayAdapter<>(this, R.layout.sensor_reading_item, sensorReadings);
+        ListView listView = (ListView) findViewById(R.id.lv_sensor_readings);
+        assert listView != null;
+        listView.setAdapter(sensorReadingAdapter);
+
         mSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
         actionBar = getSupportActionBar();
 
         if (mwMacAddress.equals(getString(R.string.pref_device_default))){
             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), SELECT_DEVICE_REQUEST_CODE);
         } else {
+            Log.d(TAG, "Starting Metawear service on startup");
             startMetawearService();
         }
     }
@@ -289,10 +306,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }else if (requestCode == Constants.ACTION.REQUEST_SET_PREFERENCES){
+            Log.d(TAG, "preferences changed");
             //TODO: May not be enough to stop and start it, what if the user changes preferences during movement? Unlikely??
-            stopMetawearService();
+            boolean serviceEnabledBefore = serviceEnabled;
             loadPreferences();
-            startMetawearService();
+            if (serviceEnabledBefore != serviceEnabled){
+                if (serviceEnabled)
+                    startMetawearService();
+                else
+                    stopMetawearService();
+            }
+
         }else if (requestCode == SELECT_DEVICE_REQUEST_CODE){
             if (data != null) {
                 mwMacAddress = data.getStringExtra(SharedConstants.KEY.UUID);
@@ -311,7 +335,7 @@ public class MainActivity extends AppCompatActivity {
      * Displays a single accelerometer reading on the main UI
      * @param reading a 3-dimensional floating point vector representing the x, y and z accelerometer values respectively.
      */
-    private void displayAccelerometerReading(final float[] reading){
+    private void displaySensorReading(final SharedConstants.SENSOR_TYPE sensorType, final float[] reading){
         float x = reading[0];
         float y = reading[1];
         float z = reading[2];
@@ -319,7 +343,8 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                txtAccelerometer.setText(output);
+                sensorReadings.set(sensorType.ordinal(), output);
+                sensorReadingAdapter.notifyDataSetChanged();
             }
         });
     }
@@ -491,9 +516,7 @@ public class MainActivity extends AppCompatActivity {
                         averages[j] /= (values.length / 3f);
                     }
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
-                    if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
-                        displayAccelerometerReading(averages);
-                    }
+                    displaySensorReading(sensorType, averages);
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){

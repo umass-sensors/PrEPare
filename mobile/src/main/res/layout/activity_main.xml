@@ -63,17 +63,11 @@
             android:textSize="15sp"
             android:gravity="center" />
 
-        <TextView
+        <ListView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/initial_sensor_readings"
-            android:textColor="#ffffff"
-            android:id="@+id/sensor_readings"
             android:layout_below="@id/status"
-            android:layout_centerHorizontal="true"
-            android:textAlignment="center"
-            android:textSize="20sp"
-            android:gravity="center" />
+            android:id="@+id/lv_sensor_readings"/>
 
     </RelativeLayout>
 

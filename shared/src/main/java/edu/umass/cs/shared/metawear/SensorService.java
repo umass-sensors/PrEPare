@@ -510,10 +510,10 @@ public class SensorService extends Service implements ServiceConnection {
                             settingsModule.startAdvertisement();
                         }
                     }).commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
-                @Override
-                public void success(RouteManager result) {
-                    disconnect();
-                }
+                        @Override
+                        public void success(RouteManager result) {
+                            disconnect();
+                        }
             });
     }
 

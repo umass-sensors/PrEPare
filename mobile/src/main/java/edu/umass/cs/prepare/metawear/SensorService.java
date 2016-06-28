@@ -82,8 +82,8 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     }
 
     @Override
-    protected void onDisconnect() {
-        super.onDisconnect();
+    protected void onMetawearDisconnected() {
+        super.onMetawearDisconnected();
         serviceManager.stopDataWriterService();
         showForegroundNotification(false);
     }

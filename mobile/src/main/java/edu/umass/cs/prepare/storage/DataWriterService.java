@@ -57,7 +57,7 @@ public class DataWriterService extends Service {
     private boolean writeLocal = false;
 
     /** Indicates whether data should be sent to the server. **/
-    private boolean writeServer = true;
+    private boolean writeServer = false;
 
     /** Client responsible for communicating to the server. **/
     private MHLMobileIOClient client;
@@ -181,8 +181,7 @@ public class DataWriterService extends Service {
         }
     };
 
-    @Override
-    public void onCreate(){
+    private void init(){
         loadPreferences();
         if (writeLocal)
             initializeFileWriters();
@@ -237,41 +236,32 @@ public class DataWriterService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId){
         if (intent == null) return START_STICKY;
         if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    registerReceiver();
+            init();
+            registerReceiver();
 
-                    Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
-                    notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
-                    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
+            Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
+            notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
 
-                    Notification notification = new NotificationCompat.Builder(DataWriterService.this)
-                            .setContentTitle(getString(R.string.app_name))
-                            .setTicker(getString(R.string.app_name))
-                            .setContentText(getString(R.string.data_writer_notification))
-                            .setSmallIcon(android.R.drawable.ic_menu_save)
-                            .setContentIntent(pendingIntent)
-                            .setOngoing(true).build();
+            Notification notification = new NotificationCompat.Builder(DataWriterService.this)
+                    .setContentTitle(getString(R.string.app_name))
+                    .setTicker(getString(R.string.app_name))
+                    .setContentText(getString(R.string.data_writer_notification))
+                    .setSmallIcon(android.R.drawable.ic_menu_save)
+                    .setContentIntent(pendingIntent)
+                    .setOngoing(true).build();
 
-                    startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
-                }
-            }).start();
+            startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
             Log.i(TAG, "Received Stop Service Intent");
 
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    unregisterReceiver();
-                    if (writeLocal)
-                        closeAllWriters();
+            unregisterReceiver();
+            if (writeLocal)
+                closeAllWriters();
 
-                    stopForeground(true);
-                    stopSelf();
-                }
-            }).start();
+            stopForeground(true);
+            stopSelf();
         }
 
         return START_STICKY;

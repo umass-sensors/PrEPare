@@ -569,7 +569,8 @@ public class SensorService extends Service implements ServiceConnection {
                     }
                 });
 
-                handler.postDelayed(this, delay);
+                if (mwBoard.isConnected())
+                    handler.postDelayed(this, delay);
             }
         };
         handler.postDelayed(queryRSSITask, delay);

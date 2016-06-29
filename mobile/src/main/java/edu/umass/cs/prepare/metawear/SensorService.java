@@ -109,12 +109,13 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
                 .setTicker(getString(R.string.app_name))
                 .setSmallIcon(R.drawable.ic_notification)
                 .setOngoing(true)
-                .setContentIntent(pendingIntent)
-                .setVibrate(new long[]{0, 50, 150, 200});
+                .setContentIntent(pendingIntent);
+
 
         String contentText;
         if (connected){
             contentText = getString(R.string.connection_notification);
+            notificationBuilder = notificationBuilder.setVibrate(new long[]{0, 50, 150, 200});
         }else {
             contentText = getString(R.string.sensor_service_notification);
         }

@@ -307,6 +307,8 @@ public class SensorService extends Service implements ServiceConnection {
                 stopSelf();
                 return;
             case NO_MOTION_DETECTED:
+                if (handler != null)
+                    handler.removeCallbacksAndMessages(null);
                 postReconnect();
                 break;
             case UNKNOWN:
@@ -387,7 +389,7 @@ public class SensorService extends Service implements ServiceConnection {
                         motionModule.startLowPower();
 
                         // stop advertisements
-                        settingsModule.configure().setAdInterval((short) 100, (byte) 1).commit();
+                        settingsModule.configure().setAdInterval((short) 25, (byte) 1).commit();
                     }
         }).commit();
     }
@@ -443,6 +445,7 @@ public class SensorService extends Service implements ServiceConnection {
      * been detected.
      */
     private void startAccelerometerWithNoMotionDetection(){
+        Log.d(TAG, "Initializing Route");
         accModule.routeData().fromAxes()
                 .stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER)
                 .process(new Rss())
@@ -479,6 +482,7 @@ public class SensorService extends Service implements ServiceConnection {
                                 }
                             }
                         });
+                        Log.d(TAG, "Starting accelerometer.");
                         accModule.enableAxisSampling();
                         accModule.start();
                         onAccelerometerStarted();
@@ -641,6 +645,7 @@ public class SensorService extends Service implements ServiceConnection {
         Log.d(TAG, "Request service stopped");
         disconnectSource = DISCONNECT_SOURCE.DISCONNECT_REQUESTED;
         if (mwBoard != null && mwBoard.isConnected()) {
+            stopSensors();
             startMotionDetectionThenDisconnect();
         } else {
             disconnect();
@@ -681,6 +686,7 @@ public class SensorService extends Service implements ServiceConnection {
     protected void onBluetoothDisabled(){
         disconnectSource = DISCONNECT_SOURCE.BLUETOOTH_DISABLED;
         if (mwBoard != null && mwBoard.isConnected()) {
+            stopSensors();
             startMotionDetectionThenDisconnect();
         } else {
             disconnect();

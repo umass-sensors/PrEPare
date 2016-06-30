@@ -89,9 +89,6 @@ public class SensorService extends Service implements ServiceConnection {
         /** Module that handles LED state for on-board notifications. **/
         private Led ledModule;
 
-        /** Module that handles logging of sensor data on the Metawear board. **/
-        private Logging loggingModule;
-
         /** Module responsible for the advertisement settings on the Metawear board. **/
         private Settings settingsModule;
 
@@ -336,8 +333,8 @@ public class SensorService extends Service implements ServiceConnection {
     protected void onMetawearConnected(){
         //loadPreferences(); //TODO: This could be expensive? register preference changed listener instead (add action to onStartCommand)
         getModules();
-        stopSensors();
         mwBoard.removeRoutes();
+        stopSensors();
         handleBoardDisconnectionEvent();
         setSamplingRates();
         startSensors();
@@ -350,9 +347,7 @@ public class SensorService extends Service implements ServiceConnection {
      */
     private void getModules(){
         try {
-            mwBoard.removeRoutes();
             motionModule = mwBoard.getModule(Bmi160Accelerometer.class);
-            loggingModule = mwBoard.getModule(Logging.class);
             accModule = mwBoard.getModule(Accelerometer.class);
             gyroModule = mwBoard.getModule(Gyro.class);
             ledModule = mwBoard.getModule(Led.class);
@@ -414,9 +409,6 @@ public class SensorService extends Service implements ServiceConnection {
         if (ledModule != null) {
             ledModule.stop(true);
         }
-        if (loggingModule != null) {
-            loggingModule.stopLogging();
-        }
         if (gyroModule != null) {
             gyroModule.stop();
         }
@@ -436,7 +428,6 @@ public class SensorService extends Service implements ServiceConnection {
      */
     private void onNoMotionDetected(){
         disconnectSource = DISCONNECT_SOURCE.NO_MOTION_DETECTED;
-        stopSensors();
         startMotionDetectionThenDisconnect();
     }
 
@@ -646,7 +637,6 @@ public class SensorService extends Service implements ServiceConnection {
         Log.d(TAG, "Request service stopped");
         disconnectSource = DISCONNECT_SOURCE.DISCONNECT_REQUESTED;
         if (mwBoard != null && mwBoard.isConnected()) {
-            stopSensors();
             startMotionDetectionThenDisconnect();
         } else {
             disconnect();
@@ -687,7 +677,6 @@ public class SensorService extends Service implements ServiceConnection {
     protected void onBluetoothDisabled(){
         disconnectSource = DISCONNECT_SOURCE.BLUETOOTH_DISABLED;
         if (mwBoard != null && mwBoard.isConnected()) {
-            stopSensors();
             startMotionDetectionThenDisconnect();
         } else {
             disconnect();

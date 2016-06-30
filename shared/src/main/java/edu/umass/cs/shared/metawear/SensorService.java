@@ -190,6 +190,7 @@ public class SensorService extends Service implements ServiceConnection {
             }
         } else {
             Log.d(TAG, "Service restarted after killed by OS.");
+            onServiceStarted();
         }
         return START_STICKY;
     }

@@ -38,10 +38,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
 import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.recording.RecordingService;
@@ -66,26 +64,27 @@ public class MainActivity extends AppCompatActivity {
     /** used for debugging purposes */
     private static final String TAG = MainActivity.class.getName();
 
-    /** View which displays the accelerometer readings from the Metawear tag TODO: make array adapter list view for displaying multiple modalities **/
+    /** List of formatted sensor readings outputs **/
     private ArrayList<String> sensorReadings;
 
+    /** Links the {@link #sensorReadings} to a UI view. **/
     private ArrayAdapter<String> sensorReadingAdapter;
 
     /** whether video recording should include audio **/
     private boolean record_audio;
 
+    /** Indicates whether the {@link SensorService} should run over the wearable or mobile device. **/
     private boolean runServiceOverWearable;
 
+    /** Indicates whether the {@link SensorService} is turned on. **/
     private boolean serviceEnabled;
 
-    /** Permission request identifier **/
-    private static final int PERMISSION_REQUEST = 1;
-
-    /** code to post/handler request for permission */
-    private final static int WINDOW_OVERLAY_REQUEST = 2;
-
-    /** Request code to identify that the user selected the device address when the activity called for result returns. **/
-    private static final int SELECT_DEVICE_REQUEST_CODE = 3;
+    /** Request identifiers **/
+    private interface REQUEST_CODE {
+        int RECORDING = 1;
+        int WINDOW_OVERLAY = 2;
+        int SELECT_DEVICE = 3;
+    }
 
     /** The sensor manager which handles sensors on the wearable device remotely */
     private RemoteSensorManager remoteSensorManager;
@@ -93,18 +92,17 @@ public class MainActivity extends AppCompatActivity {
     /** Handles services on the mobile application. */
     private ServiceManager serviceManager;
 
+    /** The view containing the video recording preview. **/
     public SurfaceView mSurfaceView;
 
     /** The unique address of the Metawear device. **/
-    private String mwMacAddress;
+    private String mwAddress;
 
     /** Notifies the user that the mobile device is attempting to connect to the Metawear board. **/
     private ProgressDialog connectDialog;
 
     /** Button that controls video recording, i.e. on/off switch. **/
     private Button recordingButton;
-
-    private Button labelButton;
 
     /** Image corresponding to the current Metawear battery level. **/
     private Bitmap batteryLevelBitmap;
@@ -193,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
                 getResources().getBoolean(R.bool.pref_audio_default));
         runServiceOverWearable = preferences.getBoolean(getString(R.string.pref_wearable_key),
                 getResources().getBoolean(R.bool.pref_wearable_default)); //TODO uncomment
-        mwMacAddress = preferences.getString(getString(R.string.pref_device_key),
+        mwAddress = preferences.getString(getString(R.string.pref_device_key),
                 getString(R.string.pref_device_default));
         serviceEnabled = preferences.getBoolean(getString(R.string.pref_connect_key),
                 getResources().getBoolean(R.bool.pref_connect_default));
@@ -228,7 +226,8 @@ public class MainActivity extends AppCompatActivity {
         if (RecordingService.isRecording)
             recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
 
-        labelButton = (Button) findViewById(R.id.label_button);
+        Button labelButton = (Button) findViewById(R.id.label_button);
+        assert labelButton != null;
         labelButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -257,8 +256,8 @@ public class MainActivity extends AppCompatActivity {
         mSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
         actionBar = getSupportActionBar();
 
-        if (mwMacAddress.equals(getString(R.string.pref_device_default))){
-            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), SELECT_DEVICE_REQUEST_CODE);
+        if (mwAddress.equals(getString(R.string.pref_device_default))){
+            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
         } else {
             Log.d(TAG, "Starting Metawear service on startup");
             startMetawearService();
@@ -293,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == WINDOW_OVERLAY_REQUEST) {
+        if (requestCode == REQUEST_CODE.WINDOW_OVERLAY) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 /** if so check once again if we have permission */
                 if (Settings.canDrawOverlays(this)) {
@@ -312,12 +311,12 @@ public class MainActivity extends AppCompatActivity {
                     stopMetawearService();
             }
 
-        }else if (requestCode == SELECT_DEVICE_REQUEST_CODE){
+        }else if (requestCode == REQUEST_CODE.SELECT_DEVICE){
             if (data != null) {
-                mwMacAddress = data.getStringExtra(SharedConstants.KEY.UUID);
+                mwAddress = data.getStringExtra(SharedConstants.KEY.UUID);
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putString(getString(R.string.pref_device_key), mwMacAddress);
+                editor.putString(getString(R.string.pref_device_key), mwAddress);
                 editor.apply();
                 startMetawearService();
             }else{
@@ -402,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             /** request permission via start activity for result */
-            startActivityForResult(intent, WINDOW_OVERLAY_REQUEST);
+            startActivityForResult(intent, REQUEST_CODE.WINDOW_OVERLAY);
         }else{
             onPermissionsGranted();
         }
@@ -411,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
-            case PERMISSION_REQUEST: {
+            case REQUEST_CODE.RECORDING: {
                 //If the request is cancelled, the result array is empty.
                 if (grantResults.length == 0) return;
 
@@ -463,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
         String[] permissions = permissionGroup.toArray(new String[permissionGroup.size()]);
 
         if (!hasPermissionsGranted(permissions)) {
-            ActivityCompat.requestPermissions(MainActivity.this, permissions, PERMISSION_REQUEST);
+            ActivityCompat.requestPermissions(MainActivity.this, permissions, REQUEST_CODE.RECORDING);
             return;
         }
         checkDrawOverlayPermission();

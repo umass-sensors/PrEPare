@@ -21,7 +21,13 @@ import com.mbientlab.bletoolbox.scanner.BleScannerFragment.*;
 import com.mbientlab.metawear.MetaWearBleService;
 
 public class SelectDeviceActivity extends AppCompatActivity implements ScannerCommunicationBus, ServiceConnection {
+
+    @SuppressWarnings("unused")
+    /** used for debugging purposes */
+    private static final String TAG = SelectDeviceActivity.class.getName();
+
     private final static UUID[] serviceUuids;
+
     public static final int REQUEST_START_APP= 1;
 
     static {
@@ -43,7 +49,7 @@ public class SelectDeviceActivity extends AppCompatActivity implements ScannerCo
     public void onDestroy() {
         super.onDestroy();
 
-        ///< Unbind the service when the activity is destroyed
+        // Unbind the service when the activity is destroyed
         getApplicationContext().unbindService(this);
     }
 
@@ -59,7 +65,7 @@ public class SelectDeviceActivity extends AppCompatActivity implements ScannerCo
 
     @Override
     public void onDeviceSelected(final BluetoothDevice device) {
-        Intent data = new Intent();
+        final Intent data = new Intent();
         data.putExtra(SharedConstants.KEY.UUID, device.getAddress());
         setResult(RESULT_OK, data);
         finish();

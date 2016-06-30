@@ -54,13 +54,8 @@ import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.preferences.SettingsActivity;
 
 /**
- * The Main Activity is the entry point for the application. It involves the main user interface
- * and is responsible for managing all background sensor services. These services handle
- * {@link DataReceiverService receiving data from the wearable},
- * {@link SensorService collecting data from the Metawear tag directly to the phone},
- * {@link DataReceiverService writing data to storage},
- * recording video in the background, and
- * {@link RemoteSensorManager managing the services available on the wearable}.
+ * The Main Activity is the entry point for the application. It is the primary UI and allows
+ * the user to interact with the system.
  *
  * @author Sean Noran
  * @affiliation University of Massachusetts Amherst
@@ -507,6 +502,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() != null) {
                 if (intent.getAction().equals(Constants.ACTION.BROADCAST_SENSOR_DATA)) {
+                    SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
                     float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
                     float[] averages = new float[3];
                     for (int i = 0; i < values.length; i++) {
@@ -515,7 +511,6 @@ public class MainActivity extends AppCompatActivity {
                     for (int j = 0; j < averages.length; j++) {
                         averages[j] /= (values.length / 3f);
                     }
-                    SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
                     displaySensorReading(sensorType, averages);
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);

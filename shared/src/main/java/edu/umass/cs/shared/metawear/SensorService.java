@@ -189,7 +189,7 @@ public class SensorService extends Service implements ServiceConnection {
                 onServiceStopped();
             }
         } else {
-            Log.d(TAG, "System restarted service due to memory usage.");
+            Log.d(TAG, "Service restarted after killed by OS.");
         }
         return START_STICKY;
     }

@@ -3,10 +3,8 @@ package edu.umass.cs.prepare.communication.local;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import edu.umass.cs.prepare.constants.Constants;
-import edu.umass.cs.prepare.metawear.BeaconService;
 import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.recording.RecordingService;
 import edu.umass.cs.prepare.storage.DataWriterService;
@@ -14,7 +12,7 @@ import edu.umass.cs.shared.SharedConstants;
 
 /**
  * The service manager maintains the application services on the mobile device. These include
- * the {@link BeaconService}, {@link SensorService}, {@link RecordingService} and
+ * the {@link SensorService}, {@link RecordingService} and
  * {@link DataWriterService}.
  *
  * @author Sean Noran
@@ -28,12 +26,13 @@ public class ServiceManager {
     /** used for debugging purposes */
     private static final String TAG = ServiceManager.class.getName();
 
-    /** singleton instance of the remote sensor manager */
+    /** Singleton instance of the remote sensor manager */
     private static ServiceManager instance;
 
+    /** The application context is used to bind the service manager to the application. **/
     private final Context context;
 
-    /** return singleton instance of the remote sensor manager, instantiating if necessary */
+    /** Returns the singleton instance of the remote sensor manager, instantiating it if necessary. */
     public static synchronized ServiceManager getInstance(Context context) {
         if (instance == null) {
             instance = new ServiceManager(context.getApplicationContext());
@@ -50,9 +49,6 @@ public class ServiceManager {
      * Starts the {@link RecordingService} via an {@link Intent}
      */
     public void startRecordingService(int x, int y, int width, int height){
-
-        Log.d(TAG, "start recording service");
-
         Intent startServiceIntent = new Intent(context, RecordingService.class);
 
         //identify the intent by the START_SERVICE action, defined in the Constants class
@@ -63,9 +59,7 @@ public class ServiceManager {
         startServiceIntent.putExtra(Constants.KEY.SURFACE_X, x);
         startServiceIntent.putExtra(Constants.KEY.SURFACE_Y, y);
 
-        //start sensor service
         context.startService(startServiceIntent);
-
     }
 
     /**
@@ -99,24 +93,6 @@ public class ServiceManager {
     }
 
     /**
-     * Starts the Beacon scanning service on the mobile device.
-     */
-    public void startLocalBeaconService(){
-        Intent startIntent = new Intent(context, BeaconService.class);
-        startIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
-        context.startService(startIntent);
-    }
-
-    /**
-     * Stops the Beacon service on the mobile device.
-     */
-    public void stopLocalBeaconService(){
-        Intent startIntent = new Intent(context, BeaconService.class);
-        startIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-        context.startService(startIntent);
-    }
-
-    /**
      * Starts the data writer service on the mobile device.
      */
     public void startDataWriterService(){
@@ -134,6 +110,9 @@ public class ServiceManager {
         context.startService(startIntent);
     }
 
+    /**
+     * Starts the Metawear service on the mobile device.
+     */
     public void startMetawearService(){
         Intent startServiceIntent = new Intent(context, SensorService.class);
         startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);

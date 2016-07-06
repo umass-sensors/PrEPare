@@ -44,16 +44,4 @@ public class Constants {
         String TIMESTAMP = "edu.umass.cs.prepare.key.timestamp";
     }
 
-    public interface MESSAGE {
-        int REGISTER_CLIENT = 0;
-        int UNREGISTER_CLIENT = 1;
-        int SENSOR_STARTED = 2;
-        int SENSOR_STOPPED = 3;
-        int STATUS = 4;
-        int ACCELEROMETER_READING = 5;
-        int BATTERY_LEVEL = 6;
-        int CONNECTING = 7;
-        int CONNECTED = 8;
-        int DISCONNECTED = 9;
-    }
 }

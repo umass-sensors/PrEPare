@@ -520,10 +520,8 @@ public class MainActivity extends AppCompatActivity {
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         showStatus("Connected to pill bottle.");
                         cancelConnectingDialog();
-//                        remoteSensorManager.startSensorService(); //TODO uncomment
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
                         serviceManager.stopDataWriterService();
-//                        remoteSensorManager.stopSensorService(); //TODO uncomment
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
                         recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){

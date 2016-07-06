@@ -51,7 +51,6 @@ public class ServiceManager {
     public void startRecordingService(int x, int y, int width, int height){
         Intent startServiceIntent = new Intent(context, RecordingService.class);
 
-        //identify the intent by the START_SERVICE action, defined in the Constants class
         startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
 
         startServiceIntent.putExtra(Constants.KEY.SURFACE_WIDTH, width);

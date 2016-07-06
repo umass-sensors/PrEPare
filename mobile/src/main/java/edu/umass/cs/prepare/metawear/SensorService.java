@@ -22,10 +22,10 @@ import edu.umass.cs.prepare.R;
  * the tag and the phone.
  * <br> <hr> <br>
  * To begin collecting sensor data, bind to the {@link SensorService} and start an intent
- * with action {@link edu.umass.cs.prepare.constants.Constants.ACTION#START_SERVICE},
+ * with action {@link edu.umass.cs.shared.constants.SharedConstants.ACTIONS#START_SERVICE},
  * passing in a {@link String} extra with key {@link SharedConstants.KEY#UUID}
  * to identify the Bluetooth device by its address. To stop the service, use action
- * {@link edu.umass.cs.prepare.constants.Constants.ACTION#STOP_SERVICE}.
+ * {@link edu.umass.cs.shared.constants.SharedConstants.ACTIONS#STOP_SERVICE}.
  *
  * @author Sean Noran
  * @affiliation University of Massachusetts Amherst

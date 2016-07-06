@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         int RECORDING = 1;
         int WINDOW_OVERLAY = 2;
         int SELECT_DEVICE = 3;
+        int SET_PREFERENCES = 4;
     }
 
     /** The sensor manager which handles sensors on the wearable device remotely */
@@ -299,7 +300,7 @@ public class MainActivity extends AppCompatActivity {
                     onPermissionsGranted();
                 }
             }
-        }else if (requestCode == Constants.ACTION.REQUEST_SET_PREFERENCES){
+        }else if (requestCode == REQUEST_CODE.SET_PREFERENCES){
             Log.d(TAG, "preferences changed");
             //TODO: May not be enough to stop and start it, what if the user changes preferences during movement? Unlikely??
             boolean serviceEnabledBefore = serviceEnabled;
@@ -385,7 +386,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.action_settings) {
             Intent openSettings = new Intent(MainActivity.this, SettingsActivity.class);
-            startActivityForResult(openSettings, Constants.ACTION.REQUEST_SET_PREFERENCES, null);
+            startActivityForResult(openSettings, REQUEST_CODE.SET_PREFERENCES, null);
             return true;
         }
 

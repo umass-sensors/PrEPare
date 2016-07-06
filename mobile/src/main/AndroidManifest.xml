@@ -53,7 +53,6 @@
         android:supportsRtl="true">
         <service android:name="com.mbientlab.metawear.MetaWearBleService" />
         <service android:name=".metawear.SensorService" />
-        <service android:name=".metawear.BeaconService" />
         <service android:name=".recording.RecordingService" />
         <service android:name="edu.umass.cs.prepare.storage.DataWriterService" />
         <meta-data android:name="com.google.android.gms.version"

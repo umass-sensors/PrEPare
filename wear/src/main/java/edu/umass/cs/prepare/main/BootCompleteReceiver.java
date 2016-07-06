@@ -11,8 +11,8 @@ import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.shared.SharedConstants;
 
 /**
- * This class handles watch reboot events. If the wearable is rebooted then
- * the {@link SensorService} should be restarted.
+ * This class handles boot events. If the wearable device is rebooted and the
+ * {@link SensorService} was running, then the service should be restarted.
  */
 public class BootCompleteReceiver extends BroadcastReceiver {
 

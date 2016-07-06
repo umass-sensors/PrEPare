@@ -11,8 +11,8 @@ import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.metawear.SensorService;
 
 /**
- * This class handles watch reboot events. If the mobile device is rebooted then
- * the {@link SensorService} should be restarted.
+ * This class handles boot events. If the mobile device is rebooted and the
+ * {@link SensorService} was running, then the service should be restarted.
  */
 public class BootCompleteReceiver extends BroadcastReceiver {
 

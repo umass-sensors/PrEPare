@@ -10,7 +10,7 @@ import com.mbientlab.metawear.MetaWearBoard;
 
 import java.util.UUID;
 
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.prepare.R;
 
 import android.content.ComponentName;

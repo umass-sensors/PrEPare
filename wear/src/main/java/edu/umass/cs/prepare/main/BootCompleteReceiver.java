@@ -8,7 +8,7 @@ import android.preference.PreferenceManager;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.metawear.SensorService;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * This class handles boot events. If the wearable device is rebooted and the

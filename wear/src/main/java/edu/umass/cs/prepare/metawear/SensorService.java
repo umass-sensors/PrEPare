@@ -10,9 +10,9 @@ import android.support.v4.app.NotificationCompat;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.Broadcaster;
-import edu.umass.cs.shared.BatteryUtil;
-import edu.umass.cs.shared.SharedConstants;
-import edu.umass.cs.shared.SensorBuffer;
+import edu.umass.cs.shared.util.BatteryUtil;
+import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.util.SensorBuffer;
 import edu.umass.cs.prepare.communication.DataClient;
 
 /**

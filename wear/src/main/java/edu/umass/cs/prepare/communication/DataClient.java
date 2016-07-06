@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The DataClient is responsible for sending data from the wearable device to the handheld application.

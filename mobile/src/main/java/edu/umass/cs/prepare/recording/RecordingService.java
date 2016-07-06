@@ -26,7 +26,7 @@ import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.main.MainActivity;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * Background video recording service. Due to the questionable legal and ethical nature of secret

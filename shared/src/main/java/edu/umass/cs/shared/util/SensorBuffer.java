@@ -1,4 +1,4 @@
-package edu.umass.cs.shared;
+package edu.umass.cs.shared.util;
 
 /**
  * Data buffer for arbitrary dimensional sensor data, e.g. 3-axis accelerometer data,

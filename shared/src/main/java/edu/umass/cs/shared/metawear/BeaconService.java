@@ -18,8 +18,8 @@ import org.altbeacon.beacon.service.RunningAverageRssiFilter;
 
 import java.util.Collection;
 
-import edu.umass.cs.shared.BroadcastInterface;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.communication.BroadcastInterface;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The Beacon service is responsible for monitoring the Metawear device while it is in beacon mode.

@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The Remote Sensor Manager is responsible for remotely communicating with the motion sensors

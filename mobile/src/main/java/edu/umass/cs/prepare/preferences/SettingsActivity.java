@@ -8,7 +8,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
 

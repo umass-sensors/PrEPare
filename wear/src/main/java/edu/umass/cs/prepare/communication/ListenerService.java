@@ -7,7 +7,7 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 
 import edu.umass.cs.prepare.sensors.SensorService;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The Listener Service is responsible for handling messages received from the handheld device.

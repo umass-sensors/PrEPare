@@ -8,7 +8,7 @@ import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.recording.RecordingService;
 import edu.umass.cs.prepare.storage.DataWriterService;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The service manager maintains the application services on the mobile device. These include

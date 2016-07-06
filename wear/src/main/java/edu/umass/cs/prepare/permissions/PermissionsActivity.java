@@ -9,7 +9,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 public class PermissionsActivity extends Activity {
     private final String[] permissions = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,

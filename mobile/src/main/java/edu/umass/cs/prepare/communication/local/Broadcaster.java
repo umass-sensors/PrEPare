@@ -5,9 +5,9 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import edu.umass.cs.prepare.constants.Constants;
-import edu.umass.cs.shared.BroadcastInterface;
-import edu.umass.cs.shared.DataLayerUtil;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.communication.BroadcastInterface;
+import edu.umass.cs.shared.communication.DataLayerUtil;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * Specifies how a mobile service should notify the other application components of important events,

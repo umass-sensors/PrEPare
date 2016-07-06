@@ -30,7 +30,6 @@ import com.mbientlab.metawear.module.Bmi160Accelerometer;
 import com.mbientlab.metawear.module.DataProcessor;
 import com.mbientlab.metawear.module.Gyro;
 import com.mbientlab.metawear.module.Led;
-import com.mbientlab.metawear.module.Logging;
 import com.mbientlab.metawear.module.Settings;
 import com.mbientlab.metawear.processor.Average;
 import com.mbientlab.metawear.processor.Comparison;
@@ -42,9 +41,9 @@ import com.mbientlab.metawear.processor.Time;
 import java.util.Map;
 
 import cs.umass.edu.shared.R;
-import edu.umass.cs.shared.BroadcastInterface;
-import edu.umass.cs.shared.SharedConstants;
-import edu.umass.cs.shared.SensorBuffer;
+import edu.umass.cs.shared.communication.BroadcastInterface;
+import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.util.SensorBuffer;
 
 
 /**
@@ -551,7 +550,7 @@ public class SensorService extends Service implements ServiceConnection {
                         long timestamp = System.currentTimeMillis();
                         onRSSIReadingReceived(timestamp, result);
                         synchronized (rssiBuffer) { //add sensor data to the appropriate buffer
-                            rssiBuffer.addReading(timestamp, (int)result);
+                            rssiBuffer.addReading(timestamp, (int) result);
                         }
                     }
 

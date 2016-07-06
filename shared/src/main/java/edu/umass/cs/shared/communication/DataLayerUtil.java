@@ -1,4 +1,4 @@
-package edu.umass.cs.shared;
+package edu.umass.cs.shared.communication;
 
 import android.content.Intent;
 

@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import edu.umass.cs.prepare.communication.Broadcaster;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The Beacon service is responsible for monitoring the Metawear device while it is in beacon mode.

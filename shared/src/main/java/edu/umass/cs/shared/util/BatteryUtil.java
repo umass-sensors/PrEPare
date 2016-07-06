@@ -1,4 +1,4 @@
-package edu.umass.cs.shared;
+package edu.umass.cs.shared.util;
 
 import cs.umass.edu.shared.R;
 

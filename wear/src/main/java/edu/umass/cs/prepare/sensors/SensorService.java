@@ -15,8 +15,8 @@ import android.util.Log;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.DataClient;
-import edu.umass.cs.shared.SensorBuffer;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.util.SensorBuffer;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The wearable sensor service is responsible for collecting sensor data on the wearable device.

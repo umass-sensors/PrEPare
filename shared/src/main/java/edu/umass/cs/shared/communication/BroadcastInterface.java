@@ -1,4 +1,4 @@
-package edu.umass.cs.shared;
+package edu.umass.cs.shared.communication;
 
 /**
  * The BroadcastInterface defines the component-level communication protocol. More precisely, subclasses

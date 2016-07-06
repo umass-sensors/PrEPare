@@ -13,7 +13,7 @@ import com.google.android.gms.wearable.WearableListenerService;
 
 import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
-import edu.umass.cs.shared.SharedConstants;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The Data Receiver Service listens for data sent from the wearable to the handheld device. In

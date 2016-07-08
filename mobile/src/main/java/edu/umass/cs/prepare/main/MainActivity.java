@@ -393,12 +393,15 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
+    /**
+     * Check the draw overlay permission. This is required to run the video recording service in
+     * a background service.
+     */
     @TargetApi(Build.VERSION_CODES.M)
     private void checkDrawOverlayPermission() {
         /** check if we already  have permission to draw over other apps */
         if (!Settings.canDrawOverlays(getApplicationContext())) {
-            /** if not construct intent to request permission */
+            /** if not, construct intent to request permission */
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             /** request permission via start activity for result */

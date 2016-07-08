@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         record_audio = preferences.getBoolean(getString(R.string.pref_audio_key),
                 getResources().getBoolean(R.bool.pref_audio_default));
         runServiceOverWearable = preferences.getBoolean(getString(R.string.pref_wearable_key),
-                getResources().getBoolean(R.bool.pref_wearable_default)); //TODO uncomment
+                getResources().getBoolean(R.bool.pref_wearable_default));
         mwAddress = preferences.getString(getString(R.string.pref_device_key),
                 getString(R.string.pref_device_default));
         serviceEnabled = preferences.getBoolean(getString(R.string.pref_connect_key),

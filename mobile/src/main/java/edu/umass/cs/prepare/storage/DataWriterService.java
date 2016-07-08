@@ -231,8 +231,7 @@ public class DataWriterService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
-        if (intent == null) return START_STICKY;
-        if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
+        if (intent == null || intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
             init();
             registerReceiver();
 

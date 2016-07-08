@@ -65,6 +65,9 @@ public class DataWriterService extends Service {
     /** The directory where the sensor data is stored. **/
     private File directory;
 
+    /**
+     * Initializes the objects responsible for writing the sensor data to disk.
+     */
     public void initializeFileWriters(){
         accelerometerWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_WEARABLE", directory);
         gyroscopeWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "GYRO_WEARABLE", directory);
@@ -74,6 +77,9 @@ public class DataWriterService extends Service {
         rssiMetawearToPhoneWriter = FileUtil.getFileWriter(DataWriterService.this, "PHONE_TO_METAWEAR_RSSI", directory);
     }
 
+    /**
+     * Loads relevant preferences, i.e. the directory where the sensor data should be saved.
+     */
     private void loadPreferences(){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         final String defaultDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name)).getAbsolutePath();
@@ -168,6 +174,10 @@ public class DataWriterService extends Service {
         }
     };
 
+    /**
+     * Called when the service is started; we should initialize the file writer objects and
+     * connect to the server if possible.
+     */
     private void init(){
         loadPreferences();
         if (writeLocal)

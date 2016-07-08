@@ -237,6 +237,8 @@ public class SensorService extends Service implements ServiceConnection {
             btDevice = btManager.getAdapter().getRemoteDevice(mwMacAddress);
         }catch(IllegalArgumentException e){
             e.printStackTrace();
+            if (broadcaster != null)
+                broadcaster.broadcastMessage(SharedConstants.MESSAGES.INVALID_ADDRESS);
             //TODO: Notify user that address is not valid
             return;
         }

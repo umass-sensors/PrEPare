@@ -526,6 +526,9 @@ public class MainActivity extends AppCompatActivity {
                         recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
                         recordingButton.setBackgroundResource(android.R.drawable.ic_media_play);
+                    } else if (message == SharedConstants.MESSAGES.INVALID_ADDRESS){
+                        showStatus("Invalid Bluetooth Address.");
+                        startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
                     }
                 }
             }

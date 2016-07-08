@@ -26,7 +26,7 @@ import edu.umass.cs.shared.constants.SharedConstants;
 public class Broadcaster implements BroadcastInterface {
 
     /** The application component from which the message is sent. **/
-    private Context context;
+    private final Context context;
 
     public Broadcaster(Context context){
         this.context = context;

@@ -19,7 +19,7 @@ import edu.umass.cs.shared.communication.BroadcastInterface;
  */
 public class Broadcaster implements BroadcastInterface {
 
-    private Context context;
+    private final Context context;
     private DataClient client;
 
     public Broadcaster(Context context){

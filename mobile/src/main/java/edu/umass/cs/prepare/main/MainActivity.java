@@ -438,16 +438,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Request required permissions, depending on the application settings. Permissions
+     * Request permissions required for video recording. These include
      * {@link android.Manifest.permission#WRITE_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE},
-     * {@link android.Manifest.permission#BLUETOOTH BLUETOOTH},
-     * {@link android.Manifest.permission#BLUETOOTH_ADMIN BLUETOOTH_ADMIN},
-     * {@link android.Manifest.permission#ACCESS_COARSE_LOCATION ACCESS_COARSE_LOCATION}
-     * are always required, because the data collection from the Bean cannot work without
-     * these permissions. If video recording is enabled, then additionally the
-     * {@link android.Manifest.permission#CAMERA CAMERA} permission is required. For audio
-     * recording, which is disabled by default, the
-     * {@link android.Manifest.permission#RECORD_AUDIO RECORD_AUDIO} permission is required.
+     * and {@link android.Manifest.permission#CAMERA CAMERA}. If audio is enabled, then
+     * the {@link android.Manifest.permission#RECORD_AUDIO RECORD_AUDIO} permission is
+     * additionally required.
      */
     @TargetApi(Build.VERSION_CODES.M)
     private void requestPermissions(){

@@ -151,30 +151,17 @@ public class DataWriterService extends Service {
 
                     String line = builder.toString();
                     if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE) {
-                        synchronized (accelerometerWearableWriter) {
-                            FileUtil.writeToFile(line, accelerometerWearableWriter);
-                        }
+                        FileUtil.writeToFile(line, accelerometerWearableWriter);
                     } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE){
-                        synchronized (gyroscopeWearableWriter) {
-                            FileUtil.writeToFile(line, gyroscopeWearableWriter);
-                        }
+                        FileUtil.writeToFile(line, gyroscopeWearableWriter);
                     } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
-                        synchronized (accelerometerMetawearWriter) {
-                            Log.d(TAG, line);
-                            FileUtil.writeToFile(line, accelerometerMetawearWriter);
-                        }
+                        FileUtil.writeToFile(line, accelerometerMetawearWriter);
                     } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR){
-                        synchronized (gyroscopeMetawearWriter) {
-                            FileUtil.writeToFile(line, gyroscopeMetawearWriter);
-                        }
+                        FileUtil.writeToFile(line, gyroscopeMetawearWriter);
                     } else if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI){
-                        synchronized (rssiMetawearToWearableWriter) {
-                            FileUtil.writeToFile(line, rssiMetawearToWearableWriter);
-                        }
+                        FileUtil.writeToFile(line, rssiMetawearToWearableWriter);
                     } else if (sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
-                        synchronized (rssiMetawearToPhoneWriter) {
-                            FileUtil.writeToFile(line, rssiMetawearToPhoneWriter);
-                        }
+                        FileUtil.writeToFile(line, rssiMetawearToPhoneWriter);
                     }
                 }
             }

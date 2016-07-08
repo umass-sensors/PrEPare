@@ -111,7 +111,7 @@ public class DataWriterService extends Service {
                             if (writeLocal)
                                 builder.append(String.format("%s,%d\n", timestamp, rssi));
                             if (writeServer) {
-                                client.addSensorReading(new MHLRSSIReading(0, "Metawear", timestamp, rssi));
+                                client.addSensorReading(new MHLRSSIReading(0, "METAWEAR", timestamp, rssi));
                                 //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
                                 try {
                                     Thread.sleep(10);

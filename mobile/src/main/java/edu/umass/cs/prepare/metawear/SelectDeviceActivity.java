@@ -20,6 +20,13 @@ import android.os.IBinder;
 import com.mbientlab.bletoolbox.scanner.BleScannerFragment.*;
 import com.mbientlab.metawear.MetaWearBleService;
 
+/**
+ * This UI allows the user to select a pill bottle to connect. Only one device may be selected.
+ * All devices within range will be displayed along with their signal strength (RSSI) in order
+ * to differentiate devices with the same name.
+ *
+ * TODO: Link mbientlab sample
+ */
 public class SelectDeviceActivity extends AppCompatActivity implements ScannerCommunicationBus, ServiceConnection {
 
     @SuppressWarnings("unused")

@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
     private ServiceManager serviceManager;
 
     /** The view containing the video recording preview. **/
-    public SurfaceView mSurfaceView;
+    private SurfaceView mSurfaceView;
 
     /** The unique address of the Metawear device. **/
     private String mwAddress;

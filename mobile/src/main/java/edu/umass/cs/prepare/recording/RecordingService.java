@@ -173,7 +173,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
      * stored in the directory specified in the application preferences.
      */
     @SuppressWarnings("deprecation")
-    public void startRecording(){
+    private void startRecording(){
         camera = Camera.open();
         camera.setDisplayOrientation(90);
         camera.unlock();
@@ -207,7 +207,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     /**
      * Stops video/audio recording and releases the media recorder.
      */
-    public void stopRecording(){
+    private void stopRecording(){
         if (mMediaRecorder != null) {
             mMediaRecorder.stop();
         }

@@ -6,7 +6,6 @@ import android.widget.Toast;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 /**
@@ -26,7 +25,7 @@ class FileUtil {
      * @param filename file name (without extension!)
      * @return the file writer for the particular filename
      */
-    public static BufferedWriter getFileWriter(Context context, String filename, File directory){
+    public static AsyncFileWriter getFileWriter(Context context, String filename, File directory){
         if(!directory.exists()) {
             if (directory.mkdirs()){
                 Toast.makeText(context, String.format("Created directory %s", directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
@@ -37,9 +36,9 @@ class FileUtil {
         }
         String fullFileName = filename + String.valueOf(System.currentTimeMillis()) + CSV_EXTENSION;
 
-        BufferedWriter out = null;
+        AsyncFileWriter out = null;
         try{
-            out = new BufferedWriter(new FileWriter(new File(directory,fullFileName)));
+            out = new AsyncFileWriter(new File(directory,fullFileName));
         }catch(IOException e){
             e.printStackTrace();
         }
@@ -51,25 +50,16 @@ class FileUtil {
      * @param s log to write
      * @param out file writer
      */
-    public static void writeToFile(String s, final BufferedWriter out) {
-        try{
-            out.write(s + "\n");
-        } catch(IOException e){
-            e.printStackTrace();
-        }
+    public static void writeToFile(String s, final AsyncFileWriter out) {
+        out.append(s);
     }
 
     /**
      * Close and flush the given log writer. Flushing ensures that the data in the buffer is first save to the file
      * @param out file writer
      */
-    public static void closeWriter(final BufferedWriter out) {
-        try{
-            out.flush();
-            out.close();
-        } catch(IOException | NullPointerException e){
-            e.printStackTrace();
-        }
+    public static void closeWriter(final AsyncFileWriter out) {
+        out.close();
     }
 
     /**

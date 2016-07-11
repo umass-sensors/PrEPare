@@ -46,12 +46,12 @@ public class DataWriterService extends Service {
     /** used for debugging purposes */
     private static final String TAG = DataWriterService.class.getName();
 
-    private BufferedWriter accelerometerWearableWriter;
-    private BufferedWriter gyroscopeWearableWriter;
-    private BufferedWriter accelerometerMetawearWriter;
-    private BufferedWriter gyroscopeMetawearWriter;
-    private BufferedWriter rssiMetawearToPhoneWriter;
-    private BufferedWriter rssiMetawearToWearableWriter;
+    private AsyncFileWriter accelerometerWearableWriter;
+    private AsyncFileWriter gyroscopeWearableWriter;
+    private AsyncFileWriter accelerometerMetawearWriter;
+    private AsyncFileWriter gyroscopeMetawearWriter;
+    private AsyncFileWriter rssiMetawearToPhoneWriter;
+    private AsyncFileWriter rssiMetawearToWearableWriter;
 
     /** Indicates whether data should be written to storage. **/
     private boolean writeLocal = false;

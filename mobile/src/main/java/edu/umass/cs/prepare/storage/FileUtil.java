@@ -46,23 +46,6 @@ class FileUtil {
     }
 
     /**
-     * Write the log to the specified file writer
-     * @param s log to write
-     * @param out file writer
-     */
-    public static void writeToFile(String s, final AsyncFileWriter out) {
-        out.append(s);
-    }
-
-    /**
-     * Close and flush the given log writer. Flushing ensures that the data in the buffer is first save to the file
-     * @param out file writer
-     */
-    public static void closeWriter(final AsyncFileWriter out) {
-        out.close();
-    }
-
-    /**
      * Deletes all the data from the given directory (be careful!!)
      * @return true if successfully deleted
      */

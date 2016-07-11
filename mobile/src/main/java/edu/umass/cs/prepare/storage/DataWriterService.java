@@ -17,6 +17,7 @@ import android.util.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.util.HashMap;
 
 import edu.umass.cs.prepare.MHLClient.MHLConnectionStateHandler;
 import edu.umass.cs.prepare.MHLClient.MHLMobileIOClient;
@@ -65,16 +66,15 @@ public class DataWriterService extends Service {
     /** The directory where the sensor data is stored. **/
     private File directory;
 
-    /**
-     * Initializes the objects responsible for writing the sensor data to disk.
-     */
-    public void initializeFileWriters(){
-        accelerometerWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_WEARABLE", directory);
-        gyroscopeWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "GYRO_WEARABLE", directory);
-        accelerometerMetawearWriter = FileUtil.getFileWriter(DataWriterService.this, "ACCELEROMETER_METAWEAR", directory);
-        gyroscopeMetawearWriter = FileUtil.getFileWriter(DataWriterService.this, "GYRO_METAWEAR", directory);
-        rssiMetawearToWearableWriter = FileUtil.getFileWriter(DataWriterService.this, "WEARABLE_TO_METAWEAR_RSSI", directory);
-        rssiMetawearToPhoneWriter = FileUtil.getFileWriter(DataWriterService.this, "PHONE_TO_METAWEAR_RSSI", directory);
+    private HashMap<String, AsyncFileWriter> fileWriterHashMap = new HashMap<>();
+
+    private AsyncFileWriter getFileWriter(String filename) {
+        AsyncFileWriter writer = fileWriterHashMap.get(filename);
+        if (writer == null){
+            writer = FileUtil.getFileWriter(DataWriterService.this, filename, directory);
+            fileWriterHashMap.put(filename, writer);
+        }
+        return writer;
     }
 
     /**
@@ -156,19 +156,7 @@ public class DataWriterService extends Service {
                     if (!writeLocal) return;
 
                     String line = builder.toString();
-                    if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE) {
-                        FileUtil.writeToFile(line, accelerometerWearableWriter);
-                    } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE){
-                        FileUtil.writeToFile(line, gyroscopeWearableWriter);
-                    } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
-                        FileUtil.writeToFile(line, accelerometerMetawearWriter);
-                    } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR){
-                        FileUtil.writeToFile(line, gyroscopeMetawearWriter);
-                    } else if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI){
-                        FileUtil.writeToFile(line, rssiMetawearToWearableWriter);
-                    } else if (sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
-                        FileUtil.writeToFile(line, rssiMetawearToPhoneWriter);
-                    }
+                    getFileWriter(sensorType.name()).append(line);
                 }
             }
         }
@@ -180,8 +168,8 @@ public class DataWriterService extends Service {
      */
     private void init(){
         loadPreferences();
-        if (writeLocal)
-            initializeFileWriters();
+//        if (writeLocal)
+//            initializeFileWriters();
         if (writeServer) {
             client = new MHLMobileIOClient(SharedConstants.SERVER_IP_ADDRESS, SharedConstants.SERVER_PORT, 0);
             client.setConnectionStateHandler(new MHLConnectionStateHandler() {
@@ -267,18 +255,9 @@ public class DataWriterService extends Service {
      * Closes all file open writers.
      */
     private void closeAllWriters(){
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(accelerometerWearableWriter);
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(gyroscopeWearableWriter);
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(accelerometerMetawearWriter);
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(gyroscopeMetawearWriter);
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(rssiMetawearToPhoneWriter);
-        if (accelerometerWearableWriter != null)
-            FileUtil.closeWriter(rssiMetawearToWearableWriter);
+        for (String key : fileWriterHashMap.keySet()){
+            fileWriterHashMap.get(key).close();
+        }
     }
 
     @Override

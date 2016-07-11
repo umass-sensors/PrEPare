@@ -47,13 +47,6 @@ public class DataWriterService extends Service {
     /** used for debugging purposes */
     private static final String TAG = DataWriterService.class.getName();
 
-    private AsyncFileWriter accelerometerWearableWriter;
-    private AsyncFileWriter gyroscopeWearableWriter;
-    private AsyncFileWriter accelerometerMetawearWriter;
-    private AsyncFileWriter gyroscopeMetawearWriter;
-    private AsyncFileWriter rssiMetawearToPhoneWriter;
-    private AsyncFileWriter rssiMetawearToWearableWriter;
-
     /** Indicates whether data should be written to storage. **/
     private boolean writeLocal = false;
 
@@ -66,8 +59,16 @@ public class DataWriterService extends Service {
     /** The directory where the sensor data is stored. **/
     private File directory;
 
+    /**
+     * Mapping from sensor identifiers, e.g. "ACCELEROMETER_WEARABLE", to file writers
+     */
     private HashMap<String, AsyncFileWriter> fileWriterHashMap = new HashMap<>();
 
+    /**
+     * Gets the file writer associated with the given sensor identifier, instantiating it if necessary.
+     * @param filename the name of the file, i.e. the sensor identifier
+     * @return the file writer object
+     */
     private AsyncFileWriter getFileWriter(String filename) {
         AsyncFileWriter writer = fileWriterHashMap.get(filename);
         if (writer == null){

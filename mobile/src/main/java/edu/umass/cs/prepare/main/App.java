@@ -10,7 +10,7 @@ public class App extends Application {
         super.onCreate();
 
         // Initialize WearPrefs for the default SharedPreferences file
-        // WearPrefs.init(this); //TODO uncomment
+        WearPrefs.init(this);
     }
 
 }

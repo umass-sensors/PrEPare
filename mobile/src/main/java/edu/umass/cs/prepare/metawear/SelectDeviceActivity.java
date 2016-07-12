@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.mbientlab.bletoolbox.scanner.BleScannerFragment;
 import com.mbientlab.metawear.MetaWearBoard;
 
 import java.util.UUID;
@@ -58,16 +57,6 @@ public class SelectDeviceActivity extends AppCompatActivity implements ScannerCo
 
         // Unbind the service when the activity is destroyed
         getApplicationContext().unbindService(this);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch(requestCode) {
-            case REQUEST_START_APP:
-                ((BleScannerFragment) getFragmentManager().findFragmentById(R.id.scanner_fragment)).startBleScan();
-                break;
-        }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override

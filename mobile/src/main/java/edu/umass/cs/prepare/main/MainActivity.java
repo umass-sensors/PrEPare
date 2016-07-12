@@ -303,13 +303,14 @@ public class MainActivity extends AppCompatActivity {
         }else if (requestCode == REQUEST_CODE.SET_PREFERENCES){
             Log.d(TAG, "preferences changed");
             boolean serviceEnabledBefore = serviceEnabled;
-            boolean runServiceOverWearableBefore = runServiceOverWearable;
             loadPreferences();
-            if (serviceEnabledBefore != serviceEnabled || runServiceOverWearableBefore != runServiceOverWearable){
+            if (serviceEnabledBefore != serviceEnabled){
                 if (serviceEnabled)
                     startMetawearService();
-                else
+                else {
                     stopMetawearService();
+                    serviceManager.stopDataWriterService();
+                }
             }
 
         }else if (requestCode == REQUEST_CODE.SELECT_DEVICE){
@@ -514,10 +515,10 @@ public class MainActivity extends AppCompatActivity {
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
                         showStatus("Listening for movement...");
-                        //showConnectingDialog();
+                        showConnectingDialog();
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         showStatus("Connected to pill bottle.");
-                        //cancelConnectingDialog();
+                        cancelConnectingDialog();
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
                         serviceManager.stopDataWriterService();
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){

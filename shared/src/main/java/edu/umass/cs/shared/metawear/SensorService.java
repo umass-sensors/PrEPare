@@ -463,6 +463,7 @@ public class SensorService extends Service implements ServiceConnection {
     private void startAccelerometerWithNoMotionDetection(){
         Log.d(TAG, getString(R.string.routing_accelerometer));
         final float[] diffInMagnitudeWindow = new float[NO_MOTION_DURATION * accelerometerSamplingRate];
+        magnitudesIndex=0;
         accModule.routeData().fromAxes()
                 .stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER)
                 .commit()
@@ -484,12 +485,12 @@ public class SensorService extends Service implements ServiceConnection {
                                 diffInMagnitudeWindow[magnitudesIndex++] = Math.abs(magnitudeSq - prevMagnitudeSq);
                                 prevMagnitudeSq = magnitudeSq;
 
-                                if (magnitudesIndex >= NO_MOTION_DURATION) {
+                                if (magnitudesIndex >= NO_MOTION_DURATION * accelerometerSamplingRate) {
                                     float sumOverDiffInMagnitude = 0f;
                                     while (magnitudesIndex > 0) {
-                                        sumOverDiffInMagnitude += diffInMagnitudeWindow[magnitudesIndex];
-                                        magnitudesIndex--;
+                                        sumOverDiffInMagnitude += diffInMagnitudeWindow[--magnitudesIndex];
                                     }
+                                    Log.d(TAG, String.valueOf(sumOverDiffInMagnitude));
                                     if (sumOverDiffInMagnitude < MOTION_THRESHOLD) {
                                         onNoMotionDetected();
                                     }

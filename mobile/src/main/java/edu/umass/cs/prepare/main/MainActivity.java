@@ -510,10 +510,10 @@ public class MainActivity extends AppCompatActivity {
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
                         showStatus("Listening for movement...");
-                        showConnectingDialog();
+                        //showConnectingDialog();
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         showStatus("Connected to pill bottle.");
-                        cancelConnectingDialog();
+                        //cancelConnectingDialog();
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
                         serviceManager.stopDataWriterService();
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){

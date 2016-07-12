@@ -578,7 +578,6 @@ public class SensorService extends Service implements ServiceConnection {
                 mwBoard.readRssi().onComplete(new AsyncOperation.CompletionHandler<Integer>() {
                     @Override
                     public void success(final Integer result) {
-                        //TODO: Can we not get timestamp for RSSI reading from Metawear board? Then make sure formatting matches that from board
                         long timestamp = System.currentTimeMillis();
                         onRSSIReadingReceived(timestamp, result);
                         synchronized (rssiBuffer) { //add sensor data to the appropriate buffer

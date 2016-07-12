@@ -249,8 +249,17 @@ public class SensorService extends Service implements ServiceConnection {
     protected void onServiceStarted(){
         if (mIsBound) return;
         loadPreferences();
-        //TODO : If BT is off?
         BluetoothManager btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+        final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null){
+            //TODO: Bluetooth not supported on device (can't really use the app at all!)
+            return;
+        }
+        if (!bluetoothAdapter.isEnabled()){
+            if (broadcaster != null)
+                broadcaster.broadcastMessage(SharedConstants.MESSAGES.BLUETOOTH_DISABLED);
+            return;
+        }
         try {
             btDevice = btManager.getAdapter().getRemoteDevice(address);
         }catch(IllegalArgumentException e){

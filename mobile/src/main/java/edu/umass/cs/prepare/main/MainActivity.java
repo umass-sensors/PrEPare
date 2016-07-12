@@ -3,6 +3,7 @@ package edu.umass.cs.prepare.main;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         int WINDOW_OVERLAY = 2;
         int SELECT_DEVICE = 3;
         int SET_PREFERENCES = 4;
+        int ENABLE_BLUETOOTH = 5;
     }
 
     /** The sensor manager which handles sensors on the wearable device remotely */
@@ -521,6 +523,9 @@ public class MainActivity extends AppCompatActivity {
                     } else if (message == SharedConstants.MESSAGES.INVALID_ADDRESS){
                         showStatus("Invalid Bluetooth Address.");
                         startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
+                    } else if (message == SharedConstants.MESSAGES.BLUETOOTH_DISABLED){
+                        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                        startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);
                     }
                 }
             }

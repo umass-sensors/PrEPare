@@ -1,6 +1,6 @@
 package edu.umass.cs.shared.util;
 
-import cs.umass.edu.shared.R;
+import edu.umass.cs.shared.R;
 
 /**
  * This utility class exposes static methods regarding the battery life on the Metawear device,

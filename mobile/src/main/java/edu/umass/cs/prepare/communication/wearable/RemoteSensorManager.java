@@ -153,17 +153,6 @@ public class RemoteSensorManager {
         });
     }
 
-    /** send a message to the wearable device to cancel connection to the Metawear tag */
-    public void cancelMetawearConnection() {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                Log.v(TAG, "Cancel Metawear connection.");
-                sendMessageInBackground(SharedConstants.COMMANDS.CANCEL_METAWEAR_CONNECTION, null);
-            }
-        });
-    }
-
     /**
      * sends a command/message (referred to as a path in Google API logic) to the wearable application
      * @param path the message sent to the wearable device

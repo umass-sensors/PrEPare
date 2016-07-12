@@ -125,14 +125,7 @@ public class MainActivity extends AppCompatActivity {
         connectDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                if (!runServiceOverWearable) { //TODO: What if it changes during running?
-                    Intent startServiceIntent = new Intent(MainActivity.this, SensorService.class);
-                    startServiceIntent.setAction(SharedConstants.ACTIONS.CANCEL_CONNECTING);
-                    startService(startServiceIntent);
-                } else {
-                    remoteSensorManager.cancelMetawearConnection();
-                }
-
+                stopMetawearService();
             }
         });
         connectDialog.show();

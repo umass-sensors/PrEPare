@@ -205,11 +205,9 @@ public class SensorService extends Service implements ServiceConnection {
                 onServiceStarted();
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
                 onServiceStopped();
-            } else if (intent.getAction().equals(SharedConstants.ACTIONS.CANCEL_CONNECTING)) {
-                onServiceStopped();
             }
         } else {
-            Log.d(TAG, "Service restarted after killed by OS.");
+            Log.d(TAG, getString(R.string.notify_service_killed));
             onServiceStarted();
         }
         return START_STICKY;
@@ -224,7 +222,6 @@ public class SensorService extends Service implements ServiceConnection {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "Unregistering receiver");
         unregisterReceiver(bluetoothStateListener);
         super.onDestroy();
     }
@@ -274,13 +271,13 @@ public class SensorService extends Service implements ServiceConnection {
         mwBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
             @Override
             public void connected() {
-                Log.d(TAG, "Connected!");
+                Log.d(TAG, getString(R.string.notify_connected));
                 onMetawearConnected();
             }
 
             @Override
             public void disconnected() {
-                Log.d(TAG, "Disconnected!");
+                Log.d(TAG, getString(R.string.notify_disconnected));
                 onMetawearDisconnected();
             }
 
@@ -291,7 +288,7 @@ public class SensorService extends Service implements ServiceConnection {
                     connect();
             }
         });
-        Log.d(TAG, "Service connected...");
+        Log.d(TAG, getString(R.string.notify_service_connected));
         connect();
     }
 
@@ -455,7 +452,7 @@ public class SensorService extends Service implements ServiceConnection {
      * been detected.
      */
     private void startAccelerometerWithNoMotionDetection(){
-        Log.d(TAG, "Routing accelerometer data...");
+        Log.d(TAG, getString(R.string.routing_accelerometer));
         final float[] diffInMagnitudeWindow = new float[NO_MOTION_DURATION * accelerometerSamplingRate];
         accModule.routeData().fromAxes()
                 .stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER)
@@ -474,23 +471,23 @@ public class SensorService extends Service implements ServiceConnection {
                                     accelerometerBuffer.addReading(timestamp, x, y, z);
                                 }
 
-                                float magnitudeSq = x*x + y*y + z*z;
+                                float magnitudeSq = x * x + y * y + z * z;
                                 diffInMagnitudeWindow[magnitudesIndex++] = Math.abs(magnitudeSq - prevMagnitudeSq);
                                 prevMagnitudeSq = magnitudeSq;
 
-                                if (magnitudesIndex >= NO_MOTION_DURATION){
+                                if (magnitudesIndex >= NO_MOTION_DURATION) {
                                     float sumOverDiffInMagnitude = 0f;
-                                    while (magnitudesIndex > 0){
+                                    while (magnitudesIndex > 0) {
                                         sumOverDiffInMagnitude += diffInMagnitudeWindow[magnitudesIndex];
                                         magnitudesIndex--;
                                     }
-                                    if (sumOverDiffInMagnitude < MOTION_THRESHOLD){
+                                    if (sumOverDiffInMagnitude < MOTION_THRESHOLD) {
                                         onNoMotionDetected();
                                     }
                                 }
                             }
                         });
-                        Log.d(TAG, "Starting accelerometer...");
+                        Log.d(TAG, getString(R.string.starting_accelerometer));
                         accModule.enableAxisSampling();
                         accModule.start();
                         onAccelerometerStarted();
@@ -527,7 +524,7 @@ public class SensorService extends Service implements ServiceConnection {
      * Starts the Gyroscope sensor on the Metawear board.
      */
     private void startGyroscope() {
-        Log.d(TAG, "Routing gyroscope data...");
+        Log.d(TAG, getString(R.string.routing_gyroscope));
         gyroModule.routeData().fromAxes().stream(SharedConstants.METAWEAR_STREAM_KEY.GYROSCOPE).commit()
                 .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                     @Override
@@ -542,7 +539,7 @@ public class SensorService extends Service implements ServiceConnection {
                                 }
                             }
                         });
-                        Log.d(TAG, "Starting gyroscope...");
+                        Log.d(TAG, getString(R.string.starting_gyroscope));
                         gyroModule.start();
                         onGyroscopeStarted();
                     }
@@ -553,7 +550,7 @@ public class SensorService extends Service implements ServiceConnection {
      * Streams received signal strength indicator (RSSI) between the Metawear board and the wearable.
      */
     private void startRSSI() {
-        Log.d(TAG, "Routing RSSI data...");
+        Log.d(TAG, getString(R.string.routing_rssi));
         if (handler != null)
             handler.removeCallbacksAndMessages(null);
         if (hThread != null && hThread.isAlive()) {
@@ -659,7 +656,6 @@ public class SensorService extends Service implements ServiceConnection {
      * Called when the sensor service is stopped, by command from the handheld application.
      */
     protected void onServiceStopped(){
-        Log.d(TAG, "Request service stopped.");
         disconnectSource = DISCONNECT_SOURCE.DISCONNECT_REQUESTED;
         if (mwBoard != null && mwBoard.isConnected()) {
             startMotionDetectionThenDisconnect();

@@ -6,4 +6,20 @@
     <string name="data_writer_notification">Writing sensor data</string>
 
     <string name="stop_service">Stop service</string>
+
+    <string name="bluetooth_on">Bluetooth on</string>
+    <string name="bluetooth_off">Bluetooth off</string>
+    <string name="bluetooth_disabled">Turning Bluetooth off…</string>
+    <string name="bluetooth_enabled">Turning Bluetooth on…</string>
+
+    <string name="starting_accelerometer">Starting accelerometer…</string>
+    <string name="starting_gyroscope">Starting gyroscope…</string>
+    <string name="routing_rssi">Routing RSSI data…</string>
+    <string name="routing_accelerometer">Routing accelerometer data…</string>
+    <string name="routing_gyroscope">Routing gyroscope data…</string>
+
+    <string name="notify_service_killed">Service restarted after killed by OS.</string>
+    <string name="notify_disconnected">Disconnected!</string>
+    <string name="notify_connected">Connected!</string>
+    <string name="notify_service_connected">Service connected...</string>
 </resources>

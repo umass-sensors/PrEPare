@@ -123,7 +123,7 @@ public class SensorService extends Service implements ServiceConnection {
     /**
      * Possible sources of disconnection from the Metawear board.
      */
-    private enum DISCONNECT_SOURCE {
+    protected enum DISCONNECT_SOURCE {
         /** No known source of disconnection **/
         UNKNOWN,
         /** The Metawear board is no longer in motion and need not be connected to the phone **/
@@ -137,7 +137,7 @@ public class SensorService extends Service implements ServiceConnection {
     }
 
     /** The source of disconnection from the Metawear board. **/
-    private DISCONNECT_SOURCE disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
+    protected DISCONNECT_SOURCE disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
 
     /** The unique address of the Metawear device. **/
     private String address;

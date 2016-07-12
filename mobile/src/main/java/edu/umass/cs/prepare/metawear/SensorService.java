@@ -3,7 +3,9 @@ package edu.umass.cs.prepare.metawear;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
 import edu.umass.cs.prepare.communication.local.Broadcaster;
@@ -39,13 +41,16 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     /** Responsible for managing the services, e.g. sensor service, on the mobile application **/
     private ServiceManager serviceManager;
 
+    private enum CONTENT_TEXT_IDENTIFIER {
+        COLLECTING_DATA,
+        LISTENING_FOR_MOVEMENT,
+        BLUETOOTH_DISABLED
+    }
+
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null)
-            if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)){
-                showForegroundNotification(false);
-            }
-        return super.onStartCommand(intent, flags, startId);
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        super.onServiceConnected(name, service);
+        showForegroundNotification(CONTENT_TEXT_IDENTIFIER.LISTENING_FOR_MOVEMENT);
     }
 
     @Override
@@ -77,23 +82,27 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     protected void onMetawearConnected(){
         serviceManager.startDataWriterService();
         super.onMetawearConnected();
-        showForegroundNotification(true);
+        showForegroundNotification(CONTENT_TEXT_IDENTIFIER.COLLECTING_DATA);
         queryBatteryLevel();
     }
 
     @Override
     protected void onMetawearDisconnected() {
+        if (disconnectSource == DISCONNECT_SOURCE.BLUETOOTH_DISABLED){
+            showForegroundNotification(CONTENT_TEXT_IDENTIFIER.BLUETOOTH_DISABLED);
+        }else {
+            showForegroundNotification(CONTENT_TEXT_IDENTIFIER.LISTENING_FOR_MOVEMENT);
+        }
         super.onMetawearDisconnected();
         serviceManager.stopDataWriterService();
-        showForegroundNotification(false);
     }
 
-    private void showForegroundNotification(boolean connected){
-        Notification notification = getUpdatedNotification(-1, connected);
+    private void showForegroundNotification(CONTENT_TEXT_IDENTIFIER state){
+        Notification notification = getUpdatedNotification(-1, state);
         startForeground(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, notification);
     }
 
-    private Notification getUpdatedNotification(int batteryLevel, boolean connected){
+    private Notification getUpdatedNotification(int batteryLevel, CONTENT_TEXT_IDENTIFIER state){
         Intent queryBatteryLevelIntent = new Intent(this, SensorService.class);
         queryBatteryLevelIntent.setAction(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL);
         PendingIntent queryBatteryLevelPendingIntent = PendingIntent.getService(this, 0, queryBatteryLevelIntent, 0);
@@ -113,11 +122,15 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
 
         String contentText;
-        if (connected){
+        if (state == CONTENT_TEXT_IDENTIFIER.COLLECTING_DATA){
             contentText = getString(R.string.connection_notification);
             notificationBuilder = notificationBuilder.setVibrate(new long[]{0, 50, 150, 200});
-        }else {
+        }else if (state == CONTENT_TEXT_IDENTIFIER.LISTENING_FOR_MOVEMENT) {
             contentText = getString(R.string.sensor_service_notification);
+        }else if (state == CONTENT_TEXT_IDENTIFIER.BLUETOOTH_DISABLED){
+            contentText = "Please enable Bluetooth";
+        }else{
+            contentText = "";
         }
         if (batteryLevel >= 0)
             contentText += String.format("(battery: %d%%)", batteryLevel);
@@ -132,7 +145,8 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
     private void showBatteryLevelNotification(int percentage){
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, getUpdatedNotification(percentage, true));
+        notificationManager.notify(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE,
+                getUpdatedNotification(percentage, CONTENT_TEXT_IDENTIFIER.COLLECTING_DATA));
     }
 
     @Override

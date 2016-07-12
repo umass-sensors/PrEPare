@@ -33,9 +33,7 @@ public class SelectDeviceActivity extends AppCompatActivity implements ScannerCo
     private static final String TAG = SelectDeviceActivity.class.getName();
 
     private final static UUID[] serviceUuids;
-
-    public static final int REQUEST_START_APP= 1;
-
+    
     static {
         serviceUuids= new UUID[] {
                 MetaWearBoard.METAWEAR_SERVICE_UUID,

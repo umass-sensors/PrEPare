@@ -302,10 +302,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }else if (requestCode == REQUEST_CODE.SET_PREFERENCES){
             Log.d(TAG, "preferences changed");
-            //TODO: May not be enough to stop and start it, what if the user changes preferences during movement? Unlikely??
             boolean serviceEnabledBefore = serviceEnabled;
+            boolean runServiceOverWearableBefore = runServiceOverWearable;
             loadPreferences();
-            if (serviceEnabledBefore != serviceEnabled){
+            if (serviceEnabledBefore != serviceEnabled || runServiceOverWearableBefore != runServiceOverWearable){
                 if (serviceEnabled)
                     startMetawearService();
                 else

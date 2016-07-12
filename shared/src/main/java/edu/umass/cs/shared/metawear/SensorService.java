@@ -31,16 +31,11 @@ import com.mbientlab.metawear.module.DataProcessor;
 import com.mbientlab.metawear.module.Gyro;
 import com.mbientlab.metawear.module.Led;
 import com.mbientlab.metawear.module.Settings;
-import com.mbientlab.metawear.processor.Average;
-import com.mbientlab.metawear.processor.Comparison;
 import com.mbientlab.metawear.processor.Counter;
-import com.mbientlab.metawear.processor.Maths;
-import com.mbientlab.metawear.processor.Rss;
-import com.mbientlab.metawear.processor.Time;
 
 import java.util.Map;
 
-import cs.umass.edu.shared.R;
+import edu.umass.cs.shared.R;
 import edu.umass.cs.shared.communication.BroadcastInterface;
 import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.shared.util.SensorBuffer;
@@ -145,7 +140,7 @@ public class SensorService extends Service implements ServiceConnection {
     private DISCONNECT_SOURCE disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
 
     /** The unique address of the Metawear device. **/
-    private String mwMacAddress;
+    private String address;
 
     /** Handles the recurring RSSI requests. **/
     private Handler handler;
@@ -158,6 +153,32 @@ public class SensorService extends Service implements ServiceConnection {
      * to other application components, both on the mobile and wearable side.
      */
     private BroadcastInterface broadcaster;
+
+    /**
+     * Number of seconds that no motion must be detected before disconnection.
+     */
+    private static final int NO_MOTION_DURATION = 5;
+
+    /**
+     * Threshold for the sum over difference in square magnitude, below which no motion is detected.
+     */
+    private static final float MOTION_THRESHOLD = 0.1875f;
+
+    /**
+     * The index into the window of magnitudes.
+     */
+    private int magnitudesIndex = 0;
+
+    /**
+     * The previous square accelerometer magnitude measurement.
+     */
+    private float prevMagnitudeSq = 0;
+
+    /**
+     * The number of milliseconds after disconnecting from the board due to no motion before attempting to reconnect.
+     */
+    private static final int RECONNECTION_TIMEOUT_MILLIS = 2000;
+
 
     /**
      * Sets the callback function for the given buffer, which is called when the buffer is full.
@@ -222,7 +243,7 @@ public class SensorService extends Service implements ServiceConnection {
         blinkLedWhileRunning = preferences.getBoolean(getString(R.string.pref_led_key), getResources().getBoolean(R.bool.pref_led_default));
         enableGyroscope = preferences.getBoolean(getString(R.string.pref_gyroscope_key), getResources().getBoolean(R.bool.pref_gyroscope_default));
         enableRSSI = preferences.getBoolean(getString(R.string.pref_rssi_key), getResources().getBoolean(R.bool.pref_rssi_default));
-        mwMacAddress = preferences.getString(getString(R.string.pref_device_key), getString(R.string.pref_device_default));
+        address = preferences.getString(getString(R.string.pref_device_key), getString(R.string.pref_device_default));
     }
 
     /**
@@ -234,7 +255,7 @@ public class SensorService extends Service implements ServiceConnection {
         //TODO : If BT is off?
         BluetoothManager btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         try {
-            btDevice = btManager.getAdapter().getRemoteDevice(mwMacAddress);
+            btDevice = btManager.getAdapter().getRemoteDevice(address);
         }catch(IllegalArgumentException e){
             e.printStackTrace();
             if (broadcaster != null)
@@ -260,11 +281,7 @@ public class SensorService extends Service implements ServiceConnection {
             @Override
             public void disconnected() {
                 Log.d(TAG, "Disconnected!");
-                if (disconnectSource == DISCONNECT_SOURCE.UNKNOWN) { //retry
-                    connect();
-                } else {
-                    onMetawearDisconnected();
-                }
+                onMetawearDisconnected();
             }
 
             @Override
@@ -333,7 +350,7 @@ public class SensorService extends Service implements ServiceConnection {
      * Called once the Metawear board is connected
      */
     protected void onMetawearConnected(){
-        //loadPreferences(); //TODO: This could be expensive? register preference changed listener instead (add action to onStartCommand)
+        loadPreferences();
         getModules();
         mwBoard.removeRoutes();
         stopSensors();
@@ -438,47 +455,50 @@ public class SensorService extends Service implements ServiceConnection {
      * been detected.
      */
     private void startAccelerometerWithNoMotionDetection(){
-        Log.d(TAG, "Initializing Route");
+        Log.d(TAG, "Routing accelerometer data...");
+        final float[] diffInMagnitudeWindow = new float[NO_MOTION_DURATION * accelerometerSamplingRate];
         accModule.routeData().fromAxes()
                 .stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER)
-                .process(new Rss())
-                .process(new Maths(Maths.Operation.SUBTRACT, 1))
-                .process(new Maths(Maths.Operation.ABS_VALUE, 0))
-                .process(new Average((byte) 127))
-                .process(new Time(Time.OutputMode.ABSOLUTE, 2000))
-                //.stream("debug")
-                .process(new Comparison(Comparison.Operation.LT, 0.015))
-                .stream(SharedConstants.METAWEAR_STREAM_KEY.NO_MOTION)
                 .commit()
                 .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                     @Override
                     public void success(RouteManager result) {
-                        result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.NO_MOTION, new RouteManager.MessageHandler() {
-                            @Override
-                            public void process(Message msg) {
-                                onNoMotionDetected();
-                            }
-                        });
-//                        result.subscribe("debug", new RouteManager.MessageHandler() {
-//                            @Override
-//                            public void process(Message msg) {
-//                                Log.d(TAG, String.valueOf(msg.getData(Float.class)));
-//                            }
-//                        });
                         result.subscribe(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER, new RouteManager.MessageHandler() {
                             @Override
                             public void process(Message msg) {
                                 CartesianFloat reading = msg.getData(CartesianFloat.class);
-                                onAccelerometerReadingReceived(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
+                                float x = reading.x(), y = reading.y(), z = reading.z();
+                                long timestamp = msg.getTimestamp().getTimeInMillis();
+                                onAccelerometerReadingReceived(timestamp, x, y, z);
                                 synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
-                                    accelerometerBuffer.addReading(msg.getTimestamp().getTimeInMillis(), reading.x(), reading.y(), reading.z());
+                                    accelerometerBuffer.addReading(timestamp, x, y, z);
+                                }
+
+                                float magnitudeSq = x*x + y*y + z*z;
+                                diffInMagnitudeWindow[magnitudesIndex++] = Math.abs(magnitudeSq - prevMagnitudeSq);
+                                prevMagnitudeSq = magnitudeSq;
+
+                                if (magnitudesIndex >= NO_MOTION_DURATION){
+                                    float sumOverDiffInMagnitude = 0f;
+                                    while (magnitudesIndex > 0){
+                                        sumOverDiffInMagnitude += diffInMagnitudeWindow[magnitudesIndex];
+                                        magnitudesIndex--;
+                                    }
+                                    if (sumOverDiffInMagnitude < MOTION_THRESHOLD){
+                                        onNoMotionDetected();
+                                    }
                                 }
                             }
                         });
-                        Log.d(TAG, "Starting accelerometer.");
+                        Log.d(TAG, "Starting accelerometer...");
                         accModule.enableAxisSampling();
                         accModule.start();
                         onAccelerometerStarted();
+                    }
+
+                    @Override
+                    public void failure(Throwable error) {
+                        error.printStackTrace();
                     }
                 });
     }
@@ -492,7 +512,7 @@ public class SensorService extends Service implements ServiceConnection {
                     .monitor(new DataSignal.ActivityHandler() {
                         @Override
                         public void onSignalActive(Map<String, DataProcessor> map, DataSignal.DataToken dataToken) {
-                            turnOnLed(Led.ColorChannel.GREEN, false); //TODO: Don't turn on LED in final system due to high battery consumption
+                            //turnOnLed(Led.ColorChannel.BLUE, false); //TODO: Don't turn on LED in final system due to high battery consumption
                             settingsModule.startAdvertisement();
                         }
                     }).commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
@@ -507,6 +527,7 @@ public class SensorService extends Service implements ServiceConnection {
      * Starts the Gyroscope sensor on the Metawear board.
      */
     private void startGyroscope() {
+        Log.d(TAG, "Routing gyroscope data...");
         gyroModule.routeData().fromAxes().stream(SharedConstants.METAWEAR_STREAM_KEY.GYROSCOPE).commit()
                 .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                     @Override
@@ -521,6 +542,7 @@ public class SensorService extends Service implements ServiceConnection {
                                 }
                             }
                         });
+                        Log.d(TAG, "Starting gyroscope...");
                         gyroModule.start();
                         onGyroscopeStarted();
                     }
@@ -531,6 +553,7 @@ public class SensorService extends Service implements ServiceConnection {
      * Streams received signal strength indicator (RSSI) between the Metawear board and the wearable.
      */
     private void startRSSI() {
+        Log.d(TAG, "Routing RSSI data...");
         if (handler != null)
             handler.removeCallbacksAndMessages(null);
         if (hThread != null && hThread.isAlive()) {
@@ -620,14 +643,14 @@ public class SensorService extends Service implements ServiceConnection {
             @Override
             public void success(final Byte result) {
                 if (result <= 10) {
-                    turnOnLed(Led.ColorChannel.RED, true);
+                    turnOnLed(Led.ColorChannel.RED, false);
                 }
                 onBatteryLevelReceived(result);
             }
 
             @Override
             public void failure(Throwable error) {
-                Log.e("Metawear Error", error.toString());
+                error.printStackTrace();
             }
         });
     }
@@ -636,7 +659,7 @@ public class SensorService extends Service implements ServiceConnection {
      * Called when the sensor service is stopped, by command from the handheld application.
      */
     protected void onServiceStopped(){
-        Log.d(TAG, "Request service stopped");
+        Log.d(TAG, "Request service stopped.");
         disconnectSource = DISCONNECT_SOURCE.DISCONNECT_REQUESTED;
         if (mwBoard != null && mwBoard.isConnected()) {
             startMotionDetectionThenDisconnect();
@@ -646,11 +669,17 @@ public class SensorService extends Service implements ServiceConnection {
         }
     }
 
+    /**
+     * Connect to the Metawear board.
+     */
     protected void connect(){
         mwBoard.connect();
         onConnectionRequest();
     }
 
+    /**
+     * Attempt to reconnect to the Metawear board after {@link #RECONNECTION_TIMEOUT_MILLIS} milliseconds.
+     */
     protected void postReconnect(){
         if (hThread == null) {
             hThread = new HandlerThread("HandlerThread");
@@ -663,9 +692,12 @@ public class SensorService extends Service implements ServiceConnection {
                 connect();
             }
         };
-        reconnectionHandler.postDelayed(reconnectAfterDelayTask, 2000);
+        reconnectionHandler.postDelayed(reconnectAfterDelayTask, RECONNECTION_TIMEOUT_MILLIS);
     }
 
+    /**
+     * Disconnect from the Metawear board.
+     */
     protected void disconnect(){
         if (mwBoard != null)
             mwBoard.disconnect();
@@ -676,6 +708,10 @@ public class SensorService extends Service implements ServiceConnection {
         return null;
     }
 
+    /**
+     * Called when Bluetooth is disabled. If currently connected to the Metawear board, safely
+     * disconnect; otherwise go immediately to the {@link #onMetawearDisconnected()} method.
+     */
     protected void onBluetoothDisabled(){
         disconnectSource = DISCONNECT_SOURCE.BLUETOOTH_DISABLED;
         if (mwBoard != null && mwBoard.isConnected()) {
@@ -686,6 +722,10 @@ public class SensorService extends Service implements ServiceConnection {
         }
     }
 
+    /**
+     * Called when Bluetooth is enabled. The service should be restarted and a connection attempt
+     * should be made.
+     */
     protected void onBluetoothEnabled(){
         onServiceStarted();
     }
@@ -704,18 +744,18 @@ public class SensorService extends Service implements ServiceConnection {
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
                 switch (state) {
                     case BluetoothAdapter.STATE_OFF:
-                        Log.d(TAG, "Bluetooth off");
+                        Log.d(TAG, getString(R.string.bluetooth_off));
                         break;
                     case BluetoothAdapter.STATE_TURNING_OFF:
-                        Log.d(TAG, "Turning Bluetooth off...");
+                        Log.d(TAG, getString(R.string.bluetooth_disabled));
                         onBluetoothDisabled();
                         break;
                     case BluetoothAdapter.STATE_ON:
-                        Log.d(TAG, "Bluetooth on");
+                        Log.d(TAG, getString(R.string.bluetooth_on));
                         onBluetoothEnabled();
                         break;
                     case BluetoothAdapter.STATE_TURNING_ON:
-                        Log.d(TAG, "Turning Bluetooth on...");
+                        Log.d(TAG, getString(R.string.bluetooth_enabled));
                         break;
                 }
             }

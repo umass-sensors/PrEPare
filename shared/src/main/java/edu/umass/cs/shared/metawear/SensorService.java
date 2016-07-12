@@ -266,7 +266,6 @@ public class SensorService extends Service implements ServiceConnection {
             e.printStackTrace();
             if (broadcaster != null)
                 broadcaster.broadcastMessage(SharedConstants.MESSAGES.INVALID_ADDRESS);
-            //TODO: Notify user that address is not valid
             return;
         }
         mIsBound = getApplicationContext().bindService(new Intent(SensorService.this, MetaWearBleService.class),

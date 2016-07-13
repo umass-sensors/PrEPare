@@ -102,6 +102,8 @@ public class DataWriterService extends Service {
                     float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
 
+                    if (sensorType == SharedConstants.SENSOR_TYPE.BATTERY_METAWEAR) return; //ignore battery readings
+
                     StringBuilder builder = new StringBuilder(timestamps.length * (Constants.BYTES_PER_TIMESTAMP + Constants.BYTES_PER_SENSOR_READING + 6));
                     if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI ||
                             sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){

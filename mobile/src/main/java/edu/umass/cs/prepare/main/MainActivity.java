@@ -173,8 +173,6 @@ public class MainActivity extends AppCompatActivity {
         }catch (IllegalArgumentException e){
             e.printStackTrace();
         }
-
-        cancelConnectingDialog();
         super.onStop();
     }
 

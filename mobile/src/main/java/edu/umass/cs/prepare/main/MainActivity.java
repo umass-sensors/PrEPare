@@ -487,7 +487,7 @@ public class MainActivity extends AppCompatActivity {
     private void showStatus(String message){
         View mainUI = MainActivity.this.findViewById(R.id.fragment);
         assert mainUI != null;
-        Snackbar snack = Snackbar.make(mainUI, message, Snackbar.LENGTH_LONG);
+        Snackbar snack = Snackbar.make(mainUI, message, Snackbar.LENGTH_INDEFINITE);
         View view = snack.getView();
         TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
         tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);

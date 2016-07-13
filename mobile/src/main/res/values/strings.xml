@@ -39,5 +39,5 @@
     <string name="title_select_device">Select Pill Bottle</string>
 
     <string name="video_permission_denied">Video failed! Permission Denied.</string>
-    <string name="audio_permission_denied">"Audio Permission Denied : Continuing with audio disabled."</string>
+    <string name="audio_permission_denied">Audio Permission Denied : Continuing with audio disabled.</string>
 </resources>

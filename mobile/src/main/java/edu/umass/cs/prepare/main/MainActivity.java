@@ -269,7 +269,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startMetawearService(){
-        if (!serviceEnabled) return;
+        if (!serviceEnabled) {
+            showStatus(getString(R.string.status_service_stopped));
+            return;
+        }
         if (runServiceOverWearable)
             remoteSensorManager.startMetawearService();
         else
@@ -496,6 +499,11 @@ public class MainActivity extends AppCompatActivity {
                 if (intent.getAction().equals(Constants.ACTION.BROADCAST_SENSOR_DATA)) {
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
                     float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
+                    if (sensorType == SharedConstants.SENSOR_TYPE.BATTERY_METAWEAR){
+                        updateBatteryLevel((int)values[0]);
+                        return;
+                    }
+
                     float[] averages = new float[3];
                     for (int i = 0; i < values.length; i++) {
                         averages[i % 3] += values[i];

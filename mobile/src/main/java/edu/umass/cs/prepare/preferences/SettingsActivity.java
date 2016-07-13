@@ -4,9 +4,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.text.InputFilter;
+import android.text.Spanned;
+import android.widget.EditText;
 
 import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.prepare.R;
@@ -96,6 +100,43 @@ public class SettingsActivity extends PreferenceActivity {
                 return true;
             }
         });
+
+        EditText ipAddressPreference = ((EditTextPreference) findPreference(getString(R.string.pref_ip_key)))
+                .getEditText();
+        ipAddressPreference.setFilters(new InputFilter[]{new InputFilter() {
+            /**
+             * Filters the text input to ensure it is a valid IP address
+             * @param source source text
+             * @param start start index
+             * @param end end index
+             * @param dest destination span
+             * @param destStart destination start index
+             * @param destEnd destination end index
+             * @return null if valid, "" otherwise
+             * @see <a href="http://stackoverflow.com/questions/8661915/what-androidinputtype-should-i-use-for-entering-an-ip-address">SKT's answer</a>
+             */
+            @Override
+            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int destStart, int destEnd) {
+                if (end > start) {
+                    String destTxt = dest.toString();
+                    String resultingTxt = destTxt.substring(0, destStart) +
+                            source.subSequence(start, end) +
+                            destTxt.substring(destEnd);
+                    if (!resultingTxt.matches("^\\d{1,3}(\\." +
+                            "(\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3})?)?)?)?)?)?")) {
+                        return "";
+                    } else {
+                        String[] splits = resultingTxt.split("\\.");
+                        for (String split : splits) {
+                            if (Integer.valueOf(split) > 255) {
+                                return "";
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+        }});
     }
 
     @Override

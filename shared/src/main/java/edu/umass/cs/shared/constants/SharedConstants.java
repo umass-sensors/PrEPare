@@ -46,6 +46,8 @@ public class SharedConstants {
         int RECORDING_SERVICE_STOPPED = 7;
         int INVALID_ADDRESS = 8;
         int BLUETOOTH_DISABLED = 9;
+        int BLUETOOTH_UNSUPPORTED = 10;
+        int METAWEAR_SERVICE_STOPPED = 11;
     }
 
     /**

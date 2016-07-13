@@ -252,7 +252,8 @@ public class SensorService extends Service implements ServiceConnection {
         BluetoothManager btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null){
-            //TODO: Bluetooth not supported on device (can't really use the app at all!)
+            if (broadcaster != null)
+                broadcaster.broadcastMessage(SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED);
             return;
         }
         if (!bluetoothAdapter.isEnabled()){

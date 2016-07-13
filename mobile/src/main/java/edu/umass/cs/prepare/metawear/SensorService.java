@@ -152,6 +152,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
     @Override
     protected void onBatteryLevelReceived(int percentage) {
         showBatteryLevelNotification(percentage);
+        Broadcaster.broadcastSensorData(SensorService.this, SharedConstants.SENSOR_TYPE.BATTERY_METAWEAR, new long[]{System.currentTimeMillis()}, new float[]{percentage});
     }
 
 }

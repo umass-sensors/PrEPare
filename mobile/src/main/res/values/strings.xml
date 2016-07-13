@@ -46,7 +46,7 @@
     <string name="status_invalid_address">Invalid Bluetooth address!</string>
     <string name="status_bluetooth_disabled">Please turn on Bluetooth.</string>
     <string name="status_bluetooth_unsupported">Your device does not support Bluetooth!</string>
-    <string name="status_service_stopped">Pill bottle disabled. To reconnect, go to General settings.</string>
+    <string name="status_service_stopped">Sensor disabled. Reconnect in General settings.</string>
 
     <string name="app_package_identifier_prefix">package:</string>
 </resources>

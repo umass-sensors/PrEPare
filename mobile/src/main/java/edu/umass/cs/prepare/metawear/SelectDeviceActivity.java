@@ -24,7 +24,12 @@ import com.mbientlab.metawear.MetaWearBleService;
  * All devices within range will be displayed along with their signal strength (RSSI) in order
  * to differentiate devices with the same name.
  *
- * TODO: Link mbientlab sample
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
+ * @see <a href="https://github.com/mbientlab/Metawear-SampleAndroidApp/blob/master/app/src/main/java/com/mbientlab/metawear/app/ScannerActivity.java">ScannerActivity</a>
+ * @see ScannerCommunicationBus
+ * @see MetaWearBleService
  */
 public class SelectDeviceActivity extends AppCompatActivity implements ScannerCommunicationBus, ServiceConnection {
 
@@ -32,10 +37,13 @@ public class SelectDeviceActivity extends AppCompatActivity implements ScannerCo
     /** used for debugging purposes */
     private static final String TAG = SelectDeviceActivity.class.getName();
 
+    /**
+     * Unique Metawear device identifiers
+     */
     private final static UUID[] serviceUuids;
-    
+
     static {
-        serviceUuids= new UUID[] {
+        serviceUuids = new UUID[] {
                 MetaWearBoard.METAWEAR_SERVICE_UUID,
                 MetaWearBoard.METABOOT_SERVICE_UUID
         };

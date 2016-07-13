@@ -23,16 +23,16 @@ import java.io.File;
 
 /**
  * The Settings Activity handles all shared application preferences. These settings include the
- * {@link cs.umass.edu.shared.R.string#pref_directory_key save directory},
- * {@link cs.umass.edu.shared.R.string#pref_device_key address of the Metawear device},
- * the {@link cs.umass.edu.shared.R.string#pref_accelerometer_sampling_rate_key accelerometer},
- * {@link cs.umass.edu.shared.R.string#pref_gyroscope_sampling_rate_key gyroscope} and
- * {@link cs.umass.edu.shared.R.string#pref_rssi_sampling_rate_key RSSI} sampling rates as
- * {@link cs.umass.edu.shared.R.string#pref_gyroscope_key gyroscope} and
- * {@link cs.umass.edu.shared.R.string#pref_rssi_key RSSI} enabled states.
+ * {@link edu.umass.cs.shared.R.string#pref_directory_key save directory},
+ * {@link edu.umass.cs.shared.R.string#pref_device_key address of the Metawear device},
+ * the {@link edu.umass.cs.shared.R.string#pref_accelerometer_sampling_rate_key accelerometer},
+ * {@link edu.umass.cs.shared.R.string#pref_gyroscope_sampling_rate_key gyroscope} and
+ * {@link edu.umass.cs.shared.R.string#pref_rssi_sampling_rate_key RSSI} sampling rates as
+ * {@link edu.umass.cs.shared.R.string#pref_gyroscope_key gyroscope} and
+ * {@link edu.umass.cs.shared.R.string#pref_rssi_key RSSI} enabled states.
  *
  * By ease of convention, preference keys, defaults, summaries and other related values are maintained in
- * {@link cs.umass.edu.shared.R.xml#preferences}, while the preference definitions and preference layout are
+ * {@link edu.umass.cs.shared.R.xml#preferences}, while the preference definitions and preference layout are
  * maintained in {@link R.xml#preferences}.
  *
  * @author Sean Noran

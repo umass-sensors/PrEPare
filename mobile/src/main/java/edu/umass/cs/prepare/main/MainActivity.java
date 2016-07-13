@@ -255,7 +255,6 @@ public class MainActivity extends AppCompatActivity {
         if (mwAddress.equals(getString(R.string.pref_device_default))){
             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
         } else {
-            Log.d(TAG, "Starting Metawear service on startup");
             startMetawearService();
         }
     }
@@ -296,7 +295,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }else if (requestCode == REQUEST_CODE.SET_PREFERENCES){
-            Log.d(TAG, "preferences changed");
             boolean serviceEnabledBefore = serviceEnabled;
             loadPreferences();
             if (serviceEnabledBefore != serviceEnabled){
@@ -305,7 +303,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     stopMetawearService();
                     serviceManager.stopDataWriterService();
-                    showStatus("Pill bottle disabled.");
+                    showStatus(getString(R.string.status_service_stopped));
                 }
             }
 
@@ -400,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
         if (!Settings.canDrawOverlays(getApplicationContext())) {
             /** if not, construct intent to request permission */
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
+                    Uri.parse(getString(R.string.app_package_identifier_prefix) + getPackageName()));
             /** request permission via start activity for result */
             startActivityForResult(intent, REQUEST_CODE.WINDOW_OVERLAY);
         }else{
@@ -429,8 +427,6 @@ public class MainActivity extends AppCompatActivity {
                                 showStatus(getString(R.string.audio_permission_denied));
                                 break;
                             default:
-                                //required permission not granted, abort
-                                //updateStatus(permissions[i] + " Permission Denied - cannot continue");
                                 return;
                         }
                     }
@@ -513,11 +509,9 @@ public class MainActivity extends AppCompatActivity {
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
-                        showStatus("Listening for movement...");
-                        //showConnectingDialog();
+                        showStatus(getString(R.string.status_connection_attempt));
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
-                        showStatus("Connected to pill bottle.");
-                        //cancelConnectingDialog();
+                        showStatus(getString(R.string.status_connected));
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
                         serviceManager.stopDataWriterService();
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
@@ -525,14 +519,14 @@ public class MainActivity extends AppCompatActivity {
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
                         recordingButton.setBackgroundResource(android.R.drawable.ic_media_play);
                     } else if (message == SharedConstants.MESSAGES.INVALID_ADDRESS){
-                        showStatus("Invalid Bluetooth Address.");
+                        showStatus(getString(R.string.status_invalid_address));
                         startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
                     } else if (message == SharedConstants.MESSAGES.BLUETOOTH_DISABLED){
-                        showStatus("Please Enable Bluetooth.");
+                        showStatus(getString(R.string.status_bluetooth_disabled));
                         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);
                     } else if (message == SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED){
-                        showStatus("Your device does not support Bluetooth!");
+                        showStatus(getString(R.string.status_bluetooth_unsupported));
                     }
                 }
             }

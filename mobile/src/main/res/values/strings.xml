@@ -40,4 +40,13 @@
 
     <string name="video_permission_denied">Video failed! Permission Denied.</string>
     <string name="audio_permission_denied">Audio Permission Denied : Continuing with audio disabled.</string>
+
+    <string name="status_connection_attempt">Listening for movement…</string>
+    <string name="status_connected">Connected to pill bottle.</string>
+    <string name="status_invalid_address">Invalid Bluetooth address!</string>
+    <string name="status_bluetooth_disabled">Please turn on Bluetooth.</string>
+    <string name="status_bluetooth_unsupported">Your device does not support Bluetooth!</string>
+    <string name="status_service_stopped">Pill bottle disabled. To reconnect, go to General settings.</string>
+
+    <string name="app_package_identifier_prefix">package:</string>
 </resources>

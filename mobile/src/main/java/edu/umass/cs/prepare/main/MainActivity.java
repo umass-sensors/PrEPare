@@ -418,11 +418,14 @@ public class MainActivity extends AppCompatActivity {
                     if (grantResults[i] != PackageManager.PERMISSION_GRANTED){
                         switch (permissions[i]) {
                             case Manifest.permission.CAMERA:
-                                showStatus("Video Permission Denied!");
+                                showStatus(getString(R.string.video_permission_denied));
+                                return;
+                            case Manifest.permission.WRITE_EXTERNAL_STORAGE:
+                                showStatus(getString(R.string.video_permission_denied));
                                 return;
                             case Manifest.permission.RECORD_AUDIO:
                                 record_audio = false;
-                                showStatus("Audio Permission Denied : Continuing with audio disabled.");
+                                showStatus(getString(R.string.audio_permission_denied));
                                 break;
                             default:
                                 //required permission not granted, abort

@@ -3,14 +3,60 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Preference
-        android:title="@string/pref_device_title"
-        android:key="@string/pref_device_key" />
+    <!-- General settings -->
+    <PreferenceScreen
+        android:title="@string/pref_group_general_title"
+        android:key="@string/pref_group_general_key">
 
-    <Preference
-        android:title="@string/pref_directory_title"
-        android:key="@string/pref_directory_key" />
+        <CheckBoxPreference
+            android:enabled="true"
+            android:title="@string/pref_connect_title"
+            android:key="@string/pref_connect_key"
+            android:defaultValue="@bool/pref_connect_default"
 
+            android:summaryOn="@string/pref_connect_summaryOn"
+            android:summaryOff="@string/pref_connect_summaryOff" />
+
+        <Preference
+            android:title="@string/pref_device_title"
+            android:key="@string/pref_device_key" />
+
+    </PreferenceScreen>
+
+    <!-- Storage settings -->
+    <PreferenceScreen
+        android:title="@string/pref_group_storage_title"
+        android:key="@string/pref_group_storage_key">
+
+        <CheckBoxPreference
+            android:key="@string/pref_server_key"
+            android:title="@string/pref_server_title"
+            android:summary="@string/pref_server_desc"
+            android:defaultValue="@bool/pref_server_default"/>
+
+        <EditTextPreference
+            android:key="@string/pref_ip_key"
+            android:title="@string/pref_ip_title"
+            android:summary="@string/pref_ip_desc"
+            android:defaultValue="@string/pref_ip_default"
+            android:inputType="numberDecimal"
+            android:digits="0123456789."
+            android:dependency="@string/pref_server_key"/>
+
+        <CheckBoxPreference
+            android:key="@string/pref_local_key"
+            android:title="@string/pref_local_title"
+            android:summary="@string/pref_local_desc"
+            android:defaultValue="@bool/pref_local_default"/>
+
+        <Preference
+            android:title="@string/pref_directory_title"
+            android:key="@string/pref_directory_key"
+            android:dependency="@string/pref_local_key"/>
+
+    </PreferenceScreen>
+
+    <!-- Video settings -->
     <PreferenceScreen
         android:title="@string/pref_group_video_title"
         android:key="@string/pref_group_video_key">
@@ -23,6 +69,7 @@
 
     </PreferenceScreen>
 
+    <!-- Pill bottle settings -->
     <PreferenceScreen
         android:title="@string/pref_group_metawear_title"
         android:key="@string/pref_group_metawear_key">
@@ -81,15 +128,6 @@
             android:defaultValue="@bool/pref_led_default" />
 
     </PreferenceScreen>
-
-    <CheckBoxPreference
-        android:enabled="true"
-        android:title="@string/pref_connect_title"
-        android:key="@string/pref_connect_key"
-        android:defaultValue="@bool/pref_connect_default"
-
-        android:summaryOn="@string/pref_connect_summaryOn"
-        android:summaryOff="@string/pref_connect_summaryOff" />
 
 
 </PreferenceScreen>

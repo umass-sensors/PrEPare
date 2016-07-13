@@ -305,6 +305,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     stopMetawearService();
                     serviceManager.stopDataWriterService();
+                    showStatus("Pill bottle disabled.");
                 }
             }
 
@@ -527,8 +528,11 @@ public class MainActivity extends AppCompatActivity {
                         showStatus("Invalid Bluetooth Address.");
                         startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
                     } else if (message == SharedConstants.MESSAGES.BLUETOOTH_DISABLED){
+                        showStatus("Please Enable Bluetooth.");
                         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);
+                    } else if (message == SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED){
+                        showStatus("Your device does not support Bluetooth!");
                     }
                 }
             }

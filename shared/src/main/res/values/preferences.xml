@@ -16,7 +16,6 @@
 
     <string name="pref_ip_key">server-ip-address</string>
     <string name="pref_ip_title">Server IP Address</string>
-    <string name="pref_ip_desc"></string>
     <string name="pref_ip_default">192.168.24.127</string>
 
     <string name="pref_local_key">save-data-locally</string>

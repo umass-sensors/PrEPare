@@ -37,7 +37,6 @@
         <EditTextPreference
             android:key="@string/pref_ip_key"
             android:title="@string/pref_ip_title"
-            android:summary="@string/pref_ip_desc"
             android:defaultValue="@string/pref_ip_default"
             android:inputType="numberDecimal"
             android:digits="0123456789."

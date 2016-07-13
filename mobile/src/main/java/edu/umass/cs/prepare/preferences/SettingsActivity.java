@@ -10,6 +10,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.text.InputFilter;
 import android.text.Spanned;
+import android.util.Log;
 import android.widget.EditText;
 
 import edu.umass.cs.shared.constants.SharedConstants;
@@ -101,9 +102,9 @@ public class SettingsActivity extends PreferenceActivity {
             }
         });
 
-        EditText ipAddressPreference = ((EditTextPreference) findPreference(getString(R.string.pref_ip_key)))
-                .getEditText();
-        ipAddressPreference.setFilters(new InputFilter[]{new InputFilter() {
+        final Preference ipAddressPreference = findPreference(getString(R.string.pref_ip_key));
+        EditText ipAddressEditText = ((EditTextPreference) ipAddressPreference).getEditText();
+        ipAddressEditText.setFilters(new InputFilter[]{new InputFilter() {
             /**
              * Filters the text input to ensure it is a valid IP address
              * @param source source text
@@ -137,6 +138,15 @@ public class SettingsActivity extends PreferenceActivity {
                 return null;
             }
         }});
+        ipAddressPreference.setSummary(((EditTextPreference) ipAddressPreference).getText());
+        ipAddressPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object o) {
+                preference.setSummary(o.toString());
+                ((EditTextPreference) preference).setText(o.toString());
+                return false;
+            }
+        });
     }
 
     @Override

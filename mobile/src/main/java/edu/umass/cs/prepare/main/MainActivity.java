@@ -1,56 +1,39 @@
 package edu.umass.cs.prepare.main;
 
-import android.Manifest;
-import android.annotation.TargetApi;
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.Uri;
-import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
+import android.support.design.widget.TabLayout;
+import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.SurfaceView;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
-import edu.umass.cs.prepare.communication.local.ServiceManager;
-import edu.umass.cs.prepare.recording.RecordingService;
-import edu.umass.cs.shared.communication.DataLayerUtil;
-import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.prepare.R;
-import edu.umass.cs.prepare.constants.Constants;
+import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.communication.wearable.RemoteSensorManager;
+import edu.umass.cs.prepare.constants.Constants;
+import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
 import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.preferences.SettingsActivity;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
  * The Main Activity is the entry point for the application. It is the primary UI and allows
@@ -65,14 +48,10 @@ public class MainActivity extends AppCompatActivity {
     /** used for debugging purposes */
     private static final String TAG = MainActivity.class.getName();
 
-    /** List of formatted sensor readings outputs **/
-    private ArrayList<String> sensorReadings;
-
-    /** Links the {@link #sensorReadings} to a UI view. **/
-    private ArrayAdapter<String> sensorReadingAdapter;
-
     /** whether video recording should include audio **/
-    private boolean record_audio;
+    boolean record_audio;
+
+    boolean showTutorial;
 
     /** Indicates whether the {@link SensorService} should run over the wearable or mobile device. **/
     private boolean runServiceOverWearable;
@@ -81,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean serviceEnabled;
 
     /** Request identifiers **/
-    private interface REQUEST_CODE {
+    interface REQUEST_CODE {
         int RECORDING = 1;
         int WINDOW_OVERLAY = 2;
         int SELECT_DEVICE = 3;
@@ -95,17 +74,8 @@ public class MainActivity extends AppCompatActivity {
     /** Handles services on the mobile application. */
     private ServiceManager serviceManager;
 
-    /** The view containing the video recording preview. **/
-    private SurfaceView mSurfaceView;
-
     /** The unique address of the Metawear device. **/
     private String mwAddress;
-
-    /** Notifies the user that the mobile device is attempting to connect to the Metawear board. **/
-    private ProgressDialog connectDialog;
-
-    /** Button that controls video recording, i.e. on/off switch. **/
-    private Button recordingButton;
 
     /** Image corresponding to the current Metawear battery level. **/
     private Bitmap batteryLevelBitmap;
@@ -113,33 +83,7 @@ public class MainActivity extends AppCompatActivity {
     /** The action bar at the top of the main UI **/
     private ActionBar actionBar;
 
-    public static int label = 0;
-
-    private void showConnectingDialog(){
-        if (connectDialog != null && connectDialog.isShowing())
-            connectDialog.cancel();
-        connectDialog = new ProgressDialog(this);
-        connectDialog.setTitle(getString(R.string.title_connecting));
-        connectDialog.setMessage(getString(R.string.message_wait));
-        connectDialog.setCancelable(false);
-        connectDialog.setCanceledOnTouchOutside(false);
-        connectDialog.setIndeterminate(true);
-        connectDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                stopMetawearService();
-            }
-        });
-        connectDialog.show();
-    }
-
-    /**
-     * Cancel the connection notification dialog.
-     */
-    private void cancelConnectingDialog() {
-        if (connectDialog != null)
-            connectDialog.dismiss();
-    }
+    private TextView txtStatus;
 
     @Override
     protected void onStart() {
@@ -148,21 +92,8 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
         //the intent filter specifies the messages we are interested in receiving
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Constants.ACTION.BROADCAST_SENSOR_DATA);
         filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
         broadcastManager.registerReceiver(receiver, filter);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        serviceManager.maximizeVideo();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        serviceManager.minimizeVideo();
     }
 
     @Override
@@ -174,6 +105,19 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         super.onStop();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (viewPager.getCurrentItem() == 2)
+            serviceManager.maximizeVideo();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        serviceManager.minimizeVideo();
     }
 
     /**
@@ -189,83 +133,124 @@ public class MainActivity extends AppCompatActivity {
                 getString(R.string.pref_device_default));
         serviceEnabled = preferences.getBoolean(getString(R.string.pref_connect_key),
                 getResources().getBoolean(R.bool.pref_connect_default));
+        showTutorial = preferences.getBoolean(getString(R.string.pref_show_tutorial_key),
+                getResources().getBoolean(R.bool.pref_show_tutorial_default));
     }
+
+    ViewPager viewPager;
+
+    private int selectedPage = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        loadPreferences();
+        final SensorReadingFragment sensorReadingFragment = new SensorReadingFragment();
+        final RecordingFragment recordingFragment = new RecordingFragment();
+        final SettingsFragment settingsFragment = new SettingsFragment();
 
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        viewPager.setAdapter(new FragmentPagerAdapter(getFragmentManager()) {
+            private final String[] tabTitles = new String[]{"Settings", "Data", "Recording"};
+
+            @Override
+            public android.app.Fragment getItem(int position) {
+                if (position == 0)
+                    return settingsFragment;
+                else if (position == 1)
+                    return sensorReadingFragment;
+                else
+                    return recordingFragment;
+            }
+
+            @Override
+            public CharSequence getPageTitle(int position) {
+                // Generate title based on item position
+                return tabTitles[position];
+            }
+
+            @Override
+            public int getCount() {
+                return 3;
+            }
+        });
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                selectedPage = position;
+                if (position == 2){
+                    serviceManager.maximizeVideo();
+                }else{
+                    serviceManager.minimizeVideo();
+                }
+//                if (position == 0) {
+//
+//                }else if (position == 1) {
+//                    try {
+//                        Thread.sleep(1000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    sensorReadingFragment.showTutorial(viewPager);
+//                }else {
+//                    try {
+//                        Thread.sleep(1000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    recordingFragment.showTutorial(viewPager);
+//                }
+                //sensorReadingFragment.dismissTutorial();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                switch (state) {
+                    case ViewPager.SCROLL_STATE_IDLE:
+                        loadPreferences();
+                        if (selectedPage != -1 && showTutorial) {
+                            if (selectedPage == 0){
+                                //settingsFragment.showTutorial(viewPager);
+                            } else if (selectedPage == 1){
+                                sensorReadingFragment.showTutorial(viewPager);
+                            } else {
+                                recordingFragment.showTutorial(viewPager);
+                            }
+                            selectedPage = -1;
+                        }
+                        break;
+                    case ViewPager.SCROLL_STATE_DRAGGING:
+                        break;
+                    case ViewPager.SCROLL_STATE_SETTLING:
+                        break;
+                }
+            }
+        });
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        assert tabLayout != null;
+        tabLayout.setupWithViewPager(viewPager);
+
+        loadPreferences();
         remoteSensorManager = RemoteSensorManager.getInstance(this);
         serviceManager = ServiceManager.getInstance(this);
 
-        recordingButton = (Button) findViewById(R.id.start_button);
-        recordingButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!RecordingService.isRecording) {
-                    //TODO: Do Android versions prior to M require run-time permission request for overlay?
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                        requestPermissions();
-                    else
-                        onPermissionsGranted();
-                } else {
-                    serviceManager.stopRecordingService();
-                }
-
-            }
-        });
-        if (RecordingService.isRecording)
-            recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
-
-        Button labelButton = (Button) findViewById(R.id.label_button);
-        assert labelButton != null;
-        labelButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        showStatus("Labeling event");
-                        label = 1;
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        showStatus("No event");
-                        label = 0;
-                        return true;
-                }
-                return false;
-            }
-        });
-
-        sensorReadings = new ArrayList<>();
-        for (int i = 0; i < SharedConstants.SENSOR_TYPE.values().length; i++)
-            sensorReadings.add(SharedConstants.SENSOR_TYPE.values()[i].name() + ": unavailable.");
-        sensorReadingAdapter = new ArrayAdapter<>(this, R.layout.sensor_reading_item, sensorReadings);
-        ListView listView = (ListView) findViewById(R.id.lv_sensor_readings);
-        assert listView != null;
-        listView.setAdapter(sensorReadingAdapter);
-
-        mSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
         actionBar = getSupportActionBar();
 
-        if (mwAddress.equals(getString(R.string.pref_device_default))){
-            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
-        } else {
-            startMetawearService();
-        }
-    }
+//        if (mwAddress.equals(getString(R.string.pref_device_default))){
+//            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
+//        } else {
+//            startMetawearService();
+//        }
+        settingsFragment.setViewPager(viewPager);
 
-    /**
-     * Called when all required permissions have been granted.
-     */
-    private void onPermissionsGranted(){
-        int[] position = new int[2];
-        mSurfaceView.getLocationInWindow(position);
-        int w = mSurfaceView.getWidth();
-        int h = mSurfaceView.getHeight();
-        serviceManager.startRecordingService(position[0], position[1], w, h);
+        txtStatus = (TextView) findViewById(R.id.status);
     }
 
     private void startMetawearService(){
@@ -287,15 +272,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE.WINDOW_OVERLAY) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                /** if so check once again if we have permission */
-                if (Settings.canDrawOverlays(this)) {
-                    onPermissionsGranted();
-                }
-            }
-        }else if (requestCode == REQUEST_CODE.SET_PREFERENCES){
+        if (requestCode == REQUEST_CODE.SET_PREFERENCES){
             boolean serviceEnabledBefore = serviceEnabled;
             loadPreferences();
             if (serviceEnabledBefore != serviceEnabled){
@@ -316,28 +295,11 @@ public class MainActivity extends AppCompatActivity {
                 editor.putString(getString(R.string.pref_device_key), mwAddress);
                 editor.apply();
                 startMetawearService();
+                //showTutorial();
             }else{
                 finish(); //can't return to the main UI if there is no device available
             }
         }
-    }
-
-    /**
-     * Displays a single accelerometer reading on the main UI
-     * @param reading a 3-dimensional floating point vector representing the x, y and z accelerometer values respectively.
-     */
-    private void displaySensorReading(final SharedConstants.SENSOR_TYPE sensorType, final float[] reading){
-        float x = reading[0];
-        float y = reading[1];
-        float z = reading[2];
-        final String output = String.format(getString(R.string.initial_sensor_readings), x, y, z);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                sensorReadings.set(sensorType.ordinal(), output);
-                sensorReadingAdapter.notifyDataSetChanged();
-            }
-        });
     }
 
     /**
@@ -390,140 +352,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Check the draw overlay permission. This is required to run the video recording service in
-     * a background service.
-     */
-    @TargetApi(Build.VERSION_CODES.M)
-    private void checkDrawOverlayPermission() {
-        /** check if we already  have permission to draw over other apps */
-        if (!Settings.canDrawOverlays(getApplicationContext())) {
-            /** if not, construct intent to request permission */
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse(getString(R.string.app_package_identifier_prefix) + getPackageName()));
-            /** request permission via start activity for result */
-            startActivityForResult(intent, REQUEST_CODE.WINDOW_OVERLAY);
-        }else{
-            onPermissionsGranted();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE.RECORDING: {
-                //If the request is cancelled, the result array is empty.
-                if (grantResults.length == 0) return;
-
-                for (int i = 0; i < permissions.length; i++){
-                    if (grantResults[i] != PackageManager.PERMISSION_GRANTED){
-                        switch (permissions[i]) {
-                            case Manifest.permission.CAMERA:
-                                showStatus(getString(R.string.video_permission_denied));
-                                return;
-                            case Manifest.permission.WRITE_EXTERNAL_STORAGE:
-                                showStatus(getString(R.string.video_permission_denied));
-                                return;
-                            case Manifest.permission.RECORD_AUDIO:
-                                record_audio = false;
-                                showStatus(getString(R.string.audio_permission_denied));
-                                break;
-                            default:
-                                return;
-                        }
-                    }
-                }
-                checkDrawOverlayPermission();
-            }
-        }
-    }
-
-    /**
-     * Request permissions required for video recording. These include
-     * {@link android.Manifest.permission#WRITE_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE},
-     * and {@link android.Manifest.permission#CAMERA CAMERA}. If audio is enabled, then
-     * the {@link android.Manifest.permission#RECORD_AUDIO RECORD_AUDIO} permission is
-     * additionally required.
-     */
-    @TargetApi(Build.VERSION_CODES.M)
-    private void requestPermissions(){
-        List<String> permissionGroup = new ArrayList<>(Arrays.asList(new String[]{
-                Manifest.permission.CAMERA,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-        }));
-
-        if (record_audio){
-            permissionGroup.add(Manifest.permission.RECORD_AUDIO);
-        }
-
-        String[] permissions = permissionGroup.toArray(new String[permissionGroup.size()]);
-
-        if (!hasPermissionsGranted(permissions)) {
-            ActivityCompat.requestPermissions(MainActivity.this, permissions, REQUEST_CODE.RECORDING);
-            return;
-        }
-        checkDrawOverlayPermission();
-    }
-
-    /**
-     * Check the specified permissions
-     * @param permissions list of Strings indicating permissions
-     * @return true if ALL permissions are granted, false otherwise
-     */
-    private boolean hasPermissionsGranted(String[] permissions) {
-        for (String permission : permissions) {
-            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Shows a removable status message at the bottom of the application.
      * @param message the status message shown
      */
-    private void showStatus(String message){
-        View mainUI = MainActivity.this.findViewById(R.id.fragment);
-        assert mainUI != null;
-        Snackbar snack = Snackbar.make(mainUI, message, Snackbar.LENGTH_INDEFINITE);
-        View view = snack.getView();
-        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
-        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        snack.show();
+    void showStatus(String message){
+        txtStatus.setText(message);
+//        View mainUI = MainActivity.this.findViewById(R.id.fragment);
+//        assert mainUI != null;
+//        Snackbar snack = Snackbar.make(mainUI, message, Snackbar.LENGTH_INDEFINITE);
+//        View view = snack.getView();
+//        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+//        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+//        snack.show();
     }
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() != null) {
-                if (intent.getAction().equals(Constants.ACTION.BROADCAST_SENSOR_DATA)) {
-                    SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
-                    float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
-                    if (sensorType == SharedConstants.SENSOR_TYPE.BATTERY_METAWEAR){
-                        updateBatteryLevel((int)values[0]);
-                        return;
-                    }
-
-                    float[] averages = new float[3];
-                    for (int i = 0; i < values.length; i++) {
-                        averages[i % 3] += values[i];
-                    }
-                    for (int j = 0; j < averages.length; j++) {
-                        averages[j] /= (values.length / 3f);
-                    }
-                    displaySensorReading(sensorType, averages);
-                }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
+                if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
                         showStatus(getString(R.string.status_connection_attempt));
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         showStatus(getString(R.string.status_connected));
+                        remoteSensorManager.startSensorService();
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
                         serviceManager.stopDataWriterService();
-                    } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
-                        recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
-                    } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
-                        recordingButton.setBackgroundResource(android.R.drawable.ic_media_play);
+                        HandlerThread hThread = new HandlerThread("StopWearableSensorServiceThread");
+                        hThread.start();
+                        Handler stopServiceHandler = new Handler(hThread.getLooper());
+                        stopServiceHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                remoteSensorManager.stopSensorService();
+                            }
+                        }, 5000);
                     } else if (message == SharedConstants.MESSAGES.INVALID_ADDRESS){
                         showStatus(getString(R.string.status_invalid_address));
                         startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);

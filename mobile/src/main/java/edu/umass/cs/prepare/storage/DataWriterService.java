@@ -105,8 +105,7 @@ public class DataWriterService extends Service {
                     if (sensorType == SharedConstants.SENSOR_TYPE.BATTERY_METAWEAR) return; //ignore battery readings
 
                     StringBuilder builder = new StringBuilder(timestamps.length * (Constants.BYTES_PER_TIMESTAMP + Constants.BYTES_PER_SENSOR_READING + 6));
-                    if (sensorType == SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI ||
-                            sensorType == SharedConstants.SENSOR_TYPE.PHONE_TO_METAWEAR_RSSI){
+                    if (sensorType == SharedConstants.SENSOR_TYPE.RSSI){
 
                         for (int i = 0; i < timestamps.length; i++) {
                             long timestamp = timestamps[i];

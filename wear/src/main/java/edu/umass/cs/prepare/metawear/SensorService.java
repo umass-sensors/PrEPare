@@ -52,7 +52,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         setOnBufferFullCallback(rssiBuffer, new SensorBuffer.OnBufferFullCallback() {
             @Override
             public void onBufferFull(long[] timestamps, float[] values) {
-                client.sendSensorData(SharedConstants.SENSOR_TYPE.WEARABLE_TO_METAWEAR_RSSI, timestamps.clone(), values.clone());
+                client.sendSensorData(SharedConstants.SENSOR_TYPE.RSSI, timestamps.clone(), values.clone());
             }
         });
     }

@@ -90,4 +90,7 @@
     <string name="pref_connect_summaryOff">The phone is disconnected from the pill bottle.</string>
     <bool name="pref_connect_default">true</bool>
 
+    <string name="pref_show_tutorial_key">show-tutorial</string>
+    <bool name="pref_show_tutorial_default">true</bool>
+
 </resources>

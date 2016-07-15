@@ -112,12 +112,12 @@ public class SensorService extends Service implements SensorEventListener {
                 client.sendSensorData(SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE, timestamps.clone(), values.clone());
             }
         });
-//        gyroscopeBuffer.setOnBufferFullCallback(new SensorBuffer.OnBufferFullCallback() {
-//            @Override
-//            public void onBufferFull(long[] timestamps, float[] values) {
-//                client.sendSensorData(SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE, timestamps.clone(), values.clone());
-//            }
-//        });
+        gyroscopeBuffer.setOnBufferFullCallback(new SensorBuffer.OnBufferFullCallback() {
+            @Override
+            public void onBufferFull(long[] timestamps, float[] values) {
+                client.sendSensorData(SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE, timestamps.clone(), values.clone());
+            }
+        });
 
         //get handles to the hardware sensors
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -127,20 +127,20 @@ public class SensorService extends Service implements SensorEventListener {
             return;
         }
 
-//        gyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        gyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         if (accelerometer != null) {
-            mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+            mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         } else {
             Log.w(TAG, "No Accelerometer found");
         }
 
-//        if (gyroscope != null) {
-//            mSensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_GAME);
-//        } else {
-//            Log.w(TAG, "No gyroscope found");
-//        }
+        if (gyroscope != null) {
+            mSensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
+        } else {
+            Log.w(TAG, "No gyroscope found");
+        }
     }
 
     /**
@@ -149,7 +149,7 @@ public class SensorService extends Service implements SensorEventListener {
     private void unregisterSensors() {
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this, accelerometer);
-//            mSensorManager.unregisterListener(this, gyroscope);
+            mSensorManager.unregisterListener(this, gyroscope);
         }
     }
 
@@ -161,11 +161,11 @@ public class SensorService extends Service implements SensorEventListener {
                 accelerometerBuffer.addReading(event.timestamp, event.values);
             }
         }
-//        else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-//            synchronized (gyroscopeBuffer) {
-//                gyroscopeBuffer.addReading(event.timestamp, event.values);
-//            }
-//        }
+        else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            synchronized (gyroscopeBuffer) {
+                gyroscopeBuffer.addReading(event.timestamp, event.values);
+            }
+        }
         else{
             Log.w(TAG, "Sensor Not Supported!");
         }

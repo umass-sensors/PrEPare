@@ -64,7 +64,7 @@ dependencies {
     compile project(':shared')
 
     compile 'com.android.support:appcompat-v7:23.2.1'
-    compile 'com.android.support:support-v13:21.0.3'
+    compile 'com.android.support:support-v13:21.0.3' //TODO
     compile 'com.mbientlab:metawear:2.5.9'
     compile 'com.mbientlab.bletoolbox:scanner:0.2.0'
     compile 'com.android.support:design:23.2.1'

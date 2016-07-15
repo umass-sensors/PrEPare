@@ -77,14 +77,83 @@ public class SharedConstants {
      * or from any other connected device, e.g. a Metawear tag, connected to the wearable.
      */
     public enum SENSOR_TYPE {
-        ACCELEROMETER_WEARABLE,
-        GYROSCOPE_WEARABLE,
-        ACCELEROMETER_METAWEAR,
-        GYROSCOPE_METAWEAR,
-        WEARABLE_TO_METAWEAR_RSSI,
-        PHONE_TO_METAWEAR_RSSI,
-        BATTERY_METAWEAR,
-        UNKNOWN
+        ACCELEROMETER_WEARABLE {
+            @Override
+            public String getSensor(){
+                return "Accelerometer";
+            }
+            @Override
+            public String getDevice(){
+                return "Wearable";
+            }
+        },
+        GYROSCOPE_WEARABLE {
+            @Override
+            public String getSensor(){
+                return "Gyroscope";
+            }
+            @Override
+            public String getDevice(){
+                return "Wearable";
+            }
+        },
+        ACCELEROMETER_METAWEAR {
+            @Override
+            public String getSensor(){
+                return "Accelerometer";
+            }
+            @Override
+            public String getDevice(){
+                return "Metawear";
+            }
+        },
+        GYROSCOPE_METAWEAR {
+            @Override
+            public String getSensor(){
+                return "Gyroscope";
+            }
+            @Override
+            public String getDevice(){
+                return "Metawear";
+            }
+        },
+        RSSI {
+            @Override
+            public String getSensor(){
+                return "RSSI";
+            }
+            @Override
+            public String getDevice(){
+                return "Mobile";
+            }
+        },
+        BATTERY_METAWEAR {
+            @Override
+            public String getSensor(){
+                return "Battery";
+            }
+            @Override
+            public String getDevice(){
+                return "Metawear";
+            }
+        },
+        UNKNOWN {
+            @Override
+            public String getSensor(){
+                return null;
+            }
+            @Override
+            public String getDevice(){
+                return null;
+            }
+        };
+
+        public String getSensor(){
+            return null;
+        }
+        public String getDevice(){
+            return null;
+        }
     }
 
     public interface METAWEAR_STREAM_KEY{

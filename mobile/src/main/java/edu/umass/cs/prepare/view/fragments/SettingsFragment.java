@@ -12,7 +12,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.view.ViewPager;
 import android.text.InputFilter;
 import android.text.Spanned;
-import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 
 import net.rdrei.android.dirchooser.DirectoryChooserActivity;
@@ -21,15 +21,18 @@ import net.rdrei.android.dirchooser.DirectoryChooserConfig;
 import java.io.File;
 
 import edu.umass.cs.prepare.R;
-import edu.umass.cs.prepare.main.MainActivity;
-import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
-import edu.umass.cs.prepare.tutorial.StandardTutorial;
+import edu.umass.cs.prepare.communication.local.ServiceManager;
+import edu.umass.cs.prepare.view.CustomPreference;
+import edu.umass.cs.prepare.view.activities.MainActivity;
+import edu.umass.cs.prepare.view.activities.SelectDeviceActivity;
+import edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider;
+import edu.umass.cs.prepare.view.tutorial.StandardTutorial;
 import edu.umass.cs.shared.constants.SharedConstants;
 
 public class SettingsFragment extends PreferenceFragment {
     @SuppressWarnings("unused")
     /** used for debugging purposes */
-    private static final String TAG = SensorReadingFragment.class.getName();
+    private static final String TAG = SettingsFragment.class.getName();
 
     /** Request code to identify that the user selected the directory when the activity called for result returns. **/
     private static final int SELECT_DIRECTORY_REQUEST_CODE = 1;
@@ -43,6 +46,8 @@ public class SettingsFragment extends PreferenceFragment {
     /** Preference view for selecting the device. **/
     private Preference prefDevice;
 
+    private SharedPreferences preferences;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +55,7 @@ public class SettingsFragment extends PreferenceFragment {
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         final String defaultDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name)).getAbsolutePath();
         String path = preferences.getString(getString(R.string.pref_directory_key), defaultDirectory);
 
@@ -134,38 +139,54 @@ public class SettingsFragment extends PreferenceFragment {
                 return false;
             }
         });
+
+        toggleServicePreference = (CustomPreference) findPreference(getString(R.string.pref_connect_key));
+        toggleServicePreference.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean enabled) {
+                preferences.edit().putBoolean(getString(R.string.pref_connect_key), enabled).apply();
+
+                if (tutorial != null)
+                    tutorial.dismiss();
+                if (enabled)
+                    ServiceManager.getInstance(getActivity()).startMetawearService();
+                else
+                    ServiceManager.getInstance(getActivity()).stopMetawearService();
+
+            }
+        });
+
+        findPreference(getString(R.string.pref_server_key)).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object o) {
+                if ((Boolean) o)
+                    ((MainActivity)getActivity()).networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                else
+                    ((MainActivity)getActivity()).networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                return true;
+            }
+        });
     }
 
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        boolean showTutorial = preferences.getBoolean(getString(R.string.pref_show_tutorial_key),
-                getResources().getBoolean(R.bool.pref_show_tutorial_default));
-        if (showTutorial)
-            showTutorial();
-        super.onViewCreated(view, savedInstanceState);
-    }
+    private CustomPreference toggleServicePreference;
 
-    void showTutorial(){
-        StandardTutorial tutorial = new StandardTutorial(getActivity(), getView(), getString(R.string.tutorial_settings), getString(R.string.tutorial_next), null);
-        tutorial.setTutorialListener(new StandardTutorial.TutorialListener() {
+    private StandardTutorial tutorial;
+
+    public void showTutorial(final ViewPager viewPager){
+        tutorial = new StandardTutorial(getActivity(), toggleServicePreference.getSwitch())
+                .setDescription(getString(R.string.tutorial_enable_service))
+                .enableButton(false)
+                .setTutorialListener(new StandardTutorial.TutorialListener() {
             @Override
             public void onReady(final StandardTutorial tutorial) {
                 tutorial.showTutorial();
             }
 
             @Override
-            public void onFinish(StandardTutorial tutorial) {
-                viewPager.setCurrentItem(MainActivity.PAGES.SENSOR_DATA.getPageNumber(), true);
+            public void onComplete(StandardTutorial tutorial) {
+                preferences.edit().putBoolean(getString(R.string.pref_show_tutorial_key), false).apply();
             }
-        });
-
-    }
-
-    private ViewPager viewPager;
-
-    public void setViewPager(ViewPager viewPager){
-        this.viewPager = viewPager;
+        }).build();
     }
 
     @Override
@@ -173,19 +194,13 @@ public class SettingsFragment extends PreferenceFragment {
         if (requestCode == SELECT_DIRECTORY_REQUEST_CODE) {
             if (resultCode == DirectoryChooserActivity.RESULT_CODE_DIR_SELECTED) {
                 String dir = data.getStringExtra(DirectoryChooserActivity.RESULT_SELECTED_DIR);
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putString(getString(R.string.pref_directory_key), dir);
-                editor.apply();
+                preferences.edit().putString(getString(R.string.pref_directory_key), dir).apply();
                 prefDirectory.setSummary(dir);
             }
         }else if (requestCode == SELECT_DEVICE_REQUEST_CODE){
             if (resultCode == Activity.RESULT_OK) {
                 String address = data.getStringExtra(SharedConstants.KEY.UUID);
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putString(getString(R.string.pref_device_key), address);
-                editor.apply();
+                preferences.edit().putString(getString(R.string.pref_device_key), address).apply();
                 prefDevice.setSummary(address);
             }
         }

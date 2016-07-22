@@ -1,6 +1,35 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" tools:context=".ReadAccel">
-    <item android:id="@+id/action_settings" android:title="@string/action_settings"
-        android:orderInCategory="100" app:showAsAction="never" />
+    xmlns:tools="http://schemas.android.com/tools" tools:context=".view.activities.MainActivity">
+
+    <item
+        android:id="@+id/action_battery_status"
+        app:actionProviderClass="edu.umass.cs.prepare.view.tools.BatteryStatusActionProvider"
+        app:showAsAction="always"
+        android:title="Battery Status"
+        android:orderInCategory="3"/>
+
+    <item
+        android:id="@+id/action_network_status"
+        app:actionProviderClass="edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider"
+        app:showAsAction="always"
+        android:title="Network Status"
+        android:orderInCategory="0"
+        android:visibility="gone" />
+
+    <item
+        android:id="@+id/action_connection_status"
+        app:actionProviderClass="edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider"
+        app:showAsAction="always"
+        android:title="Wearable Status"
+        android:orderInCategory="1"
+        android:visibility="gone" />
+
+    <item
+        android:id="@+id/action_metawear_status"
+        app:actionProviderClass="edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider"
+        app:showAsAction="always"
+        android:title="Metawear Status"
+        android:orderInCategory="2"
+        android:visibility="gone" />
 </menu>

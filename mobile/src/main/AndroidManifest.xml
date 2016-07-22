@@ -79,7 +79,15 @@
         </activity>
 
         <activity android:name=".view.activities.MainActivity"
-            android:theme="@style/AppTheme"/>
+            android:theme="@style/AppTheme">
+            <intent-filter android:label="@string/filter_activity_main">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="prepare"
+                    android:host="main" />
+            </intent-filter>
+        </activity>
         <service android:name=".communication.wearable.DataReceiverService"
             android:exported="false">
             <intent-filter>

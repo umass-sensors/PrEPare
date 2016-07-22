@@ -7,13 +7,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -23,20 +20,22 @@ import android.view.LayoutInflater;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Button;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.recording.RecordingService;
 import edu.umass.cs.prepare.view.activities.MainActivity;
-import edu.umass.cs.prepare.tutorial.StandardTutorial;
+import edu.umass.cs.prepare.view.tutorial.StandardTutorial;
 import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 
 // In this case, the fragment displays simple text based on the page
 public class RecordingFragment extends Fragment {
@@ -54,14 +53,7 @@ public class RecordingFragment extends Fragment {
 
     private boolean recordAudio;
 
-    /**
-     * Loads shared user preferences, e.g. whether video/audio is enabled
-     */
-    private void loadPreferences(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        recordAudio = preferences.getBoolean(getString(R.string.pref_audio_key),
-                getResources().getBoolean(R.bool.pref_audio_default));
-    }
+    private ApplicationPreferences applicationPreferences;
 
     @Override
     public void onStart() {
@@ -89,30 +81,18 @@ public class RecordingFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         serviceManager = ServiceManager.getInstance(getActivity());
+        applicationPreferences = ApplicationPreferences.getInstance(getActivity());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_recording, container, false);
+        final View view = inflater.inflate(R.layout.fragment_recording, container, false);
         recordingButton = (Button) view.findViewById(R.id.start_button);
-        recordingButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!RecordingService.isRecording) {
-                    //TODO: Do Android versions prior to M require run-time permission request for overlay?
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                        requestPermissions();
-                    else
-                        onPermissionsGranted();
-                } else {
-                    serviceManager.stopRecordingService();
-                }
-
-            }
-        });
         if (RecordingService.isRecording)
             recordingButton.setBackgroundResource(android.R.drawable.ic_media_pause);
+        if (!applicationPreferences.showTutorial())
+            enableRecordingButton();
         mSurfaceView = (SurfaceView) view.findViewById(R.id.surface_camera);
         UI = (MainActivity) getActivity();
         return view;
@@ -122,19 +102,19 @@ public class RecordingFragment extends Fragment {
      * Called when all required permissions have been granted.
      */
     private void onPermissionsGranted(){
-        Rect rectangle = new Rect();
-        Window window = getActivity().getWindow();
-        window.getDecorView().getWindowVisibleDisplayFrame(rectangle);
-        int statusBarHeight = rectangle.top;
-        int contentViewTop =
-                window.findViewById(Window.ID_ANDROID_CONTENT).getTop();
-        int titleBarHeight= contentViewTop - statusBarHeight;
+//        Rect rectangle = new Rect();
+//        Window window = getActivity().getWindow();
+//        window.getDecorView().getWindowVisibleDisplayFrame(rectangle);
+//        int statusBarHeight = rectangle.top;
+//        int contentViewTop =
+//                window.findViewById(Window.ID_ANDROID_CONTENT).getTop();
+//        int titleBarHeight= contentViewTop - statusBarHeight; //TODO I THINK I CAN REMOVE
 
         int[] position = new int[2];
         mSurfaceView.getLocationOnScreen(position);
         int w = mSurfaceView.getWidth();
         int h = mSurfaceView.getHeight();
-        serviceManager.startRecordingService(position[0], position[1]-titleBarHeight, w, h, recordAudio);
+        serviceManager.startRecordingService(position[0], position[1], w, h, recordAudio);
     }
 
     /**
@@ -151,6 +131,7 @@ public class RecordingFragment extends Fragment {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
         }));
 
+        recordAudio = applicationPreferences.recordAudio();
         if (recordAudio){
             permissionGroup.add(Manifest.permission.RECORD_AUDIO);
         }
@@ -255,21 +236,44 @@ public class RecordingFragment extends Fragment {
     };
 
     public void showTutorial(final ViewPager viewPager){
-        StandardTutorial tutorial = new StandardTutorial(getActivity(), recordingButton, getString(R.string.tutorial_recording), getString(R.string.tutorial_finish), null);
-        tutorial.setTutorialListener(new StandardTutorial.TutorialListener() {
+        String tutorialText = String.format(Locale.getDefault(), getString(R.string.tutorial_recording),
+                applicationPreferences.getSaveDirectory());
+        new StandardTutorial(getActivity(), recordingButton)
+                .setDescription(tutorialText)
+                .setButtonText(getString(R.string.tutorial_next))
+                .setTutorialListener(new StandardTutorial.TutorialListener() {
             @Override
             public void onReady(final StandardTutorial tutorial) {
+                recordingButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Toast.makeText(getActivity(), "Disabled in tutorial mode.", Toast.LENGTH_LONG).show();
+                    }
+                });
                 tutorial.showTutorial();
             }
 
             @Override
-            public void onFinish(StandardTutorial tutorial) {
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putBoolean(getString(R.string.pref_show_tutorial_key), false);
-                editor.apply();
+            public void onComplete(StandardTutorial tutorial) {
+                viewPager.setCurrentItem(MainActivity.PAGES.SETTINGS.getPageNumber(), true);
+                enableRecordingButton();
+            }
+        }).build();
+    }
 
-                serviceManager.startMetawearService();
+    private void enableRecordingButton(){
+        recordingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!RecordingService.isRecording) {
+                    //TODO: Do Android versions prior to M require run-time permission request for overlay?
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        requestPermissions();
+                    else
+                        onPermissionsGranted();
+                } else {
+                    serviceManager.stopRecordingService();
+                }
             }
         });
     }

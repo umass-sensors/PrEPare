@@ -3,6 +3,7 @@ package edu.umass.cs.prepare.communication;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.util.SparseLongArray;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -61,7 +62,10 @@ public class DataClient {
         googleApiClient = new GoogleApiClient.Builder(context).addApi(Wearable.API).build();
 
         executorService = Executors.newCachedThreadPool();
+        lastSensorData = new SparseLongArray();
     }
+
+    private SparseLongArray lastSensorData;
 
     /**
      * Sends the sensor data via the data layer to the handheld application. This calls
@@ -72,6 +76,24 @@ public class DataClient {
      * @param values a list sensor readings
      */
     public void sendSensorData(final SharedConstants.SENSOR_TYPE sensorType, final long[] timestamps, final float[] values) {
+        long t = System.currentTimeMillis();
+
+        long lastTimestamp = lastSensorData.get(sensorType.ordinal());
+        long timeAgo = t - lastTimestamp;
+
+        if (lastTimestamp != 0) {
+//            if (timeAgo < 100) {
+//                return;
+//            }
+
+//            if (timeAgo > 3000) {
+//                lastSensorData.put(sensorType.ordinal(), 0);
+//                return;
+//            } //TODO: Should we be discarding any readings??
+        }
+
+        lastSensorData.put(sensorType.ordinal(), t);
+
         executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -119,6 +141,7 @@ public class DataClient {
     private void sendMessageInBackground(final int message) {
         PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.MESSAGE_PATH);
         dataMap.getDataMap().putInt(SharedConstants.KEY.MESSAGE, message);
+        dataMap.getDataMap().putLong("timestamp", System.currentTimeMillis()); //ensures the data map changes
         PutDataRequest putDataRequest = dataMap.asPutDataRequest();
         send(putDataRequest);
     }

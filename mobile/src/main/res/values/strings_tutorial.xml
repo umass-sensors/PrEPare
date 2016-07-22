@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tutorial_devices">All pill bottles in range will be displayed here, along with their signal strength.</string>
+    <string name="tutorial_device_not_found">If you cannot find your device, make sure it is in range. You may also try pressing
+    the switch on the sensor, or if all else fails, removing and reinserting the coin cell battery.</string>
+    <string name="tutorial_select_device">Select your device to get started!</string>
+    <string name="tutorial_recording" formatted="false">Click here to start recording video. Videos will be saved locally in %s.</string>
+    <string name="tutorial_sensor_data">Here the sensor data will be displayed in real time. Click for additional information.</string>
+    <string name="tutorial_device_icon">The icon indicates which device the data comes from.</string>
+    <string name="tutorial_swipe_tab">Swipe to the recording tab to continue.</string>
+    <string name="tutorial_settings">Application settings are available here.</string>
+    <string name="tutorial_enable_service">Slide the button to start collecting data!</string>
+    <string name="tutorial_battery_status">The battery status will be displayed here. It will be updated each time you take your pill. Click on the icon for additional information.</string>
+    <string name="tutorial_metawear_status">Pill bottle connection status:</string>
+    <string name="tutorial_wearable_status">Android Wear connection status:</string>
+    <string name="tutorial_network_status">Server connection status:</string>
+    <string name="tutorial_next">Next</string>
+    <string name="tutorial_finish">Finish</string>
+</resources>

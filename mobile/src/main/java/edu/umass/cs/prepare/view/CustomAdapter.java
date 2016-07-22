@@ -3,22 +3,21 @@ package edu.umass.cs.prepare.view;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
 import edu.umass.cs.prepare.R;
+import edu.umass.cs.shared.constants.SharedConstants;
 
 public class CustomAdapter extends BaseAdapter {
 
-    interface OnRowClickedListener{
+    public interface OnRowClickedListener{
         void onRowClicked(int row);
     }
 
@@ -32,6 +31,7 @@ public class CustomAdapter extends BaseAdapter {
     Context context;
     private LayoutInflater inflater=null;
     public ImageView imageView;
+    public TextView dataView;
 
     public CustomAdapter(Context context, ArrayList<String> sensors, ArrayList<String> devices, ArrayList<String> sensorReadings) {
         this.sensorReadings = sensorReadings;
@@ -69,7 +69,7 @@ public class CustomAdapter extends BaseAdapter {
         Holder holder=new Holder();
 
         if (rowView[position] == null) {
-            rowView[position] = inflater.inflate(R.layout.item_sensor_reading, parent, false);
+            rowView[position] = inflater.inflate(R.layout.listitem_sensor_reading, parent, false);
         }
 
         holder.txtSensor = (TextView) rowView[position].findViewById(R.id.txtSensor);
@@ -78,6 +78,9 @@ public class CustomAdapter extends BaseAdapter {
 
         if (imageView == null && position == 0)
             imageView = holder.imgDevice;
+
+        if (dataView == null && position == 0)
+            dataView = holder.txtReading;
 
         holder.txtReading.setText(sensorReadings.get(position));
         holder.imgDevice.setImageBitmap(getBitmapFromDevice(devices.get(position)));
@@ -97,12 +100,12 @@ public class CustomAdapter extends BaseAdapter {
 
     private Bitmap getBitmapFromDevice(String device){
         switch (device){
-            case "Wearable":
-                return BitmapFactory.decodeResource(context.getResources(), R.drawable.wearable);
-            case "Metawear":
+            case SharedConstants.DEVICE.WEARABLE.TITLE:
+                return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_wearable);
+            case SharedConstants.DEVICE.METAWEAR.TITLE:
                 return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_pill);
-            case "Mobile":
-                return BitmapFactory.decodeResource(context.getResources(), R.drawable.rssi);
+            case SharedConstants.DEVICE.MOBILE.TITLE:
+                return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_rssi);
             default:
                 return null;
         }

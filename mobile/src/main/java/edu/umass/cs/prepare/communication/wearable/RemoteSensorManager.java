@@ -55,21 +55,11 @@ public class RemoteSensorManager {
     }
 
     private RemoteSensorManager(Context context) {
-
         this.googleApiClient = new GoogleApiClient.Builder(context)
                 .addApi(Wearable.API)
                 .build();
 
         this.executorService = Executors.newCachedThreadPool();
-    }
-
-    private RemoteSensorListener listener;
-    public interface RemoteSensorListener {
-        void onMessageResult(String path, byte[] msg, MessageApi.SendMessageResult sendMessageResult);
-    }
-
-    public void setRemoteSensorListener(RemoteSensorListener listener){
-        this.listener = listener;
     }
 
     /**
@@ -104,28 +94,6 @@ public class RemoteSensorManager {
             public void run() {
                 Log.v(TAG, "Stop Sensor Service");
                 sendMessageInBackground(SharedConstants.COMMANDS.STOP_SENSOR_SERVICE, null);
-            }
-        });
-    }
-
-    /** send a message to the wearable device to start the beacon service on the wearable */
-    public void startBeaconService() {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                Log.v(TAG, "Start Beacon Service");
-                sendMessageInBackground(SharedConstants.COMMANDS.START_BEACON_SERVICE, null);
-            }
-        });
-    }
-
-    /** send a message to the wearable device to stop the beacon service on the wearable */
-    public void stopBeaconService() {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                Log.v(TAG, "Stop Beacon Service");
-                sendMessageInBackground(SharedConstants.COMMANDS.STOP_BEACON_SERVICE, null);
             }
         });
     }
@@ -168,8 +136,6 @@ public class RemoteSensorManager {
                             @Override
                             public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
                                 Log.d(TAG, "startOrStopInBackground(" + path + "): " + sendMessageResult.getStatus().isSuccess());
-                                if (listener != null)
-                                    listener.onMessageResult(path, msg, sendMessageResult);
                             }
                         });
             }

@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import edu.umass.cs.prepare.R;
 import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
@@ -109,7 +110,7 @@ public class DataClient {
      * @param values a list sensor readings
      */
     private void sendSensorDataInBackground(final SharedConstants.SENSOR_TYPE sensorType, final long[] timestamps, final float[] values) {
-        PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH);
+        PutDataMapRequest dataMap = PutDataMapRequest.create(googleApiClient.getContext().getString(R.string.path_sensor_data));
 
         dataMap.getDataMap().putInt(SharedConstants.KEY.SENSOR_TYPE, sensorType.ordinal());
         dataMap.getDataMap().putLongArray(SharedConstants.KEY.TIMESTAMPS, timestamps);
@@ -139,7 +140,7 @@ public class DataClient {
      * @param message the message being delivered
      */
     private void sendMessageInBackground(final int message) {
-        PutDataMapRequest dataMap = PutDataMapRequest.create(SharedConstants.DATA_LAYER_CONSTANTS.MESSAGE_PATH);
+        PutDataMapRequest dataMap = PutDataMapRequest.create(googleApiClient.getContext().getString(R.string.path_message));
         dataMap.getDataMap().putInt(SharedConstants.KEY.MESSAGE, message);
         dataMap.getDataMap().putLong("timestamp", System.currentTimeMillis()); //ensures the data map changes
         PutDataRequest putDataRequest = dataMap.asPutDataRequest();

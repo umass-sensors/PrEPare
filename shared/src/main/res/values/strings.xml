@@ -5,6 +5,9 @@
     <string name="connection_notification">Collecting sensor data</string>
     <string name="data_writer_notification">Writing sensor data</string>
 
+    <string name="path_sensor_data">/sensors/</string>
+    <string name="path_message">/message/</string>
+
     <string name="stop_service">Stop service</string>
 
     <string name="bluetooth_on">Bluetooth on</string>

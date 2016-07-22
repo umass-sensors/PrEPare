@@ -13,6 +13,7 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.metawear.SensorService;
@@ -70,14 +71,14 @@ public class DataReceiverService extends WearableListenerService {
                 String path = uri.getPath();
                 DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
 
-                if (path.equals(SharedConstants.DATA_LAYER_CONSTANTS.SENSOR_PATH)) {
+                if (path.equals(getString(R.string.path_sensor_data))) {
                     SharedConstants.SENSOR_TYPE sensorType = SharedConstants.SENSOR_TYPE.values()[dataMap.getInt(SharedConstants.KEY.SENSOR_TYPE)];
                     long[] timestamps = dataMap.getLongArray(SharedConstants.KEY.TIMESTAMPS);
                     float[] values = dataMap.getFloatArray(SharedConstants.KEY.SENSOR_VALUES);
                     Log.d(TAG, "Data received on mobile application : " + sensorType.name());
                     Broadcaster.broadcastSensorData(this, sensorType, timestamps, values);
                 }
-                else if (path.equals(SharedConstants.DATA_LAYER_CONSTANTS.MESSAGE_PATH)){
+                else if (path.equals(getString(R.string.path_message))){
                     int message = dataMap.getInt(SharedConstants.KEY.MESSAGE);
                     Broadcaster.broadcastMessage(this, message);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){

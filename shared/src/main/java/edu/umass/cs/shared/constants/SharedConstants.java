@@ -14,16 +14,6 @@ public class SharedConstants {
     public static final float GRAVITY = 9.8f;
 
     /**
-     * Tags that define the type of communication between the handheld and wearable application.
-     * These are used as keys to identify data packages sent over Bluetooth to the mobile device.
-     * @see SharedConstants.KEY
-     */
-    public interface DATA_LAYER_CONSTANTS {
-        String SENSOR_PATH = "/sensors/";
-        String MESSAGE_PATH = "/message/";
-    }
-
-    /**
      * Commands sent from the handheld application to the wearable application.
      */
     public interface COMMANDS {
@@ -69,7 +59,6 @@ public class SharedConstants {
 
     /**
      * Keys used to identify data instances from data packages sent over Bluetooth to the mobile device.
-     * @see SharedConstants.DATA_LAYER_CONSTANTS
      */
     public interface KEY {
         String UUID = "edu.umass.cs.prepare.key.uuid";

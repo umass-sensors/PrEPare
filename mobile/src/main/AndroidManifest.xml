@@ -93,8 +93,8 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/sensors/" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/message/" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="@string/path_sensor_data" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="@string/path_message" />
             </intent-filter>
         </service>
         <activity android:name=".view.activities.SelectDeviceActivity"/>

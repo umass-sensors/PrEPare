@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="15dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/layout_description">
+
+        <TextView
+            android:id="@+id/tutorial_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/tooltip_background"
+            android:textAlignment="center"
+            />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/layout_description"
+        android:id="@+id/layout_connection_icons"
+        android:paddingTop="10dp">
+        <TextView
+            android:id="@+id/txtDisabledIcon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Disabled"
+            android:textColor="@color/tooltip_background"
+            android:drawableTop="@drawable/ic_pill_off_white_24dp"
+            android:textAlignment="center"/>
+        <TextView
+            android:id="@+id/txtDisconnectedIcon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Disconnected"
+            android:alpha="0.4"
+            android:textColor="@color/tooltip_background"
+            android:drawableTop="@drawable/ic_pill_white_24dp"
+            android:textAlignment="center"/>
+        <TextView
+            android:id="@+id/txtConnectedIcon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Connected"
+            android:textColor="@color/tooltip_background"
+            android:drawableTop="@drawable/ic_pill_white_24dp"
+            android:textAlignment="center"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_connection_icons">
+        <ImageView
+            android:id="@+id/tutorial_next_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/ic_thumb_up_white_24dp"
+            android:contentDescription="@string/tutorial_next"
+            />
+    </RelativeLayout>
+
+</RelativeLayout>

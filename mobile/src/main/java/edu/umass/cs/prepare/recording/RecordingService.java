@@ -5,13 +5,11 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.media.MediaRecorder;
-import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
@@ -25,16 +23,18 @@ import java.io.IOException;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.constants.Constants;
-import edu.umass.cs.prepare.main.MainActivity;
+import edu.umass.cs.prepare.view.activities.CameraReminderDialogActivity;
+import edu.umass.cs.prepare.view.activities.MainActivity;
 import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 
 /**
  * Background video recording service. Due to the questionable legal and ethical nature of secret
- * video recording, Android APIs explicitly disallow video recording without a visible preview
+ * video recording, Android API explicitly disallows video recording without a visible preview
  * surface. This makes recording video in the background rather difficult. A workaround is to
  * create a surface view of size 1x1 pixel with highest-priority Z-order which persists even
  * when the application is not visible to the user. Although the preview must always be visible
- * to the user, the user is unlikely to notice it because it is only 1x1 pixel large.
+ * to the user, the user will not notice it at minimal size on a high-resolution display.
  *
  * This workaround requires the {@link android.Manifest.permission#SYSTEM_ALERT_WINDOW} permission,
  * which allows the application to place the video surface in the foreground, even above other
@@ -63,10 +63,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     private Camera camera;
 
     /** indicates whether audio should be recorded in addition to video **/
-    private boolean record_audio;
-
-    /** the directory where the video data is stored **/
-    private String save_directory;
+    private boolean recordAudio;
 
     /** indicates whether the service is currently recording video **/
     public static boolean isRecording = false;
@@ -77,17 +74,14 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     /** height in pixels of the {@link SurfaceView} which displays the video recording preview **/
     private int height;
 
-    /**
-     * Loads shared preferences, e.g. the directory where the video data should be saved and
-     * whether or not audio recording is enabled.
-     */
-    private void loadPreferences(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        final String defaultDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name)).getAbsolutePath();
-        save_directory = preferences.getString(getString(R.string.pref_directory_key), defaultDirectory);
+    public static final int CAMERA_REMINDER_TIMEOUT_MINUTES = 2;
 
-        record_audio = preferences.getBoolean(getString(R.string.pref_audio_key),
-                getResources().getBoolean(R.bool.pref_audio_default));
+    private ApplicationPreferences applicationPreferences;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        applicationPreferences = ApplicationPreferences.getInstance(this);
     }
 
     @Override
@@ -97,8 +91,6 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             stopForeground(true);
             stopSelf();
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
-            loadPreferences();
-
             mSurfaceView = new SurfaceView(getApplicationContext());
             sHolder = mSurfaceView.getHolder();
             sHolder.addCallback(this);
@@ -109,8 +101,12 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             WindowManager winMan = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
             WindowManager.LayoutParams params = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                    WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                     PixelFormat.TRANSLUCENT);
 
             //TODO: FLAG_NOT_TOUCHABLE with TYPE_SYSTEM_ALERT?
@@ -121,6 +117,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             params.y=intent.getIntExtra(Constants.KEY.SURFACE_Y, 0);
             width = intent.getIntExtra(Constants.KEY.SURFACE_WIDTH, 1);
             height = intent.getIntExtra(Constants.KEY.SURFACE_HEIGHT, 1);
+            recordAudio = intent.getBooleanExtra(Constants.KEY.RECORD_AUDIO, getResources().getBoolean(R.bool.pref_audio_default));
 
             //display the surface view as a stand-alone window
             winMan.addView(mSurfaceView, params);
@@ -128,28 +125,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             sHolder.setFixedSize(width, height);
             sHolder.setFormat(PixelFormat.TRANSPARENT);
 
-            Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
-            notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
-            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
-            Intent stopIntent = new Intent(this, RecordingService.class);
-            stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-            PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
-
-            // notify the user that the foreground service has started
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setTicker(getString(R.string.app_name))
-                    .setContentText("Video currently recording...")
-                    .setSmallIcon(android.R.drawable.ic_menu_camera)
-                    .setOngoing(true)
-                    .setVibrate(new long[]{0, 50, 150, 200})
-                    .setPriority(Notification.PRIORITY_MAX)
-                    .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent)
-                    .setContentIntent(pendingIntent).build();
-
-            startForeground(SharedConstants.NOTIFICATION_ID.RECORDING_SERVICE, notification);
+            startForeground(SharedConstants.NOTIFICATION_ID.RECORDING_SERVICE, getNotification("Video currently recording..."));
 
         }else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE) && isRecording){
             stopRecording();
@@ -163,6 +139,8 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             //return to the original width and height
             //mSurfaceView.setZOrderOnTop(false);
             sHolder.setFixedSize(width,height);
+        }else if (intent.getAction().equals(Constants.ACTION.SET_CAMERA_REMINDER) && isRecording){
+            setUpCameraReminder();
         }
 
         return START_STICKY;
@@ -179,16 +157,16 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
         camera.unlock();
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setCamera(camera);
-        if (record_audio) {
+        if (recordAudio) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        if (record_audio) {
+        if (recordAudio) {
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
         }
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
-        mMediaRecorder.setOutputFile(new File(save_directory, "VIDEO" + String.valueOf(System.currentTimeMillis()) + ".mp4").getAbsolutePath());
+        mMediaRecorder.setOutputFile(new File(applicationPreferences.getSaveDirectory(), "VIDEO" + String.valueOf(System.currentTimeMillis()) + ".mp4").getAbsolutePath());
         mMediaRecorder.setVideoFrameRate(30);
         mMediaRecorder.setPreviewDisplay(sHolder.getSurface());
         mMediaRecorder.setOrientationHint(90);
@@ -202,6 +180,52 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
         mMediaRecorder.start();
         isRecording = true;
         Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED);
+    }
+
+    private Handler handler;
+    private Runnable cameraReminder;
+
+    private void setUpCameraReminder(){
+        if (applicationPreferences.showCameraReminder()) {
+            if (handler == null) {
+                handler = new Handler();
+                cameraReminder = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (RecordingService.isRecording) {
+                            Intent dialogIntent = new Intent(RecordingService.this, CameraReminderDialogActivity.class);
+                            dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(dialogIntent);
+                        }
+                    }
+                };
+            }
+            handler.removeCallbacks(cameraReminder);
+            handler.postDelayed(cameraReminder, CAMERA_REMINDER_TIMEOUT_MINUTES * 60000);
+        }
+    }
+
+    private Notification getNotification(String contentText){
+        Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
+        notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        Intent stopIntent = new Intent(this, RecordingService.class);
+        stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+
+        // notify the user that the foreground service has started
+        return new NotificationCompat.Builder(this)
+                .setContentTitle(getString(R.string.app_name))
+                .setTicker(getString(R.string.app_name))
+                .setContentText(contentText)
+                .setSmallIcon(android.R.drawable.ic_menu_camera)
+                .setOngoing(true)
+                .setVibrate(new long[]{0, 50, 150, 200})
+                .setPriority(Notification.PRIORITY_MAX)
+                .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent)
+                .setContentIntent(pendingIntent).build();
     }
 
     /**

@@ -6,18 +6,18 @@ import org.json.JSONObject;
 /**
  * Created by erikrisinger on 6/14/16.
  */
-public class MHLGyroscopeReading extends MHLSensorReading {
+class MHLGyroscopeReading extends MHLSensorReading {
 
     private double x, y, z;
     private long timestamp;
 
-    public MHLGyroscopeReading(int userID, String deviceType, long t, float x, float y, float z){
+    public MHLGyroscopeReading(int userID, String deviceType, long t, float... values){
         super(userID, deviceType, "SENSOR_" + deviceType + "_GYRO");
 
         this.timestamp = t;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.x = values[0];
+        this.y = values[1];
+        this.z = values[2];
     }
 
     @Override

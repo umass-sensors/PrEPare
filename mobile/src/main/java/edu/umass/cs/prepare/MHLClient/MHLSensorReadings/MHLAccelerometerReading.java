@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /**
  * Created by erikrisinger on 6/14/16.
  */
-public class MHLAccelerometerReading extends MHLSensorReading {
+class MHLAccelerometerReading extends MHLSensorReading {
 
     private double x, y, z;
     private long timestamp;
@@ -14,13 +14,13 @@ public class MHLAccelerometerReading extends MHLSensorReading {
     //constructor for string payload -- removed
 
     //constructor for discrete payload values
-    public MHLAccelerometerReading(int userID, String deviceType, long t, double x, double y, double z){
+    public MHLAccelerometerReading(int userID, String deviceType, long t, float... values){
         super(userID, deviceType, "SENSOR_" + deviceType + "_ACCEL");
 
         this.timestamp = t;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.x = values[0];
+        this.y = values[1];
+        this.z = values[2];
     }
 
     @Override

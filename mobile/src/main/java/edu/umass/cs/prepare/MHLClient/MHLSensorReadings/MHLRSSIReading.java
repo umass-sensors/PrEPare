@@ -6,16 +6,16 @@ import org.json.JSONObject;
 /**
  * Created by erikrisinger on 6/15/16.
  */
-public class MHLRSSIReading extends MHLSensorReading {
+class MHLRSSIReading extends MHLSensorReading {
 
     private long timestamp;
     private int rssi;
 
-    public MHLRSSIReading(int userID, String deviceType, long t, int rssi){
+    public MHLRSSIReading(int userID, String deviceType, long t, float... rssi){
         super(userID, deviceType, "SENSOR_RSSI");
 
         this.timestamp = t;
-        this.rssi = rssi;
+        this.rssi = (int)rssi[0];
     }
 
     @Override

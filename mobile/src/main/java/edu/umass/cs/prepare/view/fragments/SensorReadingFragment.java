@@ -4,17 +4,17 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -22,11 +22,12 @@ import java.util.ArrayList;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
-import edu.umass.cs.prepare.main.MainActivity;
-import edu.umass.cs.prepare.tutorial.StandardTutorial;
+import edu.umass.cs.prepare.view.activities.MainActivity;
+import edu.umass.cs.prepare.view.tutorial.StandardTutorial;
 import edu.umass.cs.prepare.view.CustomAdapter;
 import edu.umass.cs.shared.communication.DataLayerUtil;
 import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 
 // In this case, the fragment displays simple text based on the page
 public class SensorReadingFragment extends Fragment {
@@ -46,6 +47,10 @@ public class SensorReadingFragment extends Fragment {
 
     /** Links the {@link #sensorReadings} to a UI view. **/
     private CustomAdapter sensorReadingAdapter;
+
+    private ViewPager viewPager;
+
+    private ApplicationPreferences applicationPreferences;
 
     @Override
     public void onStart() {
@@ -71,17 +76,7 @@ public class SensorReadingFragment extends Fragment {
         super.onStop();
     }
 
-    private int accelerometerSamplingRate, gyroscopeSamplingRate, rssiSamplingRate;
-
-    private void loadPreferences(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        accelerometerSamplingRate = Integer.parseInt(preferences.getString(getString(edu.umass.cs.shared.R.string.pref_accelerometer_sampling_rate_key),
-                getString(edu.umass.cs.shared.R.string.pref_accelerometer_sampling_rate_default)));
-        gyroscopeSamplingRate = Integer.parseInt(preferences.getString(getString(edu.umass.cs.shared.R.string.pref_gyroscope_sampling_rate_key),
-                getString(edu.umass.cs.shared.R.string.pref_gyroscope_sampling_rate_default)));
-        rssiSamplingRate = Integer.parseInt(preferences.getString(getString(edu.umass.cs.shared.R.string.pref_rssi_sampling_rate_key),
-                getString(edu.umass.cs.shared.R.string.pref_rssi_sampling_rate_default)));
-    }
+    private StandardTutorial tutorial;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -94,10 +89,11 @@ public class SensorReadingFragment extends Fragment {
                 sensors.add(sensor_type.getSensor());
             }
         }
+        applicationPreferences = ApplicationPreferences.getInstance(getActivity());
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_sensor_readings, container, false);
 
@@ -108,25 +104,40 @@ public class SensorReadingFragment extends Fragment {
         sensorReadingAdapter.setOnRowClickedListener(new CustomAdapter.OnRowClickedListener() {
             @Override
             public void onRowClicked(int row) {
+                if (tutorial != null)
+                    tutorial.dismiss();
+
                 String sensor = sensors.get(row);
                 String device = devices.get(row);
 
                 LayoutInflater inflater = getActivity().getLayoutInflater();
-                View dialogLayout = inflater.inflate(R.layout.dialog_layout, null);
+                View dialogLayout = inflater.inflate(R.layout.dialog_sensor_data, null);
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setView(dialogLayout);
-                AlertDialog alertDialog = builder.create();
+                final AlertDialog alertDialog = builder.create();
+                alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialogInterface) {
+                        continueTutorial();
+                    }
+                });
                 alertDialog.show();
-
                 alertDialog.getWindow().setLayout(1000, 800);
 
                 TextView txtDevice = (TextView) dialogLayout.findViewById(R.id.device);
                 TextView txtSensor = (TextView) dialogLayout.findViewById(R.id.sensor);
                 TextView txtSamplingRate = (TextView) dialogLayout.findViewById(R.id.samplingRate);
+                Button buttonOK = (Button) dialogLayout.findViewById(R.id.sensorDataButtonOK);
 
                 txtDevice.setText("Device: " + device);
                 txtSensor.setText("Sensor: " + sensor);
-                txtSamplingRate.setText("Sampling Rate: " + getSamplingRate(sensor, device));
+                txtSamplingRate.setText("Sampling Rate: " + getSamplingRate(sensor, device) + " Hz");
+                buttonOK.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        alertDialog.cancel();
+                    }
+                });
             }
         });
 
@@ -134,14 +145,15 @@ public class SensorReadingFragment extends Fragment {
     }
 
     private int getSamplingRate(String sensor, String device){
-        loadPreferences();
-        if (device.equals("Metawear") && sensor.equals("Accelerometer")){
-            return accelerometerSamplingRate;
-        }else if (device.equals("Metawear") && sensor.equals("Gyroscope")){
-            return gyroscopeSamplingRate;
-        }else if (sensor.equals("RSSI")){
-            return rssiSamplingRate;
-        }else
+        if (device.equals(SharedConstants.DEVICE.METAWEAR.TITLE) &&
+                sensor.equals(SharedConstants.SENSOR.ACCELEROMETER.TITLE)){
+            return applicationPreferences.getAccelerometerSamplingRate();
+        } else if (device.equals(SharedConstants.DEVICE.METAWEAR.TITLE) &&
+                sensor.equals(SharedConstants.SENSOR.GYROSCOPE.TITLE)){
+            return applicationPreferences.getGyroscopeSamplingRate();
+        } else if (sensor.equals(SharedConstants.SENSOR.RSSI.TITLE)){
+            return applicationPreferences.getRssiSamplingRate();
+        } else
             return 60; //TODO
     }
 
@@ -157,28 +169,43 @@ public class SensorReadingFragment extends Fragment {
         }
     }
 
-    private StandardTutorial tutorial;
-
     public void showTutorial(final ViewPager viewPager){
+        if (!applicationPreferences.showTutorial()) return;
+        this.viewPager = viewPager;
         View listItem = getViewByPosition(0, sensorDataList);
-        View icon = sensorReadingAdapter.imageView;
-        tutorial = new StandardTutorial(getActivity(), listItem, getString(R.string.tutorial_sensor_data), getString(R.string.tutorial_next),
-        new StandardTutorial(getActivity(), icon, getString(R.string.tutorial_device_icon), getString(R.string.tutorial_next), null));
-        tutorial.setTutorialListener(new StandardTutorial.TutorialListener() {
+        tutorial = new StandardTutorial(getActivity(), listItem)
+                .setDescription(getString(R.string.tutorial_sensor_data))
+                .enableButton(false)
+                .setTutorialListener(new StandardTutorial.TutorialListener() {
                     @Override
                     public void onReady(final StandardTutorial tutorial) {
                         tutorial.showTutorial();
                     }
 
                     @Override
-                    public void onFinish(StandardTutorial tutorial) {
-                        viewPager.setCurrentItem(MainActivity.PAGES.RECORDING.getPageNumber(), true);
+                    public void onComplete(StandardTutorial tutorial) {
+
                     }
-                });
+                }).build();
     }
 
-    void dismissTutorial(){
-        tutorial.dismiss();
+    public void continueTutorial(){
+        if (!applicationPreferences.showTutorial()) return;
+        View icon = sensorReadingAdapter.imageView;
+        new StandardTutorial(getActivity(), icon)
+                .setDescription(getString(R.string.tutorial_device_icon))
+                .setButtonText(getString(R.string.tutorial_next))
+                .setTutorialListener(new StandardTutorial.TutorialListener() {
+            @Override
+            public void onReady(final StandardTutorial tutorial) {
+                tutorial.showTutorial();
+            }
+
+            @Override
+            public void onComplete(StandardTutorial tutorial) {
+                viewPager.setCurrentItem(MainActivity.PAGES.RECORDING.getPageNumber(), true);
+            }
+        }).build();
     }
 
     private ListView sensorDataList;
@@ -217,7 +244,6 @@ public class SensorReadingFragment extends Fragment {
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
                     float[] values = intent.getFloatArrayExtra(Constants.KEY.SENSOR_DATA);
                     if (sensorType == SharedConstants.SENSOR_TYPE.BATTERY_METAWEAR){
-                        //updateBatteryLevel((int)values[0]);
                         return;
                     }
 

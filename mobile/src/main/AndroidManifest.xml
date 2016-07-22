@@ -80,7 +80,8 @@
 
         <activity android:name=".view.activities.MainActivity"
             android:theme="@style/AppTheme"/>
-        <service android:name=".communication.wearable.DataReceiverService">
+        <service android:name=".communication.wearable.DataReceiverService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/sensors/" />

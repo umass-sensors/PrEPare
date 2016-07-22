@@ -10,11 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.mbientlab.metawear.AsyncOperation;
@@ -38,6 +36,7 @@ import java.util.Map;
 import edu.umass.cs.shared.R;
 import edu.umass.cs.shared.communication.BroadcastInterface;
 import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 import edu.umass.cs.shared.util.SensorBuffer;
 
 
@@ -86,28 +85,6 @@ public class SensorService extends Service implements ServiceConnection {
         /** Module responsible for the advertisement settings on the Metawear board. **/
         private Settings settingsModule;
 
-    /** The approximate sampling rate of the accelerometer. If the sampling rate is not supported by
-     * the Metawear device, then the closest supported sampling rate is used. **/
-    private int accelerometerSamplingRate;
-
-    /** The approximate sampling rate of the gyroscope. If the sampling rate is not supported by
-     * the Metawear device, then the closest supported sampling rate is used. **/
-    private int gyroscopeSamplingRate;
-
-    /** The sampling rate of the received signal strength indicator (RSSI) stream. **/
-    private int rssiSamplingRate;
-
-    /** Indicates whether the LED on the Metawear device should be turned on during streaming.
-     * This is useful for notifying the user when data is being collected; however, it decreases
-     * the battery life of the device. **/
-    private boolean blinkLedWhileRunning;
-
-    /** Indicates whether received signal strength indicator (RSSI) streaming is enabled. **/
-    private boolean enableRSSI;
-
-    /** Indicates whether gyroscope is enabled on the Metawear. **/
-    private boolean enableGyroscope;
-
     /** Sensor buffer size. */
     private static final int BUFFER_SIZE = 1;
 
@@ -138,9 +115,6 @@ public class SensorService extends Service implements ServiceConnection {
 
     /** The source of disconnection from the Metawear board. **/
     protected DISCONNECT_SOURCE disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
-
-    /** The unique address of the Metawear device. **/
-    private String address;
 
     /** Handles the recurring RSSI requests. **/
     private Handler handler;
@@ -178,6 +152,8 @@ public class SensorService extends Service implements ServiceConnection {
      * The number of milliseconds after disconnecting from the board due to no motion before attempting to reconnect.
      */
     private static final int RECONNECTION_TIMEOUT_MILLIS = 2000;
+
+    private ApplicationPreferences applicationPreferences;
 
 
     /**
@@ -218,6 +194,7 @@ public class SensorService extends Service implements ServiceConnection {
         super.onCreate();
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(bluetoothStateListener, filter);
+        applicationPreferences = ApplicationPreferences.getInstance(this);
     }
 
     @Override
@@ -227,28 +204,10 @@ public class SensorService extends Service implements ServiceConnection {
     }
 
     /**
-     * Gets all relevant shared preferences.
-     */
-    private void loadPreferences(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        accelerometerSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_accelerometer_sampling_rate_key),
-                getString(R.string.pref_accelerometer_sampling_rate_default)));
-        gyroscopeSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_gyroscope_sampling_rate_key),
-                getString(R.string.pref_gyroscope_sampling_rate_default)));
-        rssiSamplingRate = Integer.parseInt(preferences.getString(getString(R.string.pref_rssi_sampling_rate_key),
-                getString(R.string.pref_rssi_sampling_rate_default)));
-        blinkLedWhileRunning = preferences.getBoolean(getString(R.string.pref_led_key), getResources().getBoolean(R.bool.pref_led_default));
-        enableGyroscope = preferences.getBoolean(getString(R.string.pref_gyroscope_key), getResources().getBoolean(R.bool.pref_gyroscope_default));
-        enableRSSI = preferences.getBoolean(getString(R.string.pref_rssi_key), getResources().getBoolean(R.bool.pref_rssi_default));
-        address = preferences.getString(getString(R.string.pref_device_key), getString(R.string.pref_device_default));
-    }
-
-    /**
      * Called when the sensor service is started, by command from the handheld application.
      */
     protected void onServiceStarted(){
         if (mIsBound) return;
-        loadPreferences();
         BluetoothManager btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null){
@@ -262,7 +221,7 @@ public class SensorService extends Service implements ServiceConnection {
             return;
         }
         try {
-            btDevice = btManager.getAdapter().getRemoteDevice(address);
+            btDevice = btManager.getAdapter().getRemoteDevice(ApplicationPreferences.getInstance(this).getMwAddress());
         }catch(IllegalArgumentException e){
             e.printStackTrace();
             if (broadcaster != null)
@@ -313,18 +272,22 @@ public class SensorService extends Service implements ServiceConnection {
      */
     protected void onMetawearDisconnected(){
         Log.d(TAG, "onDisconnected(): " + disconnectSource.name());
+        if (broadcaster != null && disconnectSource != DISCONNECT_SOURCE.UNKNOWN)
+            broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
         switch (disconnectSource){
             case BLUETOOTH_DISABLED:
                 if (handler != null)
                     handler.removeCallbacksAndMessages(null);
                 doUnbind();
-                break;
+                if (broadcaster != null)
+                    broadcaster.broadcastMessage(SharedConstants.MESSAGES.BLUETOOTH_DISABLED);
+                return;
             case DISCONNECT_REQUESTED:
                 if (handler != null)
                     handler.removeCallbacksAndMessages(null);
                 doUnbind();
                 if (broadcaster != null)
-                    broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
+                    broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_SERVICE_STOPPED);
                 stopForeground(true);
                 stopSelf();
                 return;
@@ -332,14 +295,14 @@ public class SensorService extends Service implements ServiceConnection {
                 if (handler != null)
                     handler.removeCallbacksAndMessages(null);
                 postReconnect();
-                break;
+                if (broadcaster != null)
+                    broadcaster.broadcastMessage(SharedConstants.MESSAGES.NO_MOTION_DETECTED);
+                disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
+                return;
             case UNKNOWN:
                 connect();
-                return;
         }
-        disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
-        if (broadcaster != null)
-            broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
+        //disconnectSource = DISCONNECT_SOURCE.UNKNOWN;
     }
 
     protected void onConnectionRequest(){
@@ -356,7 +319,6 @@ public class SensorService extends Service implements ServiceConnection {
      * Called once the Metawear board is connected
      */
     protected void onMetawearConnected(){
-        loadPreferences();
         getModules();
         mwBoard.removeRoutes();
         stopSensors();
@@ -386,8 +348,8 @@ public class SensorService extends Service implements ServiceConnection {
      * Prepares the Metawear board for sensor data collection.
      */
     private void setSamplingRates() {
-        accModule.setOutputDataRate((float) accelerometerSamplingRate);
-        gyroModule.setOutputDataRate((float) gyroscopeSamplingRate);
+        accModule.setOutputDataRate((float) applicationPreferences.getAccelerometerSamplingRate());
+        gyroModule.setOutputDataRate((float) applicationPreferences.getGyroscopeSamplingRate());
     }
 
     /**
@@ -418,11 +380,11 @@ public class SensorService extends Service implements ServiceConnection {
      * Starts all enabled sensors and blinks LED on the Metawear board.
      */
     private void startSensors() {
-        if (blinkLedWhileRunning)
+        if (applicationPreferences.blinkLedWhileRunning())
             turnOnLed(Led.ColorChannel.GREEN, true);
-        if (enableGyroscope)
+        if (applicationPreferences.enableGyroscope())
             startGyroscope();
-        if (enableRSSI)
+        if (applicationPreferences.enableRSSI())
             startRSSI();
         startAccelerometerWithNoMotionDetection();
     }
@@ -452,7 +414,9 @@ public class SensorService extends Service implements ServiceConnection {
      * will be stopped, the board will listen for motion and the phone and board will disconnect.
      */
     private void onNoMotionDetected(){
+//        boolean disconnectAttemptInProcess = (disconnectSource != DISCONNECT_SOURCE.UNKNOWN);
         disconnectSource = DISCONNECT_SOURCE.NO_MOTION_DETECTED;
+//        if (!disconnectAttemptInProcess)
         startMotionDetectionThenDisconnect();
     }
 
@@ -462,7 +426,7 @@ public class SensorService extends Service implements ServiceConnection {
      */
     private void startAccelerometerWithNoMotionDetection(){
         Log.d(TAG, getString(R.string.routing_accelerometer));
-        final float[] diffInMagnitudeWindow = new float[NO_MOTION_DURATION * accelerometerSamplingRate];
+        final float[] diffInMagnitudeWindow = new float[NO_MOTION_DURATION * applicationPreferences.getAccelerometerSamplingRate()];
         magnitudesIndex=0;
         accModule.routeData().fromAxes()
                 .stream(SharedConstants.METAWEAR_STREAM_KEY.ACCELEROMETER)
@@ -485,7 +449,7 @@ public class SensorService extends Service implements ServiceConnection {
                                 diffInMagnitudeWindow[magnitudesIndex++] = Math.abs(magnitudeSq - prevMagnitudeSq);
                                 prevMagnitudeSq = magnitudeSq;
 
-                                if (magnitudesIndex >= NO_MOTION_DURATION * accelerometerSamplingRate) {
+                                if (magnitudesIndex >= NO_MOTION_DURATION * applicationPreferences.getAccelerometerSamplingRate()) {
                                     float sumOverDiffInMagnitude = 0f;
                                     while (magnitudesIndex > 0) {
                                         sumOverDiffInMagnitude += diffInMagnitudeWindow[--magnitudesIndex];
@@ -525,6 +489,12 @@ public class SensorService extends Service implements ServiceConnection {
                     }).commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                         @Override
                         public void success(RouteManager result) {
+                            disconnect();
+                        }
+
+                        @Override
+                        public void failure(Throwable error) {
+                            error.printStackTrace();
                             disconnect();
                         }
             });
@@ -571,7 +541,7 @@ public class SensorService extends Service implements ServiceConnection {
         hThread.start();
 
         handler = new Handler(hThread.getLooper());
-        final int delay = (int) (1000.0 / rssiSamplingRate); // milliseconds
+        final int delay = (int) (1000.0 / applicationPreferences.getRssiSamplingRate()); // milliseconds
         Runnable queryRSSITask = new Runnable() {
             @Override
             public void run() {

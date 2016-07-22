@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="?attr/actionButtonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:background="?attr/actionBarItemBackground"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/deviceIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingTop="12sp"
+        android:paddingBottom="12sp"
+        android:layout_gravity="center_vertical|center_horizontal" />
+
+    <ProgressBar
+        android:id="@+id/circularProgressBar"
+        android:layout_alignTop="@id/deviceIcon"
+        android:layout_alignBottom="@id/deviceIcon"
+        android:layout_alignStart="@id/deviceIcon"
+        android:layout_alignEnd="@id/deviceIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingTop="9sp"
+        android:paddingBottom="9sp"
+        android:indeterminate="true"
+        android:alpha="1"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/connectedIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_done_white_24dp"
+        android:alpha="0.6"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:visibility="gone" />
+
+</RelativeLayout>

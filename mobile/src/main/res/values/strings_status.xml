@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_connection_attempt">Listening for movement…</string>
+    <string name="status_connected">Connected to pill bottle.</string>
+    <string name="status_invalid_address">Invalid Bluetooth address!</string>
+    <string name="status_bluetooth_disabled">Please turn on Bluetooth.</string>
+    <string name="status_bluetooth_unsupported">Your device does not support Bluetooth!</string>
+    <string name="status_service_stopped">Sensor disabled. Reconnect in General settings.</string>
+    <string name="status_server_connection_failed">Failed to connect to server.</string>
+    <string name="status_no_motion">No motion detected.</string>
+    <string name="status_wearable_disconnected">Disconnected from Android wear.</string>
+</resources>

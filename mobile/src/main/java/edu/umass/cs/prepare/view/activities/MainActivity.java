@@ -1,36 +1,47 @@
 package edu.umass.cs.prepare.view.activities;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.support.v13.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
+
+import java.text.DecimalFormat;
+import java.util.Locale;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
 import edu.umass.cs.prepare.constants.Constants;
-import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
-import edu.umass.cs.prepare.recording.RecordingFragment;
+import edu.umass.cs.prepare.view.tools.BatteryStatusActionProvider;
+import edu.umass.cs.prepare.view.fragments.RecordingFragment;
 import edu.umass.cs.prepare.view.fragments.SensorReadingFragment;
 import edu.umass.cs.prepare.view.fragments.SettingsFragment;
+import edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider;
+import edu.umass.cs.prepare.view.tutorial.ConnectionStatusTutorial;
+import edu.umass.cs.prepare.view.tutorial.StandardTutorial;
 import edu.umass.cs.shared.communication.DataLayerUtil;
 import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
+import edu.umass.cs.shared.util.BatteryUtil;
 
 /**
  * The Main Activity is the entry point for the application. It is the primary UI and allows
@@ -45,7 +56,11 @@ public class MainActivity extends AppCompatActivity {
     /** used for debugging purposes */
     private static final String TAG = MainActivity.class.getName();
 
-    boolean showTutorial;
+    private static int COLOR_ANIMATION_DURATION_MILLIS = 3000;
+
+    private static int DIALOG_WIDTH = 1000;
+
+    private static int DIALOG_HEIGHT = 800;
 
     /** Request identifiers **/
     public interface REQUEST_CODE {
@@ -55,15 +70,68 @@ public class MainActivity extends AppCompatActivity {
         int ENABLE_BLUETOOTH = 5;
     }
 
+    /**
+     * Defines all available tabs in the main UI
+     */
     public enum PAGES {
-        SETTINGS,
-        SENSOR_DATA,
-        RECORDING;
+        SENSOR_DATA {
+            @Override
+            public String getTitle() {
+                return "Data";
+            }
+
+            @Override
+            public int getPageNumber() {
+                return 0;
+            }
+        },
+        RECORDING {
+            @Override
+            public String getTitle() {
+                return "Recording";
+            }
+
+            @Override
+            public int getPageNumber() {
+                return 1;
+            }
+        },
+        SETTINGS {
+            @Override
+            public String getTitle() {
+                return "Settings";
+            }
+
+            @Override
+            public int getPageNumber() {
+                return 2;
+            }
+        };
+
+        /**
+         * Indicates the title of the page. This will be displayed in the tab.
+         * Default is an empty string. Override this to return a different title.
+         * @return the page title
+         */
+        public String getTitle(){
+            return "";
+        }
+
+        /**
+         * Indicates the page number of the page. If omitted, it will return
+         * its position in the enum. Override this to specify a different page number.
+         * @return the page number
+         */
         public int getPageNumber(){
             return ordinal();
         }
+
+        /**
+         * Returns the number of pages available.
+         * @return the length of {@link #values()}
+         */
         static int getCount(){
-            return PAGES.values().length;
+            return values().length;
         }
         static final int NONE = -1;
     }
@@ -71,13 +139,44 @@ public class MainActivity extends AppCompatActivity {
     /** Handles services on the mobile application. */
     private ServiceManager serviceManager;
 
-    /** The unique address of the Metawear device. **/
-    private String mwAddress;
-
-    /** Image corresponding to the current Metawear battery level. **/
-    private Bitmap batteryLevelBitmap;
-
+    /** Displays status messages, e.g. connection station. **/
     private TextView txtStatus;
+
+    /** Handle to the sensor data tab. **/
+    private View sensorTab;
+
+    /** Maintains the tabs and the tab layout interactions. **/
+    private ViewPager viewPager;
+
+    /** The selected tab. **/
+    private int selectedPage = PAGES.NONE;
+
+    /** The fragment within the sensor data tab. **/
+    private SensorReadingFragment sensorReadingFragment;
+
+    /** The tutorial sequence entry point. **/
+    private StandardTutorial tutorial;
+
+    /** The view which displays the battery level in the toolbar. **/
+    private View batteryStatusView;
+
+    /** The view which displays the network connection status in the toolbar. **/
+    private View networkStatusView;
+
+    /** The view which displays the wearable connection status in the toolbar. **/
+    private View connectionStatusView;
+
+    /** The view which displays the pill bottle connection status in the toolbar. **/
+    private View metawearStatusView;
+
+    /** Animates the sensor data tab when the device connects. **/
+    private ValueAnimator colorAnimation;
+
+    /** Simplified application preference manager. **/
+    private ApplicationPreferences applicationPreferences;
+
+    /** A handle to the battery level view shown in the main toolbar. **/
+    private BatteryStatusActionProvider batteryStatusActionProvider;
 
     @Override
     protected void onStart() {
@@ -113,35 +212,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         serviceManager.minimizeVideo();
+        serviceManager.enableCameraReminder();
     }
-
-    /**
-     * Loads shared user preferences, e.g. whether video/audio is enabled
-     */
-    private void loadPreferences(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mwAddress = preferences.getString(getString(R.string.pref_device_key),
-                getString(R.string.pref_device_default));
-        showTutorial = preferences.getBoolean(getString(R.string.pref_show_tutorial_key),
-                getResources().getBoolean(R.bool.pref_show_tutorial_default));
-    }
-
-    ViewPager viewPager;
-
-    private int selectedPage = PAGES.NONE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
 
-        final SensorReadingFragment sensorReadingFragment = new SensorReadingFragment();
+        sensorReadingFragment = new SensorReadingFragment();
         final RecordingFragment recordingFragment = new RecordingFragment();
         final SettingsFragment settingsFragment = new SettingsFragment();
 
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(new FragmentPagerAdapter(getFragmentManager()) {
-            private final String[] tabTitles = new String[]{"Settings", "Data", "Recording"};
+            private final String[] tabTitles = new String[PAGES.getCount()];
+            //instance initializer:
+            {
+                for (PAGES page : PAGES.values())
+                    tabTitles[page.getPageNumber()] = page.getTitle();
+            }
 
             @Override
             public android.app.Fragment getItem(int position) {
@@ -166,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
+                // do nothing
             }
 
             @Override
@@ -183,14 +275,20 @@ public class MainActivity extends AppCompatActivity {
             public void onPageScrollStateChanged(int state) {
                 switch (state) {
                     case ViewPager.SCROLL_STATE_IDLE:
-                        loadPreferences();
-                        if (selectedPage != PAGES.NONE && showTutorial) {
-                            if (selectedPage == PAGES.SENSOR_DATA.getPageNumber()){
-                                sensorReadingFragment.showTutorial(viewPager);
-                            } else if (selectedPage == PAGES.RECORDING.getPageNumber()) {
-                                recordingFragment.showTutorial(viewPager);
+                        if (selectedPage != PAGES.NONE && applicationPreferences.showTutorial()) {
+                            if (selectedPage != PAGES.SENSOR_DATA.getPageNumber()) {
+                                if (selectedPage == PAGES.RECORDING.getPageNumber()) {
+                                    recordingFragment.showTutorial(viewPager);
+                                } else if (selectedPage == PAGES.SETTINGS.getPageNumber()) {
+                                    settingsFragment.showTutorial(viewPager);
+                                }
                             }
                             selectedPage = PAGES.NONE;
+                        }
+                        if (selectedPage == PAGES.SENSOR_DATA.getPageNumber()) {
+                            if (colorAnimation != null)
+                                colorAnimation.cancel();
+                            sensorTab.setBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.colorTabHighlightInitial));
                         }
                         break;
                     case ViewPager.SCROLL_STATE_DRAGGING:
@@ -204,52 +302,83 @@ public class MainActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         assert tabLayout != null;
         tabLayout.setupWithViewPager(viewPager);
+        sensorTab = ((ViewGroup) tabLayout.getChildAt(0)).getChildAt(PAGES.SENSOR_DATA.getPageNumber());
+        View recordingTab = ((ViewGroup) tabLayout.getChildAt(0)).getChildAt(PAGES.RECORDING.getPageNumber());
+        View settingsTab = ((ViewGroup) tabLayout.getChildAt(0)).getChildAt(PAGES.SETTINGS.getPageNumber());
+        sensorTab.setBackgroundColor(ContextCompat.getColor(this, R.color.colorTabHighlightInitial));
+        recordingTab.setBackgroundColor(ContextCompat.getColor(this, R.color.colorTabHighlightInitial));
+        settingsTab.setBackgroundColor(ContextCompat.getColor(this, R.color.colorTabHighlightInitial));
+        tabLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.colorTabHighlightInitial));
 
-        loadPreferences();
         serviceManager = ServiceManager.getInstance(this);
-
-        settingsFragment.setViewPager(viewPager);
+        applicationPreferences = ApplicationPreferences.getInstance(this);
 
         txtStatus = (TextView) findViewById(R.id.status);
+    }
 
+    /**
+     * Starts the toolbar tutorial
+     */
+    private void startTutorial(){
+        if (!applicationPreferences.showTutorial()) return;
+        tutorial = new StandardTutorial(MainActivity.this, batteryStatusView)
+                .setDescription(getString(R.string.tutorial_battery_status))
+                .enableButton(false).setTutorialListener(new StandardTutorial.TutorialListener() {
+            @Override
+            public void onReady(StandardTutorial tutorial) {
+                tutorial.showTutorial();
+            }
 
-//        SharedPreferences.OnSharedPreferenceChangeListener prefListener;
-//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            @Override
+            public void onComplete(StandardTutorial tutorial) {
+                continueTutorial();
+            }
+        }).build();
+    }
 
-//        prefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-//            @Override
-//            public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-//                loadPreferences();
-////                if (key.equals(getString(R.string.pref_show_tutorial_key))){
-////                    if (!showTutorial){
-////                        serviceManager.startMetawearService();
-////                    }
-////                }
-//
-//                Log.d(TAG, "Settings key changed: " + key);
-////                if(key.equals(getString(R.))
-////                    getLoaderManager().restartLoader(LOADER_ID, null, tCallbacks);
-//
-//            }
-//        };
-//        prefs.registerOnSharedPreferenceChangeListener(prefListener);
-        if (mwAddress.equals(getString(R.string.pref_device_default))){
-            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
-        } else if (!showTutorial) {
-            serviceManager.startMetawearService();
-        }
+    private void continueTutorial(){
+        if (!applicationPreferences.showTutorial()) return;
+        StandardTutorial metawearStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, metawearStatusView)
+                .setConnectedIcon(R.drawable.ic_pill_white_24dp)
+                .setDisconnectedIcon(R.drawable.ic_pill_white_24dp)
+                .setDisabledIcon(R.drawable.ic_pill_off_white_24dp)
+                .setDescription(getString(R.string.tutorial_metawear_status))
+                .setButtonText(getString(R.string.tutorial_next));
+        StandardTutorial wearableStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, connectionStatusView)
+                .setConnectedIcon(R.drawable.ic_watch_white_24dp)
+                .setDisconnectedIcon(R.drawable.ic_watch_white_24dp)
+                .setDisabledIcon(R.drawable.ic_watch_off_white_24dp)
+                .setDescription(getString(R.string.tutorial_wearable_status))
+                .setButtonText(getString(R.string.tutorial_next));
+        StandardTutorial networkStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, networkStatusView)
+                .setConnectedIcon(R.drawable.ic_cloud_done_white_24dp)
+                .setDisconnectedIcon(R.drawable.ic_cloud_white_24dp)
+                .setDisabledIcon(R.drawable.ic_cloud_off_white_24dp)
+                .setDescription(getString(R.string.tutorial_network_status))
+                .setButtonText(getString(R.string.tutorial_next));
+        metawearStatusTutorial.setTutorialListener(new StandardTutorial.TutorialListener() {
+                    @Override
+                    public void onReady(StandardTutorial tutorial) {
+                        tutorial.showTutorial();
+                    }
+
+                    @Override
+                    public void onComplete(StandardTutorial tutorial) {
+                        sensorReadingFragment.showTutorial(viewPager);
+                    }
+                });
+        StandardTutorial.buildSequence(metawearStatusTutorial, wearableStatusTutorial, networkStatusTutorial);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE.SELECT_DEVICE){
             if (data != null) {
-                mwAddress = data.getStringExtra(SharedConstants.KEY.UUID);
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putString(getString(R.string.pref_device_key), mwAddress);
-                editor.apply();
-                if (!showTutorial)
+                String address = data.getStringExtra(SharedConstants.KEY.UUID);
+                applicationPreferences.edit().putString(getString(R.string.pref_device_key), address).apply();
+                if (applicationPreferences.showTutorial())
+                    startTutorial();
+                else
                     serviceManager.startMetawearService();
             }else{
                 finish(); //can't return to the main UI if there is no device available
@@ -262,37 +391,97 @@ public class MainActivity extends AppCompatActivity {
      * @param percentage battery level in the range of [0,100]
      */
     private void updateBatteryLevel(final int percentage){
-        if (batteryLevelBitmap == null)
-            batteryLevelBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_battery_image_set);
-        int nImages = 11;
-        int height = batteryLevelBitmap.getHeight();
-        int width = batteryLevelBitmap.getWidth();
-        int width_per_image = width / nImages;
-        int index = (percentage + 5) / (nImages - 1);
-        int x = width_per_image * index;
-        final Bitmap batteryLevelSingleBitmap = Bitmap.createBitmap(batteryLevelBitmap, x, 0, width_per_image, height);
-
-        Resources res = getResources();
-        final BitmapDrawable icon = new BitmapDrawable(res,batteryLevelSingleBitmap);
-
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                menu.getItem(0).setIcon(icon);
+                batteryStatusActionProvider.updateBatteryStatus(percentage);
             }
         });
-
+        applicationPreferences.edit().putInt(getString(R.string.pref_battery_level_key), percentage).apply();
     }
-
-    private Menu menu;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        this.menu = menu;
+        batteryStatusActionProvider = (BatteryStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_battery_status));
+        batteryStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_battery_status));
+        batteryStatusView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LayoutInflater inflater = MainActivity.this.getLayoutInflater();
+                View dialogLayout = inflater.inflate(R.layout.dialog_battery_status, (ViewGroup) findViewById(android.R.id.content), false);
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setView(dialogLayout);
+                final AlertDialog alertDialog = builder.create();
+                alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialogInterface) {
+                        if (tutorial != null)
+                            tutorial.dismiss();
+                    }
+                });
+                alertDialog.show();
+                alertDialog.getWindow().setLayout(DIALOG_WIDTH, DIALOG_HEIGHT);
+
+                TextView txtBatteryLevel = (TextView) dialogLayout.findViewById(R.id.batteryLevel);
+                TextView txtLifetimeEstimate = (TextView) dialogLayout.findViewById(R.id.estimatedLifetime);
+                Button buttonOK = (Button) dialogLayout.findViewById(R.id.buttonOK);
+
+                txtBatteryLevel.setText(String.format(Locale.getDefault(), getString(R.string.battery_level), applicationPreferences.getBatteryLevel()));
+                txtLifetimeEstimate.setText(String.format(Locale.getDefault(), getString(R.string.estimated_lifetime),
+                        new DecimalFormat("#.##").format(BatteryUtil.getBatteryLifetimeEstimate(applicationPreferences.getBatteryLevel()))));
+                buttonOK.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        alertDialog.cancel();
+                    }
+                });
+            }
+        });
+
+        connectionStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_connection_status));
+        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
+                R.drawable.ic_watch_white_24dp);
+        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED,
+                R.drawable.ic_watch_white_24dp);
+        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
+                R.drawable.ic_watch_off_white_24dp);
+        connectionStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_connection_status));
+
+        metawearStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_metawear_status));
+        metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
+                R.drawable.ic_pill_white_24dp);
+        metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED,
+                R.drawable.ic_pill_white_24dp);
+        metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
+                R.drawable.ic_pill_off_white_24dp);
+        metawearStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_metawear_status));
+
+        networkStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_network_status));
+        networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
+                R.drawable.ic_cloud_white_24dp);
+        networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED,
+                R.drawable.ic_cloud_done_white_24dp);
+        networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
+                R.drawable.ic_cloud_error_white_24dp);
+        networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
+                R.drawable.ic_cloud_off_white_24dp);
+        networkStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_network_status));
+
+        if (applicationPreferences.getMwAddress().equals(getString(R.string.pref_device_default))){
+            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
+        } else if (!applicationPreferences.showTutorial()) {
+            serviceManager.startMetawearService();
+        } else {
+            startTutorial();
+        }
         return true;
     }
+
+
+    private ConnectionStatusActionProvider metawearStatusActionProvider;
+    private ConnectionStatusActionProvider connectionStatusActionProvider;
+    public ConnectionStatusActionProvider networkStatusActionProvider;
 
     /**
      * Shows a removable status message at the bottom of the application.
@@ -310,29 +499,51 @@ public class MainActivity extends AppCompatActivity {
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
                         showStatus(getString(R.string.status_connection_attempt));
+                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         showStatus(getString(R.string.status_connected));
-                        serviceManager.startSensorService();
+                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
+                        if (viewPager.getCurrentItem() != PAGES.SENSOR_DATA.getPageNumber())
+                            highlightTab();
                     } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
-                        serviceManager.stopDataWriterService();
-                        HandlerThread hThread = new HandlerThread("StopWearableSensorServiceThread");
-                        hThread.start();
-                        Handler stopServiceHandler = new Handler(hThread.getLooper());
-                        stopServiceHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                serviceManager.stopSensorService();
-                            }
-                        }, 5000);
+                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                        if (colorAnimation != null)
+                            colorAnimation.cancel();
                     } else if (message == SharedConstants.MESSAGES.INVALID_ADDRESS){
                         showStatus(getString(R.string.status_invalid_address));
                         startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
                     } else if (message == SharedConstants.MESSAGES.BLUETOOTH_DISABLED){
                         showStatus(getString(R.string.status_bluetooth_disabled));
+                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
                         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);
                     } else if (message == SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED){
                         showStatus(getString(R.string.status_bluetooth_unsupported));
+                    } else if (message == SharedConstants.MESSAGES.SERVER_CONNECTION_FAILED){
+                        showStatus(getString(R.string.status_server_connection_failed));
+                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                    } else if (message == SharedConstants.MESSAGES.SERVER_CONNECTION_SUCCEEDED){
+                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
+                    } else if (message == SharedConstants.MESSAGES.SERVER_DISCONNECTED){
+                        if (applicationPreferences.writeServer())
+                            networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                    } else if (message == SharedConstants.MESSAGES.METAWEAR_SERVICE_STOPPED){
+                        showStatus(getString(R.string.status_service_stopped));
+                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                    } else if (message == SharedConstants.MESSAGES.NO_MOTION_DETECTED){
+                        showStatus(getString(R.string.status_no_motion));
+                    } else if (message == SharedConstants.MESSAGES.WEARABLE_SERVICE_STARTED) {
+                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
+                    } else if (message == SharedConstants.MESSAGES.WEARABLE_SERVICE_STOPPED) {
+                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                    } else if (message == SharedConstants.MESSAGES.WEARABLE_CONNECTED) {
+//                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTING);
+                    } else if (message == SharedConstants.MESSAGES.WEARABLE_DISCONNECTED) {
+                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
                     }
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_SENSOR_DATA)){
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);
@@ -344,4 +555,25 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    /**
+     * Highlights the sensor data tab repeatedly using a color animation.
+     * To stop the animation use {@link ValueAnimator#cancel() colorAnimation.cancel()}
+     */
+    private void highlightTab(){
+        int colorFrom = ContextCompat.getColor(this, R.color.colorTabHighlightInitial);
+        int colorTo = ContextCompat.getColor(this, R.color.colorTabHighlightFinal);
+        colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo, colorFrom);
+        colorAnimation.setDuration(COLOR_ANIMATION_DURATION_MILLIS); // milliseconds
+        colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                sensorTab.setBackgroundColor((int) animator.getAnimatedValue());
+            }
+
+        });
+        colorAnimation.setRepeatCount(ValueAnimator.INFINITE);
+        colorAnimation.start();
+    }
 }

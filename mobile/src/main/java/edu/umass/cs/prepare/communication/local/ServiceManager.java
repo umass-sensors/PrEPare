@@ -4,11 +4,15 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import edu.umass.cs.prepare.communication.wearable.RemoteSensorManager;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.prepare.recording.RecordingService;
 import edu.umass.cs.prepare.storage.DataWriterService;
 import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 
 /**
  * The service manager maintains the application services on the mobile device. These include
@@ -43,12 +47,18 @@ public class ServiceManager {
 
     private ServiceManager(Context context) {
         this.context = context;
+        remoteSensorManager = RemoteSensorManager.getInstance(context);
+        applicationPreferences = ApplicationPreferences.getInstance(context);
     }
+
+    private final RemoteSensorManager remoteSensorManager;
+
+    private final ApplicationPreferences applicationPreferences;
 
     /**
      * Starts the {@link RecordingService} via an {@link Intent}
      */
-    public void startRecordingService(int x, int y, int width, int height){
+    public void startRecordingService(int x, int y, int width, int height, boolean recordAudio){
         Intent startServiceIntent = new Intent(context, RecordingService.class);
 
         startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
@@ -57,6 +67,7 @@ public class ServiceManager {
         startServiceIntent.putExtra(Constants.KEY.SURFACE_HEIGHT, height);
         startServiceIntent.putExtra(Constants.KEY.SURFACE_X, x);
         startServiceIntent.putExtra(Constants.KEY.SURFACE_Y, y);
+        startServiceIntent.putExtra(Constants.KEY.RECORD_AUDIO, recordAudio);
 
         context.startService(startServiceIntent);
     }
@@ -88,7 +99,15 @@ public class ServiceManager {
         Intent maximizeIntent = new Intent(context, RecordingService.class);
         maximizeIntent.setAction(Constants.ACTION.MAXIMIZE_VIDEO);
         context.startService(maximizeIntent);
+    }
 
+    /**
+     * Sets up a reminder in the case that the camera runs too long in the background (user may have forgotten!)
+     */
+    public void enableCameraReminder(){
+        Intent cameraReminderIntent = new Intent(context, RecordingService.class);
+        cameraReminderIntent.setAction(Constants.ACTION.SET_CAMERA_REMINDER);
+        context.startService(cameraReminderIntent);
     }
 
     /**
@@ -113,17 +132,41 @@ public class ServiceManager {
      * Starts the Metawear service on the mobile device.
      */
     public void startMetawearService(){
-        Intent startServiceIntent = new Intent(context, SensorService.class);
-        startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
-        context.startService(startServiceIntent);
+        if (!applicationPreferences.enablePillBottle()) return;
+        if (applicationPreferences.useAndroidWear()){
+            remoteSensorManager.startMetawearService();
+        }else {
+            Intent startServiceIntent = new Intent(context, SensorService.class);
+            startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
+            context.startService(startServiceIntent);
+        }
     }
 
     /**
      * Stops the Metawear service on the mobile device.
      */
     public void stopMetawearService(){
-        Intent startServiceIntent = new Intent(context, SensorService.class);
-        startServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
-        context.startService(startServiceIntent);
+        if (applicationPreferences.useAndroidWear()){
+            remoteSensorManager.stopMetawearService();
+        }else {
+            Intent startServiceIntent = new Intent(context, SensorService.class);
+            startServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
+            context.startService(startServiceIntent);
+        }
     }
+
+    /**
+     * Starts the sensor service on the wearable device.
+     */
+    public void startSensorService(){
+        remoteSensorManager.startSensorService();
+    }
+
+    /**
+     * Stops the sensor service on the wearable device.
+     */
+    public void stopSensorService(){
+        remoteSensorManager.stopSensorService();
+    }
+
 }

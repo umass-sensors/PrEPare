@@ -47,7 +47,15 @@ public class SharedConstants {
         int INVALID_ADDRESS = 8;
         int BLUETOOTH_DISABLED = 9;
         int BLUETOOTH_UNSUPPORTED = 10;
-        int METAWEAR_SERVICE_STOPPED = 11;
+        int NO_MOTION_DETECTED = 11;
+        int METAWEAR_SERVICE_STOPPED = 12;
+        int SERVER_CONNECTION_FAILED = 13;
+        int WEARABLE_SERVICE_STARTED = 14;
+        int WEARABLE_SERVICE_STOPPED = 15;
+        int WEARABLE_CONNECTED = 16;
+        int WEARABLE_DISCONNECTED = 17;
+        int SERVER_CONNECTION_SUCCEEDED = 18;
+        int SERVER_DISCONNECTED = 19;
     }
 
     /**
@@ -77,67 +85,67 @@ public class SharedConstants {
      * or from any other connected device, e.g. a Metawear tag, connected to the wearable.
      */
     public enum SENSOR_TYPE {
-        ACCELEROMETER_WEARABLE {
+        ACCELEROMETER_WEARABLE(true) {
             @Override
             public String getSensor(){
-                return "Accelerometer";
+                return  SENSOR.ACCELEROMETER.TITLE;
             }
             @Override
             public String getDevice(){
-                return "Wearable";
+                return  DEVICE.WEARABLE.TITLE;
             }
         },
-        GYROSCOPE_WEARABLE {
+        GYROSCOPE_WEARABLE(true) {
             @Override
             public String getSensor(){
-                return "Gyroscope";
+                return SENSOR.GYROSCOPE.TITLE;
             }
             @Override
             public String getDevice(){
-                return "Wearable";
+                return DEVICE.WEARABLE.TITLE;
             }
         },
-        ACCELEROMETER_METAWEAR {
+        ACCELEROMETER_METAWEAR(true) {
             @Override
             public String getSensor(){
-                return "Accelerometer";
+                return SENSOR.ACCELEROMETER.TITLE;
             }
             @Override
             public String getDevice(){
-                return "Metawear";
+                return DEVICE.METAWEAR.TITLE;
             }
         },
-        GYROSCOPE_METAWEAR {
+        GYROSCOPE_METAWEAR(true) {
             @Override
             public String getSensor(){
-                return "Gyroscope";
+                return SENSOR.GYROSCOPE.TITLE;
             }
             @Override
             public String getDevice(){
-                return "Metawear";
+                return DEVICE.METAWEAR.TITLE;
             }
         },
-        RSSI {
+        RSSI(true) {
             @Override
             public String getSensor(){
-                return "RSSI";
+                return SENSOR.RSSI.TITLE;
             }
             @Override
             public String getDevice(){
-                return "Mobile";
+                return DEVICE.MOBILE.TITLE;
             }
         },
-        BATTERY_METAWEAR {
+        BATTERY_METAWEAR(false) {
             @Override
             public String getSensor(){
-                return "Battery";
+                return SENSOR.BATTERY.TITLE;
             }
             @Override
             public String getDevice(){
-                return "Metawear";
+                return DEVICE.METAWEAR.TITLE;
             }
         },
-        UNKNOWN {
+        UNKNOWN(false) {
             @Override
             public String getSensor(){
                 return null;
@@ -154,11 +162,18 @@ public class SharedConstants {
         public String getDevice(){
             return null;
         }
+        private final boolean display;
+        SENSOR_TYPE(boolean display){
+            this.display = display;
+        }
+        public boolean display(){
+            return display;
+        }
+
     }
 
     public interface METAWEAR_STREAM_KEY{
         String ACCELEROMETER = "edu.umass.cs.prepare.metawear-accelerometer-stream";
-        String NO_MOTION = "edu.umass.cs.prepare.metawear-no-motion-stream";
         String GYROSCOPE = "edu.umass.cs.prepare.metawear-gyroscope-stream";
     }
 
@@ -169,9 +184,42 @@ public class SharedConstants {
         int RECORDING_SERVICE = 104;
     }
 
-    /** The IP address of the server where the data should be sent. **/
-    public static final String SERVER_IP_ADDRESS = "192.168.25.150"; //"192.168.25.150"; //"192.168.26.217"
-
     /** The port for the server where the data should be sent. **/
     public static final int SERVER_PORT = 9999;
+
+    public interface DEVICE {
+        interface METAWEAR {
+            String NAME = "METAWEAR";
+            String TITLE = "Metawear";
+        }
+        interface WEARABLE {
+            String NAME = "WEARABLE";
+            String TITLE = "Wearable";
+        }
+        interface MOBILE {
+            String NAME = "MOBILE";
+            String TITLE = "Mobile";
+        }
+    }
+
+    public interface SENSOR {
+        interface ACCELEROMETER {
+            String NAME = "ACCELEROMETER";
+            String TITLE = "Accelerometer";
+        }
+        interface GYROSCOPE {
+            String NAME = "GYROSCOPE";
+            String TITLE = "Gyroscope";
+        }
+        interface RSSI {
+            String NAME = "RSSI";
+            String TITLE = "RSSI";
+        }
+        interface BATTERY {
+            String NAME = "BATTERY";
+            String TITLE = "Battery";
+        }
+    }
+
+
 }

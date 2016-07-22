@@ -38,6 +38,16 @@
     <string name="pref_gyroscope_sampling_rate_desc">Rate at which pill bottle gyroscope is sampled: %s</string>
     <string name="pref_gyroscope_sampling_rate_default">25</string>
 
+    <string name="pref_wearable_accelerometer_sampling_rate_key">wearable-accelerometer-sampling-rate</string>
+    <string name="pref_wearable_accelerometer_sampling_rate_title">Accelerometer Sampling Rate</string>
+    <string name="pref_wearable_accelerometer_sampling_rate_desc">Rate at which accelerometer is sampled: %s</string>
+    <string name="pref_wearable_accelerometer_sampling_rate_default">25</string>
+
+    <string name="pref_wearable_gyroscope_sampling_rate_key">wearable-gyroscope-sampling-rate</string>
+    <string name="pref_wearable_gyroscope_sampling_rate_title">Gyroscope Sampling Rate</string>
+    <string name="pref_wearable_gyroscope_sampling_rate_desc">Rate at which gyroscope is sampled: %s</string>
+    <string name="pref_wearable_gyroscope_sampling_rate_default">25</string>
+
     <string-array name="pref_sampling_rate_options">
         <item>15</item>
         <item>25</item>
@@ -67,6 +77,11 @@
     <string name="pref_gyroscope_desc">If checked, gyroscope data will be sampled.</string>
     <bool name="pref_gyroscope_default">false</bool>
 
+    <string name="pref_wearable_gyroscope_key">wearable-gyroscope</string>
+    <string name="pref_wearable_gyroscope_title">Enable Gyroscope</string>
+    <string name="pref_wearable_gyroscope_desc">If checked, gyroscope data will be sampled.</string>
+    <bool name="pref_wearable_gyroscope_default">false</bool>
+
     <string name="pref_rssi_key">metawear-rssi</string>
     <string name="pref_rssi_title">Enable RSSI</string>
     <string name="pref_rssi_desc">If checked, signal strength data will be sampled.</string>
@@ -84,13 +99,24 @@
     <string name="pref_group_storage_key">storage-settings</string>
     <string name="pref_group_storage_title">Storage</string>
 
+    <string name="pref_group_wearable_key">wearable-settings</string>
+    <string name="pref_group_wearable_title">Wear Settings</string>
+
     <string name="pref_connect_key">connect</string>
     <string name="pref_connect_title">Connect to Pill Bottle</string>
     <string name="pref_connect_summaryOn">Data will stream as long as the pill bottle is in motion and in range.</string>
     <string name="pref_connect_summaryOff">The phone is disconnected from the pill bottle.</string>
-    <bool name="pref_connect_default">true</bool>
+    <bool name="pref_connect_default">false</bool>
 
     <string name="pref_show_tutorial_key">show-tutorial</string>
     <bool name="pref_show_tutorial_default">true</bool>
+
+    <string name="pref_camera_reminder_key">show-camera-reminder</string>
+    <string name="pref_camera_reminder_title">Enable Reminder</string>
+    <string name="pref_camera_reminder_summary">When recording video in the background, you will receive a reminder after 2 minutes.</string>
+    <bool name="pref_camera_reminder_default">true</bool>
+
+    <string name="pref_battery_level_key">battery-level</string>
+    <integer name="pref_battery_level_default">100</integer>
 
 </resources>

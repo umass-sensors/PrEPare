@@ -30,12 +30,14 @@ public class Constants {
         String NAVIGATE_TO_APP = "edu.umass.cs.prepare.action.navigate-to-application";
         String BROADCAST_SENSOR_DATA = "edu.umass.cs.prepare.action.broadcast-sensor-data";
         String BROADCAST_MESSAGE = "edu.umass.cs.prepare.action.broadcast-message";
+        String SET_CAMERA_REMINDER = "edu.umass.cs.prepare.action.set-camera-reminder";
     }
 
     /**
      * A key identify an object or value that is passed between application components, via an {@link Intent}
      */
     public interface KEY {
+        String RECORD_AUDIO = "edu.umass.cs.prepare.key.record-audio";
         String SURFACE_WIDTH = "edu.umass.cs.prepare.key.surface-width";
         String SURFACE_HEIGHT = "edu.umass.cs.prepare.key.surface-height";
         String SURFACE_X = "edu.umass.cs.prepare.key.surface-x";

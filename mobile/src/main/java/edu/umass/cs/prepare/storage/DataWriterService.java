@@ -59,6 +59,9 @@ public class DataWriterService extends Service {
      */
     private final HashMap<String, AsyncFileWriter> fileWriterHashMap = new HashMap<>();
 
+    /**
+     * Provides access to all shared application preferences.
+     */
     private ApplicationPreferences applicationPreferences;
 
     @Override
@@ -169,6 +172,7 @@ public class DataWriterService extends Service {
 
                 @Override
                 public void onConnectionFailed() {
+
                     writeServer = false;
                     if (!applicationPreferences.writeLocal()){
                         stopService();
@@ -205,6 +209,10 @@ public class DataWriterService extends Service {
         }
     }
 
+    /**
+     * Sends a message to other mobile application components.
+     * @param message an integer message being sent
+     */
     private void sendMessage(int message){
         Intent intent = new Intent();
         intent.putExtra(SharedConstants.KEY.MESSAGE, message);
@@ -245,6 +253,9 @@ public class DataWriterService extends Service {
         return START_STICKY;
     }
 
+    /**
+     * Stops the data writer background service.
+     */
     private void stopService(){
         unregisterReceiver();
         if (applicationPreferences.writeLocal())

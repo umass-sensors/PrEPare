@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude GCM registration key -->
+    <exclude domain="sharedpref" path="gcm"/>
+    <!-- Exclude any user account credentials -->
+    <exclude domain="sharedpref" path="user_credentials"/>
+</full-backup-content>

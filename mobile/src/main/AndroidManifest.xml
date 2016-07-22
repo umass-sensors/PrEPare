@@ -48,6 +48,7 @@
 
     <application
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_scheme"
         android:icon="@drawable/ic_pill"
         android:label="@string/app_name"
         android:name=".main.App"

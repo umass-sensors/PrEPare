@@ -30,6 +30,8 @@
   -->
 
 <resources>
+    <string name="filter_activity_main">filter-activity-main</string>
+
     <string name="title_connecting">Connecting</string>
     <string name="message_wait">Please wait</string>
 

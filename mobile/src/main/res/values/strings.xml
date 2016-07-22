@@ -30,7 +30,6 @@
   -->
 
 <resources>
-    <string name="app_name">PrEPare</string>
     <string name="title_connecting">Connecting</string>
     <string name="message_wait">Please wait</string>
 
@@ -41,24 +40,12 @@
     <string name="video_permission_denied">Video failed! Permission Denied.</string>
     <string name="audio_permission_denied">Audio Permission Denied : Continuing with audio disabled.</string>
 
-    <string name="status_connection_attempt">Listening for movement…</string>
-    <string name="status_connected">Connected to pill bottle.</string>
-    <string name="status_invalid_address">Invalid Bluetooth address!</string>
-    <string name="status_bluetooth_disabled">Please turn on Bluetooth.</string>
-    <string name="status_bluetooth_unsupported">Your device does not support Bluetooth!</string>
-    <string name="status_service_stopped">Sensor disabled. Reconnect in General settings.</string>
-
     <string name="app_package_identifier_prefix">package:</string>
 
-    <string name="tutorial_devices">All pill bottles in range will be displayed here, along with their signal strength.</string>
-    <string name="tutorial_device_not_found">If you cannot find your device, make sure it is in range. You may also try pressing
-    the switch on the sensor, or if all else fails, removing and reinserting the coin cell battery.</string>
-    <string name="tutorial_select_device">Select your device to get started!</string>
-    <string name="tutorial_recording">Click here to start recording video. Video will be saved locally in /Downloads/PrEPare.</string>
-    <string name="tutorial_sensor_data">Here the sensor data will be displayed in real time.</string>
-    <string name="tutorial_device_icon">The icon shows which device the data comes from.</string>
-    <string name="tutorial_swipe_tab">Swipe to the recording tab to continue.</string>
-    <string name="tutorial_settings">Application settings are available here</string>
-    <string name="tutorial_next">Next</string>
-    <string name="tutorial_finish">Finish</string>
+    <string name="button_reminder_cancel">Don\'t remind me.</string>
+    <string name="button_reminder_ok">Got it!</string>
+    <string name="notification_reminder" formatted="false">The camera has been running in the background for %d minutes.</string>
+    <string name="title_reminder">Camera still running!</string>
+    <string name="battery_level">Battery Level: %d%%</string>
+    <string name="estimated_lifetime">Estimated Lifetime: %s hours.</string>
 </resources>

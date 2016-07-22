@@ -14,7 +14,6 @@ import android.widget.EditText;
 
 import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.prepare.R;
-import edu.umass.cs.prepare.metawear.SelectDeviceActivity;
 
 import net.rdrei.android.dirchooser.DirectoryChooserActivity;
 import net.rdrei.android.dirchooser.DirectoryChooserConfig;

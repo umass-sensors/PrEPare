@@ -13,8 +13,12 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import java.util.Date;
+
 import edu.umass.cs.prepare.R;
+import edu.umass.cs.prepare.communication.Broadcaster;
 import edu.umass.cs.prepare.communication.DataClient;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 import edu.umass.cs.shared.util.SensorBuffer;
 import edu.umass.cs.shared.constants.SharedConstants;
 
@@ -58,15 +62,21 @@ public class SensorService extends Service implements SensorEventListener {
     /** The buffer containing the gyroscope readings **/
     private final SensorBuffer gyroscopeBuffer = new SensorBuffer(BUFFER_SIZE, 3);
 
+    private ApplicationPreferences applicationPreferences;
+
+    public static boolean isRunning = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
         client = DataClient.getInstance(this);
+        applicationPreferences = ApplicationPreferences.getInstance(this);
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()");
+        isRunning = false;
         super.onDestroy();
     }
 
@@ -75,6 +85,9 @@ public class SensorService extends Service implements SensorEventListener {
         if (intent != null) {
             if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
                 Log.d(TAG, "Started sensor service.");
+
+                registerSensors();
+
                 Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_pill);
 
                 //notify the user that the application has started
@@ -91,9 +104,14 @@ public class SensorService extends Service implements SensorEventListener {
 
                 startForeground(SharedConstants.NOTIFICATION_ID.WEARABLE_SENSOR_SERVICE, notification); //id is arbitrary, so we choose id=1
 
-                registerSensors();
+                client.sendMessage(SharedConstants.MESSAGES.WEARABLE_SERVICE_STARTED); //TODO: Broadcaster field
+
+                isRunning = true;
+
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
                 unregisterSensors();
+                client.sendMessage(SharedConstants.MESSAGES.WEARABLE_SERVICE_STOPPED);
+                isRunning = false;
                 stopForeground(true);
                 stopSelf();
             }
@@ -130,14 +148,19 @@ public class SensorService extends Service implements SensorEventListener {
         gyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
+
+        int accelerometerSamplingRate = applicationPreferences.getWearableGyroscopeSamplingRate();
+        int accelerometerSamplingPeriod = 1000 / accelerometerSamplingRate;
         if (accelerometer != null) {
-            mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+            registered = mSensorManager.registerListener(this, accelerometer, 1000 * accelerometerSamplingPeriod);
         } else {
             Log.w(TAG, "No Accelerometer found");
         }
 
-        if (gyroscope != null) {
-            mSensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
+        int gyroscopeSamplingRate = applicationPreferences.getWearableGyroscopeSamplingRate();
+        int gyroscopeSamplingPeriod = 1000 / gyroscopeSamplingRate;
+        if (gyroscope != null && applicationPreferences.enableWearableGyroscope()) {
+            registered = mSensorManager.registerListener(this, gyroscope, 1000 * gyroscopeSamplingPeriod);
         } else {
             Log.w(TAG, "No gyroscope found");
         }
@@ -147,23 +170,29 @@ public class SensorService extends Service implements SensorEventListener {
      * unregister the sensor listeners, this is important for the battery life!
      */
     private void unregisterSensors() {
+        Log.d(TAG, "UNREGISTER");
         if (mSensorManager != null) {
-            mSensorManager.unregisterListener(this, accelerometer);
-            mSensorManager.unregisterListener(this, gyroscope);
+            mSensorManager.unregisterListener(this);
         }
+        registered = false;
     }
+
+    private boolean registered = false;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        if (!registered)
+            unregisterSensors();
+        long timestamp = System.currentTimeMillis(); // (new Date()).getTime() + (event.timestamp - System.nanoTime());
         //TODO: When the service is ended, the remaining data is not saved because it does not fill buffer
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             synchronized (accelerometerBuffer) { //add sensor data to the appropriate buffer
-                accelerometerBuffer.addReading(event.timestamp, event.values);
+                accelerometerBuffer.addReading(timestamp, event.values);
             }
         }
         else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             synchronized (gyroscopeBuffer) {
-                gyroscopeBuffer.addReading(event.timestamp, event.values);
+                gyroscopeBuffer.addReading(timestamp, event.values);
             }
         }
         else{

@@ -12,6 +12,7 @@ import java.io.IOException;
  * This class handles file input/output operations, such as saving the accelerometer/gyroscope
  * data and labels, opening/closing file readers/writers, and deleting the data storage location.
  */
+@Deprecated
 class FileUtil {
 
     /** tag used for debugging purposes */

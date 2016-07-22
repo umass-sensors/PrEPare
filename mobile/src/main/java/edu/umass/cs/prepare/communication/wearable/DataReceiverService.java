@@ -1,6 +1,8 @@
 package edu.umass.cs.prepare.communication.wearable;
 
 import android.net.Uri;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import com.google.android.gms.wearable.DataEvent;
@@ -13,6 +15,7 @@ import com.google.android.gms.wearable.WearableListenerService;
 
 import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
+import edu.umass.cs.prepare.metawear.SensorService;
 import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
@@ -44,6 +47,8 @@ public class DataReceiverService extends WearableListenerService {
         super.onPeerConnected(peer);
 
         Log.i(TAG, "Connected to: " + peer.getDisplayName() + " [" + peer.getId() + "]");
+
+        Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.WEARABLE_CONNECTED);
     }
 
     @Override
@@ -51,6 +56,8 @@ public class DataReceiverService extends WearableListenerService {
         super.onPeerDisconnected(peer);
 
         Log.i(TAG, "Disconnected from: " + peer.getDisplayName() + " [" + peer.getId() + "]");
+
+        Broadcaster.broadcastMessage(this, SharedConstants.MESSAGES.WEARABLE_DISCONNECTED);
     }
 
     //Note: This is only called when the data is actually changed!! Since we have a timestamp in the data event, that is no problem
@@ -75,7 +82,20 @@ public class DataReceiverService extends WearableListenerService {
                     Broadcaster.broadcastMessage(this, message);
                     if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
                         Log.d(TAG, "Received message CONNECTED.");
+                        serviceManager.startSensorService();
                         serviceManager.startDataWriterService();
+                    } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
+                        HandlerThread hThread = new HandlerThread("StopWearableSensorServiceThread");
+                        hThread.start();
+                        Handler stopServiceHandler = new Handler(hThread.getLooper());
+                        stopServiceHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                serviceManager.stopSensorService();
+                            }
+                        }, SensorService.WEARABLE_COLLECTION_DURATION_MILLIS); //TODO Cancel on handler if reconnected
+                    } else if (message == SharedConstants.MESSAGES.WEARABLE_SERVICE_STOPPED) {
+                        serviceManager.stopDataWriterService();
                     }
                 }
             }

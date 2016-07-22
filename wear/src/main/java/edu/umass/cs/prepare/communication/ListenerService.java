@@ -31,6 +31,7 @@ public class ListenerService extends WearableListenerService {
             startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
             startService(startServiceIntent);
         }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.STOP_SENSOR_SERVICE)) {
+            if (!SensorService.isRunning) return;
             Intent stopServiceIntent = new Intent(this, SensorService.class);
             stopServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
             startService(stopServiceIntent);

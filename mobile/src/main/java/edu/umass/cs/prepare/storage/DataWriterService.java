@@ -7,29 +7,28 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.os.Environment;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
-import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 
+import autovalue.shaded.org.apache.commons.lang.ArrayUtils;
 import edu.umass.cs.prepare.MHLClient.MHLConnectionStateHandler;
 import edu.umass.cs.prepare.MHLClient.MHLMobileIOClient;
-import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLAccelerometerReading;
-import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLGyroscopeReading;
-import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLRSSIReading;
+import edu.umass.cs.prepare.MHLClient.MHLSensorReadings.MHLSensorReading;
+import edu.umass.cs.prepare.R;
+import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
+import edu.umass.cs.prepare.constants.Constants;
+import edu.umass.cs.prepare.view.activities.MainActivity;
 import edu.umass.cs.shared.communication.DataLayerUtil;
 import edu.umass.cs.shared.constants.SharedConstants;
-import edu.umass.cs.prepare.R;
-import edu.umass.cs.prepare.constants.Constants;
-import edu.umass.cs.prepare.main.MainActivity;
-import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 
 /**
  * The Data Writer Service is responsible for writing all sensor data to their respective files.
@@ -38,7 +37,6 @@ import edu.umass.cs.prepare.communication.wearable.DataReceiverService;
  * @affiliation University of Massachusetts Amherst
  *
  * @see DataReceiverService
- * @see FileUtil
  * @see Service
  */
 public class DataWriterService extends Service {
@@ -47,22 +45,27 @@ public class DataWriterService extends Service {
     /** used for debugging purposes */
     private static final String TAG = DataWriterService.class.getName();
 
-    /** Indicates whether data should be written to storage. **/
-    private boolean writeLocal = false;
+    /** CSV extension */
+    private static final String CSV_EXTENSION = ".csv";
 
     /** Indicates whether data should be sent to the server. **/
-    private boolean writeServer = false;
+    private boolean writeServer;
 
     /** Client responsible for communicating to the server. **/
     private MHLMobileIOClient client;
 
-    /** The directory where the sensor data is stored. **/
-    private File directory;
-
     /**
      * Mapping from sensor identifiers, e.g. "ACCELEROMETER_WEARABLE", to file writers
      */
-    private HashMap<String, AsyncFileWriter> fileWriterHashMap = new HashMap<>();
+    private final HashMap<String, AsyncFileWriter> fileWriterHashMap = new HashMap<>();
+
+    private ApplicationPreferences applicationPreferences;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        applicationPreferences = ApplicationPreferences.getInstance(this);
+    }
 
     /**
      * Gets the file writer associated with the given sensor identifier, instantiating it if necessary.
@@ -70,25 +73,28 @@ public class DataWriterService extends Service {
      * @return the file writer object
      */
     private AsyncFileWriter getFileWriter(String filename) {
+        File directory = new File(applicationPreferences.getSaveDirectory());
+        if(!directory.exists()) {
+            if (directory.mkdirs()){
+                Toast.makeText(this, String.format("Created directory %s", directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
+            }else{
+                Toast.makeText(this, String.format("Failed to create directory %s. Please set the directory in Settings",
+                        directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
+            }
+        }
         AsyncFileWriter writer = fileWriterHashMap.get(filename);
-        if (writer == null){
-            writer = FileUtil.getFileWriter(DataWriterService.this, filename, directory);
-            fileWriterHashMap.put(filename, writer);
+        if (writer == null) {
+            String fullFileName = filename + String.valueOf(System.currentTimeMillis()) + CSV_EXTENSION;
+
+            try {
+                writer = new AsyncFileWriter(new File(directory, fullFileName));
+                writer.open();
+                fileWriterHashMap.put(filename, writer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return writer;
-    }
-
-    /**
-     * Loads relevant preferences, i.e. the directory where the sensor data should be saved.
-     */
-    private void loadPreferences(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        final String defaultDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name)).getAbsolutePath();
-        final String dir = preferences.getString(getString(R.string.pref_directory_key), defaultDirectory);
-        if (dir == null)
-            directory = new File(defaultDirectory);
-        else
-            directory = new File(dir);
     }
 
     /** used to receive messages from other components of the handheld app through intents, i.e. receive labels **/
@@ -105,60 +111,43 @@ public class DataWriterService extends Service {
                     if (sensorType == SharedConstants.SENSOR_TYPE.BATTERY_METAWEAR) return; //ignore battery readings
 
                     StringBuilder builder = new StringBuilder(timestamps.length * (Constants.BYTES_PER_TIMESTAMP + Constants.BYTES_PER_SENSOR_READING + 6));
-                    if (sensorType == SharedConstants.SENSOR_TYPE.RSSI){
 
-                        for (int i = 0; i < timestamps.length; i++) {
-                            long timestamp = timestamps[i];
-                            int rssi = (int)values[i];
-                            if (writeLocal)
-                                builder.append(String.format("%s,%d\n", timestamp, rssi));
-                            if (writeServer) {
-                                client.addSensorReading(new MHLRSSIReading(0, "METAWEAR", timestamp, rssi));
-                                //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
-                                try {
-                                    Thread.sleep(10);
-                                } catch (InterruptedException ignored) {}
-                            }
+                    boolean receivedRSSI = sensorType.getSensor().equals(SharedConstants.SENSOR.RSSI.TITLE);
+                    final String formatString;
+                    if (receivedRSSI)
+                        formatString = "%f\n";
+                    else
+                        formatString = "%f,%f,%f\n";
+
+                    boolean metawear = sensorType.getDevice().equals(SharedConstants.DEVICE.METAWEAR.TITLE);
+                    for (int i = 0; i < timestamps.length; i++) {
+                        long timestamp = timestamps[i];
+                        final float[] reading;
+                        if (receivedRSSI){
+                            reading = new float[]{values[i]};
                         }
-                    }else {
+                        else {
+                            reading = new float[]{
+                                    values[3 * i] * (metawear ? SharedConstants.GRAVITY : 1),
+                                    values[3 * i + 1] * (metawear ? SharedConstants.GRAVITY : 1),
+                                    values[3 * i + 2] * (metawear ? SharedConstants.GRAVITY : 1)};
+                        }
 
-                        for (int i = 0; i < timestamps.length; i++) {
-                            long timestamp = timestamps[i];
-                            float x = values[3 * i];
-                            float y = values[3 * i + 1];
-                            float z = values[3 * i + 2];
-
-                            if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR){
-                                x *= SharedConstants.GRAVITY;
-                                y *= SharedConstants.GRAVITY;
-                                z *= SharedConstants.GRAVITY;
-                            }
-
-                            if (writeLocal)
-                                builder.append(String.format("%s,%f,%f,%f\n", timestamp, x, y, z));
-
-                            if (writeServer) {
-                                if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_METAWEAR) {
-                                    client.addSensorReading(new MHLAccelerometerReading(0, "METAWEAR", timestamp, x, y, z));
-                                } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_METAWEAR) {
-                                    client.addSensorReading(new MHLGyroscopeReading(0, "METAWEAR", timestamp, x, y, z));
-                                } else if (sensorType == SharedConstants.SENSOR_TYPE.ACCELEROMETER_WEARABLE) {
-                                    client.addSensorReading(new MHLAccelerometerReading(0, "WEARABLE", System.currentTimeMillis(), x, y, z)); //TODO: Get event timestamp from wearable, not in nanoseconds since boot
-                                } else if (sensorType == SharedConstants.SENSOR_TYPE.GYROSCOPE_WEARABLE) {
-                                    client.addSensorReading(new MHLGyroscopeReading(0, "WEARABLE", System.currentTimeMillis(), x, y, z));
-                                }
-                                //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
-                                try {
-                                    Thread.sleep(10);
-                                } catch (InterruptedException ignored) {} //TODO: Should I be doing this on main UI thread?
-                            }
+                        if (writeServer) {
+                            client.addSensorReading(MHLSensorReading.getReading(sensorType, timestamp, reading));
+                            //we must wait briefly after adding to the queue, otherwise subsequent data will not be received
+                            try {
+                                Thread.sleep(10);
+                            } catch (InterruptedException ignored) {}
+                        }
+                        if (applicationPreferences.writeLocal()){
+                            builder.append(String.format(Locale.getDefault(), "%d,", timestamp));
+                            builder.append(String.format(Locale.getDefault(), formatString, ArrayUtils.toObject(reading)));
                         }
                     }
 
-                    if (!writeLocal) return;
-
-                    String line = builder.toString();
-                    getFileWriter(sensorType.name()).append(line);
+                    if (applicationPreferences.writeLocal())
+                        getFileWriter(sensorType.name()).append(builder.toString());
                 }
             }
         }
@@ -169,25 +158,22 @@ public class DataWriterService extends Service {
      * connect to the server if possible.
      */
     private void init(){
-        loadPreferences();
-//        if (writeLocal)
-//            initializeFileWriters();
+        writeServer = applicationPreferences.writeServer();
         if (writeServer) {
-            client = new MHLMobileIOClient(SharedConstants.SERVER_IP_ADDRESS, SharedConstants.SERVER_PORT, 0);
+            client = new MHLMobileIOClient(applicationPreferences.getIpAddress(), SharedConstants.SERVER_PORT, 0);
             client.setConnectionStateHandler(new MHLConnectionStateHandler() {
                 @Override
                 public void onConnected() {
-
+                    sendMessage(SharedConstants.MESSAGES.SERVER_CONNECTION_SUCCEEDED);
                 }
 
                 @Override
                 public void onConnectionFailed() {
-                    // if the connection fails, then write locally instead
-//                    if (!writeLocal) {
-//                        initializeFileWriters();
-//                        writeLocal = true;
-//                    }
                     writeServer = false;
+                    if (!applicationPreferences.writeLocal()){
+                        stopService();
+                    }
+                    sendMessage(SharedConstants.MESSAGES.SERVER_CONNECTION_FAILED);
                 }
             });
             client.connect();
@@ -219,38 +205,55 @@ public class DataWriterService extends Service {
         }
     }
 
+    private void sendMessage(int message){
+        Intent intent = new Intent();
+        intent.putExtra(SharedConstants.KEY.MESSAGE, message);
+        intent.setAction(Constants.ACTION.BROADCAST_MESSAGE);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
         if (intent == null || intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
-            init();
-            registerReceiver();
+            if (!applicationPreferences.writeServer() && !applicationPreferences.writeLocal()){
+                stopSelf();
+            }else {
+                init();
+                registerReceiver();
 
-            Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
-            notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
-            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
+                Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
+                notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
+                notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
 
-            Notification notification = new NotificationCompat.Builder(DataWriterService.this)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setTicker(getString(R.string.app_name))
-                    .setContentText(getString(R.string.data_writer_notification))
-                    .setSmallIcon(android.R.drawable.ic_menu_save)
-                    .setContentIntent(pendingIntent)
-                    .setOngoing(true).build();
+                Notification notification = new NotificationCompat.Builder(DataWriterService.this)
+                        .setContentTitle(getString(R.string.app_name))
+                        .setTicker(getString(R.string.app_name))
+                        .setContentText(getString(R.string.data_writer_notification))
+                        .setSmallIcon(android.R.drawable.ic_menu_save)
+                        .setContentIntent(pendingIntent)
+                        .setOngoing(true).build();
 
-            startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
+                startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
+            }
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
             Log.i(TAG, "Received Stop Service Intent");
-
-            unregisterReceiver();
-            if (writeLocal)
-                closeAllWriters();
-
-            stopForeground(true);
-            stopSelf();
+            stopService();
         }
 
         return START_STICKY;
+    }
+
+    private void stopService(){
+        unregisterReceiver();
+        if (applicationPreferences.writeLocal())
+            closeAllWriters();
+
+        sendMessage(SharedConstants.MESSAGES.SERVER_DISCONNECTED);
+
+        stopForeground(true);
+        stopSelf();
     }
 
     /**

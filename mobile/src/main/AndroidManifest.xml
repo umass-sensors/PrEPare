@@ -98,7 +98,6 @@
             </intent-filter>
         </service>
         <activity android:name=".view.activities.SelectDeviceActivity"/>
-        <activity android:name=".view.activities.SettingsActivity"/>
         <activity android:name="net.rdrei.android.dirchooser.DirectoryChooserActivity" />
         <activity android:name=".view.activities.CameraReminderDialogActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>

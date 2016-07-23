@@ -286,6 +286,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
      * @param w the preferred width
      * @param h the preferred height
      * @return the closest matching camera size
+     * @see <a href="http://stackoverflow.com/questions/17804309/android-camera-preview-wrong-aspect-ratio">Response by Henric</a>
      */
     @SuppressWarnings("deprecation")
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {

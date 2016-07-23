@@ -37,7 +37,16 @@ import edu.umass.cs.prepare.view.tutorial.StandardTutorial;
 import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.shared.preferences.ApplicationPreferences;
 
-// In this case, the fragment displays simple text based on the page
+/**
+ * This fragment allows the user to record video. It is a rather simple layout with
+ * a recording toggle button and a surface view for previewing the video.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
+ * @see RecordingService
+ * @see SurfaceView
+ */
 public class RecordingFragment extends Fragment {
 
     /** The view containing the video recording preview. **/
@@ -49,10 +58,13 @@ public class RecordingFragment extends Fragment {
     /** Handles services on the mobile application. */
     private ServiceManager serviceManager;
 
+    /** The main UI containing this fragment. **/
     private MainActivity UI;
 
+    /** Indicates whether audio should be recorded. **/
     private boolean recordAudio;
 
+    /** Gives access to shared application preferences. **/
     private ApplicationPreferences applicationPreferences;
 
     @Override
@@ -102,14 +114,6 @@ public class RecordingFragment extends Fragment {
      * Called when all required permissions have been granted.
      */
     private void onPermissionsGranted(){
-//        Rect rectangle = new Rect();
-//        Window window = getActivity().getWindow();
-//        window.getDecorView().getWindowVisibleDisplayFrame(rectangle);
-//        int statusBarHeight = rectangle.top;
-//        int contentViewTop =
-//                window.findViewById(Window.ID_ANDROID_CONTENT).getTop();
-//        int titleBarHeight= contentViewTop - statusBarHeight; //TODO I THINK I CAN REMOVE
-
         int[] position = new int[2];
         mSurfaceView.getLocationOnScreen(position);
         int w = mSurfaceView.getWidth();
@@ -219,6 +223,10 @@ public class RecordingFragment extends Fragment {
         }
     }
 
+    /**
+     * The receiver listens for messages from the {@link RecordingService}, e.g. was the
+     * service started/stopped, and updates the fragment views accordingly.
+     */
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -235,6 +243,11 @@ public class RecordingFragment extends Fragment {
         }
     };
 
+    /**
+     * Shows the video recording tutorial. The recording button is disabled during the tutorial
+     * and enabled once completed. Once complete, the view pager will update to the settings tab.
+     * @param viewPager view pager handle responsible for updating the visible tab.
+     */
     public void showTutorial(final ViewPager viewPager){
         String tutorialText = String.format(Locale.getDefault(), getString(R.string.tutorial_recording),
                 applicationPreferences.getSaveDirectory());
@@ -261,6 +274,9 @@ public class RecordingFragment extends Fragment {
         }).build();
     }
 
+    /**
+     * Enables the recording button.
+     */
     private void enableRecordingButton(){
         recordingButton.setOnClickListener(new View.OnClickListener() {
             @Override

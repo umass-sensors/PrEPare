@@ -21,8 +21,6 @@ public class SharedConstants {
         String STOP_SENSOR_SERVICE = "edu.umass.cs.prepare.commands.stop-sensor-service";
         String START_METAWEAR_SERVICE = "edu.umass.cs.prepare.commands.start-metawear-service";
         String STOP_METAWEAR_SERVICE = "edu.umass.cs.prepare.commands.stop-metawear-service";
-        String START_BEACON_SERVICE = "edu.umass.cs.prepare.commands.start-beacon-service";
-        String STOP_BEACON_SERVICE = "edu.umass.cs.prepare.commands.stop-beacon-service";
         String QUERY_WEARABLE_STATE = "edu.umass.cs.prepare.commands.query-wearable-state";
     }
 

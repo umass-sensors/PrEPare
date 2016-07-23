@@ -142,8 +142,7 @@ public class SettingsFragment extends PreferenceFragment {
             @Override
             public boolean onPreferenceChange(Preference preference, Object o) {
                 preference.setSummary(o.toString());
-                ((EditTextPreference) preference).setText(o.toString());
-                return false;
+                return true;
             }
         });
 

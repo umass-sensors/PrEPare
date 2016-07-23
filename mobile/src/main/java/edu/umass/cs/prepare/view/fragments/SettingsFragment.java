@@ -27,7 +27,16 @@ import edu.umass.cs.prepare.view.activities.SelectDeviceActivity;
 import edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider;
 import edu.umass.cs.prepare.view.tutorial.StandardTutorial;
 import edu.umass.cs.shared.constants.SharedConstants;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 
+/**
+ * The Settings fragment allows the user to modify all shared applications preferences, e.g.
+ * whether data should be sent to the server or written locally, at what rate sensors should
+ * sample, and what sensors should be enabled. Custom preferences, including the directory
+ * chooser preference, the switch preference and the device selection preference are all
+ * managed here. Upon initial startup, a tutorial is shown which ensures the user explicitly
+ * enables the Metawear service.
+ */
 public class SettingsFragment extends PreferenceFragment {
     @SuppressWarnings("unused")
     /** used for debugging purposes */

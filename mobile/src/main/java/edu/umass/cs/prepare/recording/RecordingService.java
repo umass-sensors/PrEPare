@@ -280,6 +280,14 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             stopRecording();
     }
 
+    /**
+     * Finds the preview size which closest matches the specified dimensions.
+     * @param sizes the list of available camera sizes
+     * @param w the preferred width
+     * @param h the preferred height
+     * @return the closest matching camera size
+     */
+    @SuppressWarnings("deprecation")
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
         final double ASPECT_TOLERANCE = 0.05;
         double targetRatio = (double) w/h;

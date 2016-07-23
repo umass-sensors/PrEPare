@@ -49,7 +49,14 @@ public class SettingsFragment extends PreferenceFragment {
     /** Preference view for selecting the device. **/
     private Preference prefDevice;
 
+    /** Gives access to the shared application preferences. **/
     private ApplicationPreferences applicationPreferences;
+
+    /** Metawear service enabled preference, which uses a {@link android.widget.Switch} instead of a check box. **/
+    private CustomPreference toggleServicePreference;
+
+    /** The settings tutorial sequence. **/
+    private StandardTutorial tutorial;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -179,10 +186,6 @@ public class SettingsFragment extends PreferenceFragment {
             }
         });
     }
-
-    private CustomPreference toggleServicePreference;
-
-    private StandardTutorial tutorial;
 
     public void showTutorial(){
         tutorial = new StandardTutorial(getActivity(), toggleServicePreference.getSwitch())

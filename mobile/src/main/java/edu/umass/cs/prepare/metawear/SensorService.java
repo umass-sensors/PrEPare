@@ -5,12 +5,17 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
+import java.util.Locale;
+
 import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
-import edu.umass.cs.prepare.main.MainActivity;
+import edu.umass.cs.prepare.view.activities.MainActivity;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 import edu.umass.cs.shared.util.BatteryUtil;
 import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.shared.util.SensorBuffer;
@@ -40,6 +45,8 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
     /** Responsible for managing the services, e.g. sensor service, on the mobile application **/
     private ServiceManager serviceManager;
+
+    public static int WEARABLE_COLLECTION_DURATION_MILLIS = 3000;
 
     private enum CONTENT_TEXT_IDENTIFIER {
         COLLECTING_DATA,
@@ -80,6 +87,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
     @Override
     protected void onMetawearConnected(){
+        serviceManager.startSensorService();
         serviceManager.startDataWriterService();
         super.onMetawearConnected();
         showForegroundNotification(CONTENT_TEXT_IDENTIFIER.COLLECTING_DATA);
@@ -94,7 +102,19 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
             showForegroundNotification(CONTENT_TEXT_IDENTIFIER.LISTENING_FOR_MOVEMENT);
         }
         super.onMetawearDisconnected();
-        serviceManager.stopDataWriterService();
+        if (ApplicationPreferences.getInstance(this).useAndroidWear()) {
+            HandlerThread hThread = new HandlerThread("StopWearableSensorServiceThread");
+            hThread.start();
+            Handler stopServiceHandler = new Handler(hThread.getLooper());
+            stopServiceHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    serviceManager.stopSensorService();
+                }
+            }, WEARABLE_COLLECTION_DURATION_MILLIS); //TODO Cancel on handler if reconnected
+        } else {
+            serviceManager.stopDataWriterService();
+        }
     }
 
     private void showForegroundNotification(CONTENT_TEXT_IDENTIFIER state){
@@ -133,7 +153,7 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
             contentText = "";
         }
         if (batteryLevel >= 0)
-            contentText += String.format("(battery: %d%%)", batteryLevel);
+            contentText += String.format(Locale.getDefault(), "(battery: %d%%)", batteryLevel);
         notificationBuilder = notificationBuilder.setContentText(contentText);
 
         if (batteryLevel >= 0)

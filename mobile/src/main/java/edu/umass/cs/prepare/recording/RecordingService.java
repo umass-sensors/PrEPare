@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.Broadcaster;
@@ -154,6 +155,11 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     private void startRecording(){
         camera = Camera.open();
         camera.setDisplayOrientation(90);
+        Camera.Parameters parameters = camera.getParameters();
+        List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
+        Camera.Size optimalSize = getOptimalPreviewSize(sizes, getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
+        parameters.setPreviewSize(optimalSize.width, optimalSize.height);
+        camera.setParameters(parameters);
         camera.unlock();
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setCamera(camera);
@@ -272,5 +278,37 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         if (isRecording)
             stopRecording();
+    }
+
+    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.05;
+        double targetRatio = (double) w/h;
+
+        if (sizes==null) return null;
+
+        Camera.Size optimalSize = null;
+
+        double minDiff = Double.MAX_VALUE;
+
+        // Find size
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - h) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - h);
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - h) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - h);
+                }
+            }
+        }
+        return optimalSize;
     }
 }

@@ -9,7 +9,16 @@ import android.widget.TextView;
 import edu.umass.cs.prepare.R;
 
 /**
- * Created by snoran on 7/21/16.
+ * A tutorial for a {@link edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider}.
+ * The tutorial describes each of the connection status icons for that particular action
+ * provider.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
+ * @see edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider
+ * @see StandardTutorial
+ * @see com.lovoo.tutorialbubbles.TutorialScreen
  */
 public class ConnectionStatusTutorial extends StandardTutorial {
 
@@ -24,16 +33,31 @@ public class ConnectionStatusTutorial extends StandardTutorial {
         this.setLayout(R.layout.tutorial_connection_status);
     }
 
+    /**
+     * Sets the resource ID of the icon to be displayed when connected
+     * @param resourceId a reference to a drawable resource
+     * @return the tutorial object
+     */
     public ConnectionStatusTutorial setConnectedIcon(int resourceId){
         this.connectedIconId = resourceId;
         return this;
     }
 
+    /**
+     * Sets the resource ID of the icon to be displayed when disconnected
+     * @param resourceId a reference to a drawable resource
+     * @return the tutorial object
+     */
     public ConnectionStatusTutorial setDisconnectedIcon(int resourceId){
         this.disconnectedIconId = resourceId;
         return this;
     }
 
+    /**
+     * Sets the resource ID of the icon to be displayed when disabled
+     * @param resourceId a reference to a drawable resource
+     * @return the tutorial object
+     */
     public ConnectionStatusTutorial setDisabledIcon(int resourceId){
         this.disabledIconId = resourceId;
         return this;

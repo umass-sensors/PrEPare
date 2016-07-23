@@ -1,5 +1,6 @@
 package edu.umass.cs.prepare.view.tools;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -23,6 +24,7 @@ public class BatteryStatusActionProvider extends ActionProvider {
         mContext = context;
     }
 
+    @SuppressLint("InflateParams")
     @Override
     public View onCreateActionView() {
         // Inflate the action view to be shown on the action bar.

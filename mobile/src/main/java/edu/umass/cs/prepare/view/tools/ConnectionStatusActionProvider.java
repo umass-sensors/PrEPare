@@ -1,5 +1,6 @@
 package edu.umass.cs.prepare.view.tools;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.support.v4.view.ActionProvider;
@@ -50,6 +51,7 @@ public class ConnectionStatusActionProvider extends ActionProvider {
         connectionStatusMap = new HashMap<>();
     }
 
+    @SuppressLint("InflateParams")
     @Override
     public View onCreateActionView() {
         LayoutInflater layoutInflater = LayoutInflater.from(mContext);

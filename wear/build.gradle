@@ -25,6 +25,6 @@ dependencies {
     compile project(':shared')
     compile 'com.mbientlab:metawear:2.5.9'
     compile 'com.google.android.support:wearable:1.2.0'
-    compile 'com.google.android.gms:play-services-wearable:8.4.0'
+    compile 'com.google.android.gms:play-services-wearable:9.2.1'
     compile 'me.denley.wearprefs:WearPrefs:1.1.3'
 }

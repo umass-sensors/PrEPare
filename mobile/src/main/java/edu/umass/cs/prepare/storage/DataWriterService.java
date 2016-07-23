@@ -65,8 +65,10 @@ public class DataWriterService extends Service {
      */
     private ApplicationPreferences applicationPreferences;
 
+    /** The current network connection state. **/
     private static NETWORK_STATE networkState;
 
+    /** Set of network connection states. **/
     public enum NETWORK_STATE {
         DISCONNECTED,
         CONNECTED,
@@ -233,6 +235,13 @@ public class DataWriterService extends Service {
         manager.sendBroadcast(intent);
     }
 
+    /**
+     * Builds and returns the updated notification. The content text and icon depend on the
+     * current network connection status. If the connection failed, then the user may also
+     * swipe away the notification.
+     * @return the notification object. Call {@link #startForeground(int, Notification)}
+     * or {@link NotificationManager#notify(int, Notification)} to display the notification.
+     */
     private Notification getNotification(){
         Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
         notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);

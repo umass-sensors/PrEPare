@@ -16,6 +16,12 @@ import edu.umass.cs.prepare.R;
 /**
  * A connection status action provider is a specialized tool which displays device
  * connectivity status in the main toolbar.
+ *
+ * @author Sean Noran
+ * @affiliation University of Massachusetts Amherst
+ *
+ * @see ActionProvider
+ * @see BatteryStatusActionProvider
  */
 public class ConnectionStatusActionProvider extends ActionProvider {
 
@@ -25,10 +31,15 @@ public class ConnectionStatusActionProvider extends ActionProvider {
     /** The action provider view. **/
     private View view;
 
+    /** A mapping from connection states to drawable resource IDs. **/
     private HashMap<CONNECTION_STATUS, Integer> connectionStatusMap;
 
+    /** The current connection state. **/
     private CONNECTION_STATUS status = CONNECTION_STATUS.DISCONNECTED;
 
+    /**
+     * Set of connection states.
+     */
     public enum CONNECTION_STATUS {
         DISABLED,
         DISCONNECTED,
@@ -64,11 +75,21 @@ public class ConnectionStatusActionProvider extends ActionProvider {
         return view;
     }
 
+    /**
+     * Sets the current connection status and updates the icon in the toolbar.
+     * @param status the connection state
+     */
     public void setStatus(CONNECTION_STATUS status){
         this.status = status;
         updateDrawable();
     }
 
+    /**
+     * Updates the action provider image view, depending on the current connection status.
+     * If there is no corresponding drawable resource then the resource associated with
+     * {@link CONNECTION_STATUS#DEFAULT} will be displayed. The resource corresponding to
+     * {@link CONNECTION_STATUS#DISCONNECTED} will have alpha 0.4.
+     */
     private void updateDrawable(){
         Integer resourceId = connectionStatusMap.get(status);
         if (resourceId == null)
@@ -84,14 +105,25 @@ public class ConnectionStatusActionProvider extends ActionProvider {
         }
     }
 
+    /**
+     * Removes the action provider view from the toolbar, shifting any other action providers as necessary.
+     */
     public void hide(){
         view.setVisibility(View.GONE);
     }
 
+    /**
+     * Shows the action provider view in the toolbar, shifting any other action providers as necessary.
+     */
     public void show(){
         view.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Sets the drawable resource ID for the given connection status.
+     * @param status the connection state
+     * @param resourceId reference to a drawable resource
+     */
     public void setDrawable(CONNECTION_STATUS status, int resourceId){
         connectionStatusMap.put(status, resourceId);
     }

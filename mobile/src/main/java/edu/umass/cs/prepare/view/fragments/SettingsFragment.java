@@ -171,9 +171,9 @@ public class SettingsFragment extends PreferenceFragment {
             @Override
             public boolean onPreferenceChange(Preference preference, Object o) {
                 if ((Boolean) o)
-                    ((MainActivity)getActivity()).connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                    ((MainActivity)getActivity()).wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
                 else
-                    ((MainActivity)getActivity()).connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                    ((MainActivity)getActivity()).wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
                 return true;
             }
         });

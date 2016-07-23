@@ -30,7 +30,6 @@ import java.util.Locale;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
-import edu.umass.cs.prepare.communication.wearable.RemoteSensorManager;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.view.tools.BatteryStatusActionProvider;
 import edu.umass.cs.prepare.view.fragments.RecordingFragment;
@@ -440,20 +439,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        connectionStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_connection_status));
-        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
+        wearableStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_connection_status));
+        wearableStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
                 R.drawable.ic_watch_white_24dp);
-        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED,
+        wearableStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED,
                 R.drawable.ic_watch_white_24dp);
-        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
+        wearableStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
                 R.drawable.ic_watch_off_white_24dp);
-        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
+        wearableStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
                 R.drawable.ic_watch_error_white_24dp);
         connectionStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_connection_status));
         if (applicationPreferences.useAndroidWear()) {
             serviceManager.queryWearableState();
         }else {
-            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+            wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
         }
 
         metawearStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_metawear_status));
@@ -500,7 +499,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private ConnectionStatusActionProvider metawearStatusActionProvider;
-    public ConnectionStatusActionProvider connectionStatusActionProvider;
+    public ConnectionStatusActionProvider wearableStatusActionProvider;
     public ConnectionStatusActionProvider networkStatusActionProvider;
 
     /**
@@ -527,7 +526,7 @@ public class MainActivity extends AppCompatActivity {
                         case SharedConstants.MESSAGES.METAWEAR_SERVICE_STOPPED:
                             showStatus(getString(R.string.status_service_stopped));
                             metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
-                            //connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                            //wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
                             //networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
                             break;
                         case SharedConstants.MESSAGES.METAWEAR_CONNECTED:
@@ -542,16 +541,16 @@ public class MainActivity extends AppCompatActivity {
                                 colorAnimation.cancel();
                             break;
                         case SharedConstants.MESSAGES.WEARABLE_SERVICE_STARTED:
-                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
+                            wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
                             break;
                         case SharedConstants.MESSAGES.WEARABLE_SERVICE_STOPPED:
-                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                            wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
                             break;
                         case SharedConstants.MESSAGES.WEARABLE_CONNECTION_FAILED:
-                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             break;
                         case SharedConstants.MESSAGES.WEARABLE_DISCONNECTED:
-                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             break;
                         case SharedConstants.MESSAGES.NO_MOTION_DETECTED:
                             showStatus(getString(R.string.status_no_motion));
@@ -564,12 +563,12 @@ public class MainActivity extends AppCompatActivity {
                         case SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED:
                             showStatus(getString(R.string.status_bluetooth_unsupported));
                             metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
-                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             break;
                         case SharedConstants.MESSAGES.BLUETOOTH_DISABLED:
                             showStatus(getString(R.string.status_bluetooth_disabled));
                             metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
-                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                             startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);
                             break;

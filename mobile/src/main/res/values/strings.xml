@@ -50,4 +50,5 @@
     <string name="title_reminder">Camera still running!</string>
     <string name="battery_level">Battery Level: %d%%</string>
     <string name="estimated_lifetime">Estimated Lifetime: %s hours.</string>
+    <string name="recording_button_disabled_tutorial_mode">Disabled in tutorial mode.</string>
 </resources>

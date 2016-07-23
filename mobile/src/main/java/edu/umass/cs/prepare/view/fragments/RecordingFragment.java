@@ -260,7 +260,7 @@ public class RecordingFragment extends Fragment {
                 recordingButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(getActivity(), "Disabled in tutorial mode.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), R.string.recording_button_disabled_tutorial_mode, Toast.LENGTH_LONG).show();
                     }
                 });
                 tutorial.showTutorial();

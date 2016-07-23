@@ -54,7 +54,7 @@ public class SettingsFragment extends PreferenceFragment {
     /** Preference view for selecting the device. **/
     private Preference prefDevice;
 
-    private SharedPreferences preferences;
+    private ApplicationPreferences applicationPreferences;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,8 +63,9 @@ public class SettingsFragment extends PreferenceFragment {
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
 
-        String path = ApplicationPreferences.getInstance(getActivity()).getSaveDirectory();
-        
+        applicationPreferences = ApplicationPreferences.getInstance(getActivity());
+        String path = applicationPreferences.getSaveDirectory();
+
         prefDirectory = findPreference(getString(R.string.pref_directory_key));
         prefDirectory.setSummary(path);
         prefDirectory.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -87,7 +88,7 @@ public class SettingsFragment extends PreferenceFragment {
             }
         });
 
-        String address = preferences.getString(getString(R.string.pref_device_key), getString(R.string.pref_device_default));
+        String address = applicationPreferences.getMwAddress();
 
         prefDevice = findPreference(getString(R.string.pref_device_key));
         prefDevice.setSummary(address);
@@ -150,7 +151,7 @@ public class SettingsFragment extends PreferenceFragment {
         toggleServicePreference.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean enabled) {
-                preferences.edit().putBoolean(getString(R.string.pref_connect_key), enabled).apply();
+                applicationPreferences.edit().putBoolean(getString(R.string.pref_connect_key), enabled).apply();
 
                 if (tutorial != null)
                     tutorial.dismiss();
@@ -201,7 +202,7 @@ public class SettingsFragment extends PreferenceFragment {
 
             @Override
             public void onComplete(StandardTutorial tutorial) {
-                preferences.edit().putBoolean(getString(R.string.pref_show_tutorial_key), false).apply();
+                applicationPreferences.edit().putBoolean(getString(R.string.pref_show_tutorial_key), false).apply();
             }
         }).build();
     }
@@ -211,13 +212,13 @@ public class SettingsFragment extends PreferenceFragment {
         if (requestCode == SELECT_DIRECTORY_REQUEST_CODE) {
             if (resultCode == DirectoryChooserActivity.RESULT_CODE_DIR_SELECTED) {
                 String dir = data.getStringExtra(DirectoryChooserActivity.RESULT_SELECTED_DIR);
-                preferences.edit().putString(getString(R.string.pref_directory_key), dir).apply();
+                applicationPreferences.edit().putString(getString(R.string.pref_directory_key), dir).apply();
                 prefDirectory.setSummary(dir);
             }
         }else if (requestCode == SELECT_DEVICE_REQUEST_CODE){
             if (resultCode == Activity.RESULT_OK) {
                 String address = data.getStringExtra(SharedConstants.KEY.UUID);
-                preferences.edit().putString(getString(R.string.pref_device_key), address).apply();
+                applicationPreferences.edit().putString(getString(R.string.pref_device_key), address).apply();
                 prefDevice.setSummary(address);
             }
         }

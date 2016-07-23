@@ -1,8 +1,8 @@
 <resources>
-    <string name="pref_wearable_key">run-over-wearable</string>
+    <string name="pref_wearable_key">enable-wear</string>
     <string name="pref_wearable_title">Android Wear</string>
-    <string name="pref_wearable_desc">If checked, the pill bottle will communicate to an Android wear instead of an Android mobile device.</string>
-    <bool name="pref_wearable_default">false</bool>
+    <string name="pref_wearable_desc">If checked, collect data from an Android Wear device.</string>
+    <bool name="pref_wearable_default">true</bool>
 
     <string name="pref_audio_key">enable-audio</string>
     <string name="pref_audio_title">Enable Audio</string>

@@ -143,7 +143,7 @@ public class RecordingFragment extends Fragment {
         String[] permissions = permissionGroup.toArray(new String[permissionGroup.size()]);
 
         if (!hasPermissionsGranted(permissions)) {
-            ActivityCompat.requestPermissions(getActivity(), permissions, MainActivity.REQUEST_CODE.RECORDING);
+            requestPermissions(permissions, MainActivity.REQUEST_CODE.RECORDING);
             return;
         }
         checkDrawOverlayPermission();

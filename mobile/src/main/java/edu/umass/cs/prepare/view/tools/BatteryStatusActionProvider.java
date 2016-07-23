@@ -2,21 +2,11 @@ package edu.umass.cs.prepare.view.tools;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Picture;
-import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v4.view.ActionProvider;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.TextView;
-
-import com.larvalabs.svgandroid.SVG;
-import com.larvalabs.svgandroid.SVGParser;
-
-import org.w3c.dom.Text;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.shared.util.BatteryUtil;

@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-
 import edu.umass.cs.prepare.communication.wearable.RemoteSensorManager;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.metawear.SensorService;

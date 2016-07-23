@@ -9,6 +9,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import edu.umass.cs.prepare.communication.local.Broadcaster;
 import edu.umass.cs.shared.constants.SharedConstants;
 
 /**
@@ -129,6 +131,11 @@ public class RemoteSensorManager {
         if (validateConnection()) {
             List<Node> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient).await().getNodes();
 
+            if (nodes.size() == 0 && !path.equals(SharedConstants.COMMANDS.STOP_SENSOR_SERVICE)){
+                Log.d(TAG, "No connected nodes.");
+                Broadcaster.broadcastMessage(googleApiClient.getContext(), SharedConstants.MESSAGES.WEARABLE_CONNECTION_FAILED);
+                return;
+            }
             for (Node node : nodes) {
                 Log.i(TAG, "add node " + node.getDisplayName());
                 Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), path, msg).
@@ -136,11 +143,24 @@ public class RemoteSensorManager {
                             @Override
                             public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
                                 Log.d(TAG, "startOrStopInBackground(" + path + "): " + sendMessageResult.getStatus().isSuccess());
+                                if (!sendMessageResult.getStatus().isSuccess() && !path.equals(SharedConstants.COMMANDS.STOP_SENSOR_SERVICE))
+                                    Broadcaster.broadcastMessage(googleApiClient.getContext(), SharedConstants.MESSAGES.WEARABLE_CONNECTION_FAILED);
                             }
                         });
             }
         } else {
             Log.w(TAG, "No connections available");
         }
+    }
+
+    public void queryWearableState(){
+        Log.d(TAG, "Query wearable state.");
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "Sending message to wearable...");
+                sendMessageInBackground(SharedConstants.COMMANDS.QUERY_WEARABLE_STATE, null);
+            }
+        });
     }
 }

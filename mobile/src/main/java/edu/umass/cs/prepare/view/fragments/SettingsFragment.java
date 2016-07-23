@@ -2,13 +2,10 @@ package edu.umass.cs.prepare.view.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.widget.CompoundButton;
@@ -16,8 +13,6 @@ import android.widget.EditText;
 
 import net.rdrei.android.dirchooser.DirectoryChooserActivity;
 import net.rdrei.android.dirchooser.DirectoryChooserConfig;
-
-import java.io.File;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.ServiceManager;

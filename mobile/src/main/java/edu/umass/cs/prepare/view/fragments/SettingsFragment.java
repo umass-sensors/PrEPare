@@ -166,6 +166,17 @@ public class SettingsFragment extends PreferenceFragment {
                 return true;
             }
         });
+
+        findPreference(getString(R.string.pref_wearable_key)).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object o) {
+                if ((Boolean) o)
+                    ((MainActivity)getActivity()).connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                else
+                    ((MainActivity)getActivity()).connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                return true;
+            }
+        });
     }
 
     private CustomPreference toggleServicePreference;

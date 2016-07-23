@@ -29,6 +29,8 @@ public class ConnectionStatusActionProvider extends ActionProvider {
 
     private HashMap<CONNECTION_STATUS, Integer> connectionStatusMap;
 
+    private CONNECTION_STATUS status = CONNECTION_STATUS.DISCONNECTED;
+
     public enum CONNECTION_STATUS {
         DISABLED,
         DISCONNECTED,
@@ -54,7 +56,7 @@ public class ConnectionStatusActionProvider extends ActionProvider {
         view = layoutInflater.inflate(R.layout.action_provider_connection_status, null);
         progressBar = view.findViewById(R.id.circularProgressBar);
         deviceIcon = view.findViewById(R.id.deviceIcon);
-        setStatus(CONNECTION_STATUS.DISABLED);
+        updateDrawable();
 
         int color = 0x00002200; //TODO: More appropriate color
         ((ProgressBar)progressBar).getIndeterminateDrawable().setColorFilter(color, PorterDuff.Mode.LIGHTEN);
@@ -63,6 +65,11 @@ public class ConnectionStatusActionProvider extends ActionProvider {
     }
 
     public void setStatus(CONNECTION_STATUS status){
+        this.status = status;
+        updateDrawable();
+    }
+
+    private void updateDrawable(){
         Integer resourceId = connectionStatusMap.get(status);
         if (resourceId == null)
             resourceId = connectionStatusMap.get(CONNECTION_STATUS.DEFAULT);

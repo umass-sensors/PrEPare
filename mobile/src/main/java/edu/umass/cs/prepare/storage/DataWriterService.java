@@ -70,7 +70,7 @@ public class DataWriterService extends Service {
     public enum NETWORK_STATE {
         DISCONNECTED,
         CONNECTED,
-        CONNECTION_FAILED;
+        CONNECTION_FAILED
     }
 
     @Override

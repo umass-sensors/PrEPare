@@ -16,6 +16,7 @@ public class BatteryStatusActionProvider extends ActionProvider {
     /** Context for accessing resources. */
     private final Context mContext;
 
+    /** The image displaying the current battery level. **/
     private ImageView imgBatteryStatus;
 
     public BatteryStatusActionProvider(Context context) {
@@ -35,6 +36,10 @@ public class BatteryStatusActionProvider extends ActionProvider {
         return view;
     }
 
+    /**
+     * Updates the battery status image given the current battery level.
+     * @param percentage the battery level in [0, 100]
+     */
     public void updateBatteryStatus(int percentage) {
         imgBatteryStatus.setImageResource(BatteryUtil.getBatteryLevelIconId(percentage));
     }

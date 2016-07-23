@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import edu.umass.cs.prepare.R;
+import edu.umass.cs.shared.preferences.ApplicationPreferences;
 import edu.umass.cs.shared.util.BatteryUtil;
 
 public class BatteryStatusActionProvider extends ActionProvider {
@@ -31,9 +32,7 @@ public class BatteryStatusActionProvider extends ActionProvider {
         LayoutInflater layoutInflater = LayoutInflater.from(mContext);
         View view = layoutInflater.inflate(R.layout.action_provider_battery_status, null);
         imgBatteryStatus = (ImageView) view.findViewById(R.id.batteryStatus);
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        int batteryLevel = preferences.getInt(mContext.getString(R.string.pref_battery_level_key),
-                mContext.getResources().getInteger(R.integer.pref_battery_level_default));
+        int batteryLevel = ApplicationPreferences.getInstance(mContext).getBatteryLevel();
         imgBatteryStatus.setImageResource(BatteryUtil.getBatteryLevelIconId(batteryLevel));
         return view;
     }

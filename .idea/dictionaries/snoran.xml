@@ -23,6 +23,7 @@
       <w>recyclerview</w>
       <w>seekbar</w>
       <w>selectall</w>
+      <w>sharedpref</w>
       <w>signin</w>
       <w>singlechoice</w>
       <w>snackbar</w>

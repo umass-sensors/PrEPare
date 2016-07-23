@@ -181,6 +181,8 @@ public class SensorService extends Service implements ServiceConnection {
                 onServiceStarted();
             } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
                 onServiceStopped();
+            } else if (intent.getAction().equals(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE)){
+                queryConnectionState();
             }
         } else {
             Log.d(TAG, getString(R.string.notify_service_killed));
@@ -629,6 +631,19 @@ public class SensorService extends Service implements ServiceConnection {
                 error.printStackTrace();
             }
         });
+    }
+
+    /**
+     * Queries the connection state of the board and notifies all listening application components.
+     */
+    protected void queryConnectionState(){
+        if (mwBoard != null && mwBoard.isConnected()){
+            if (broadcaster != null)
+                broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_CONNECTED);
+        } else {
+            if (broadcaster != null)
+                broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
+        }
     }
 
     /**

@@ -63,10 +63,8 @@ public class SettingsFragment extends PreferenceFragment {
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        final String defaultDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name)).getAbsolutePath();
-        String path = preferences.getString(getString(R.string.pref_directory_key), defaultDirectory);
-
+        String path = ApplicationPreferences.getInstance(getActivity()).getSaveDirectory();
+        
         prefDirectory = findPreference(getString(R.string.pref_directory_key));
         prefDirectory.setSummary(path);
         prefDirectory.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

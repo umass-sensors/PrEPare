@@ -24,7 +24,7 @@ import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.view.activities.MainActivity;
 import edu.umass.cs.prepare.view.tutorial.StandardTutorial;
-import edu.umass.cs.prepare.view.CustomAdapter;
+import edu.umass.cs.prepare.view.SensorDataListAdapter;
 import edu.umass.cs.shared.communication.DataLayerUtil;
 import edu.umass.cs.shared.constants.SharedConstants;
 import edu.umass.cs.shared.preferences.ApplicationPreferences;
@@ -46,7 +46,7 @@ public class SensorReadingFragment extends Fragment {
     private final ArrayList<String> devices = new ArrayList<>();
 
     /** Links the {@link #sensorReadings} to a UI view. **/
-    private CustomAdapter sensorReadingAdapter;
+    private SensorDataListAdapter sensorReadingAdapter;
 
     private ViewPager viewPager;
 
@@ -97,11 +97,11 @@ public class SensorReadingFragment extends Fragment {
         Log.d(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_sensor_readings, container, false);
 
-        sensorReadingAdapter = new CustomAdapter(getActivity(), sensors, devices, sensorReadings);
+        sensorReadingAdapter = new SensorDataListAdapter(getActivity(), sensors, devices, sensorReadings);
         sensorDataList = (ListView) view.findViewById(R.id.lv_sensor_readings);
         sensorDataList.setAdapter(sensorReadingAdapter);
         sensorReadingAdapter.notifyDataSetChanged();
-        sensorReadingAdapter.setOnRowClickedListener(new CustomAdapter.OnRowClickedListener() {
+        sensorReadingAdapter.setOnRowClickedListener(new SensorDataListAdapter.OnRowClickedListener() {
             @Override
             public void onRowClicked(int row) {
                 if (tutorial != null)

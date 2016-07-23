@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.shared.constants.SharedConstants;
 
-public class CustomAdapter extends BaseAdapter {
+public class SensorDataListAdapter extends BaseAdapter {
 
     public interface OnRowClickedListener{
         void onRowClicked(int row);
@@ -33,7 +33,7 @@ public class CustomAdapter extends BaseAdapter {
     public ImageView imageView;
     public TextView dataView;
 
-    public CustomAdapter(Context context, ArrayList<String> sensors, ArrayList<String> devices, ArrayList<String> sensorReadings) {
+    public SensorDataListAdapter(Context context, ArrayList<String> sensors, ArrayList<String> devices, ArrayList<String> sensorReadings) {
         this.sensorReadings = sensorReadings;
         this.sensors = sensors;
         this.devices = devices;

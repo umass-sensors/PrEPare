@@ -114,10 +114,20 @@ public class SensorService extends Service implements SensorEventListener {
                 isRunning = false;
                 stopForeground(true);
                 stopSelf();
+            } else if (intent.getAction().equals(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE)){
+                queryConnectionState();
             }
         }
 
         return START_STICKY;
+    }
+
+    private void queryConnectionState(){
+        Log.d(TAG, String.valueOf(isRunning) + "?????");
+        if (isRunning)
+            client.sendMessage(SharedConstants.MESSAGES.WEARABLE_SERVICE_STARTED); //TODO other message?
+        else
+            client.sendMessage(SharedConstants.MESSAGES.WEARABLE_SERVICE_STOPPED);
     }
 
     /**
@@ -149,7 +159,7 @@ public class SensorService extends Service implements SensorEventListener {
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
 
-        int accelerometerSamplingRate = applicationPreferences.getWearableGyroscopeSamplingRate();
+        int accelerometerSamplingRate = applicationPreferences.getWearableAccelerometerSamplingRate();
         int accelerometerSamplingPeriod = 1000 / accelerometerSamplingRate;
         if (accelerometer != null) {
             registered = mSensorManager.registerListener(this, accelerometer, 1000 * accelerometerSamplingPeriod);

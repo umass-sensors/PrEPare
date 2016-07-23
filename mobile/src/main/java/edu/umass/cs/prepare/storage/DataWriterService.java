@@ -1,6 +1,7 @@
 package edu.umass.cs.prepare.storage;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -63,6 +64,14 @@ public class DataWriterService extends Service {
      * Provides access to all shared application preferences.
      */
     private ApplicationPreferences applicationPreferences;
+
+    private static NETWORK_STATE networkState;
+
+    public enum NETWORK_STATE {
+        DISCONNECTED,
+        CONNECTED,
+        CONNECTION_FAILED;
+    }
 
     @Override
     public void onCreate() {
@@ -161,6 +170,7 @@ public class DataWriterService extends Service {
      * connect to the server if possible.
      */
     private void init(){
+        networkState = NETWORK_STATE.DISCONNECTED;
         writeServer = applicationPreferences.writeServer();
         if (writeServer) {
             client = new MHLMobileIOClient(applicationPreferences.getIpAddress(), SharedConstants.SERVER_PORT, 0);
@@ -168,16 +178,18 @@ public class DataWriterService extends Service {
                 @Override
                 public void onConnected() {
                     sendMessage(SharedConstants.MESSAGES.SERVER_CONNECTION_SUCCEEDED);
+                    networkState = NETWORK_STATE.CONNECTED;
+                    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    notificationManager.notify(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, getNotification());
                 }
 
                 @Override
                 public void onConnectionFailed() {
-
                     writeServer = false;
-                    if (!applicationPreferences.writeLocal()){
-                        stopService();
-                    }
                     sendMessage(SharedConstants.MESSAGES.SERVER_CONNECTION_FAILED);
+                    networkState = NETWORK_STATE.CONNECTION_FAILED;
+                    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    notificationManager.notify(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, getNotification());
                 }
             });
             client.connect();
@@ -221,36 +233,72 @@ public class DataWriterService extends Service {
         manager.sendBroadcast(intent);
     }
 
+    private Notification getNotification(){
+        Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
+        notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
+
+        final int icon;
+        final String contentText;
+        if (networkState == NETWORK_STATE.CONNECTED){
+            icon = R.drawable.ic_cloud_done_white_24dp;
+            contentText = getString(R.string.notification_network_connected);
+        } else if (networkState == NETWORK_STATE.DISCONNECTED) {
+            icon = R.drawable.ic_cloud_white_24dp;
+            contentText = getString(R.string.notification_network_connecting);
+        } else if (networkState == NETWORK_STATE.CONNECTION_FAILED) {
+            icon = R.drawable.ic_cloud_error_white_24dp;
+            contentText = getString(R.string.notification_network_failed);
+        } else {
+            icon = R.drawable.ic_cloud_white_24dp;
+            contentText = getString(R.string.notification_network_connecting);
+        }
+        Log.d(TAG, "notification " + networkState.name());
+
+        return new NotificationCompat.Builder(DataWriterService.this)
+                .setContentTitle(getString(R.string.app_name))
+                .setTicker(getString(R.string.app_name))
+                .setContentText(contentText)
+                .setSmallIcon(icon)
+                .setContentIntent(pendingIntent)
+                .setOngoing(networkState != NETWORK_STATE.CONNECTION_FAILED).build();
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
         if (intent == null || intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
             if (!applicationPreferences.writeServer() && !applicationPreferences.writeLocal()){
-                stopSelf();
+                stopSelf(); //no need to continue if not saving the data
             }else {
                 init();
                 registerReceiver();
-
-                Intent notificationIntent = new Intent(DataWriterService.this, MainActivity.class); //open main activity when user clicks on notification
-                notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
-                notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                PendingIntent pendingIntent = PendingIntent.getActivity(DataWriterService.this, 0, notificationIntent, 0);
-
-                Notification notification = new NotificationCompat.Builder(DataWriterService.this)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setTicker(getString(R.string.app_name))
-                        .setContentText(getString(R.string.data_writer_notification))
-                        .setSmallIcon(android.R.drawable.ic_menu_save)
-                        .setContentIntent(pendingIntent)
-                        .setOngoing(true).build();
-
-                startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, notification);
+                startForeground(SharedConstants.NOTIFICATION_ID.DATA_WRITER_SERVICE, getNotification());
             }
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.STOP_SERVICE)) {
             Log.i(TAG, "Received Stop Service Intent");
             stopService();
+        } else if (intent.getAction().equals(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE)) {
+            queryConnectionState();
         }
 
         return START_STICKY;
+    }
+
+    /**
+     * Queries the network connection state, informing all listening application components.
+     */
+    private void queryConnectionState(){
+        if (networkState == NETWORK_STATE.DISCONNECTED){
+            sendMessage(SharedConstants.MESSAGES.SERVER_DISCONNECTED);
+            Log.d(TAG, "disconnected");
+        } else if (networkState == NETWORK_STATE.CONNECTED){
+            sendMessage(SharedConstants.MESSAGES.SERVER_CONNECTION_SUCCEEDED);
+            Log.d(TAG, "connected");
+        } else if (networkState == NETWORK_STATE.CONNECTION_FAILED){
+            sendMessage(SharedConstants.MESSAGES.SERVER_CONNECTION_FAILED);
+            Log.d(TAG, "failed");
+        }
     }
 
     /**
@@ -263,6 +311,7 @@ public class DataWriterService extends Service {
 
         sendMessage(SharedConstants.MESSAGES.SERVER_DISCONNECTED);
 
+        Log.d(TAG, "stop service");
         stopForeground(true);
         stopSelf();
     }

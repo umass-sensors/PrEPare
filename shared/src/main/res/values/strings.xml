@@ -3,7 +3,10 @@
 
     <string name="sensor_service_notification">Connecting…</string>
     <string name="connection_notification">Collecting sensor data</string>
-    <string name="data_writer_notification">Writing sensor data</string>
+
+    <string name="notification_network_failed">Cannot reach server.</string>
+    <string name="notification_network_connected">Writing data to server.</string>
+    <string name="notification_network_connecting">Connecting to server…</string>
 
     <string name="path_sensor_data">/sensors/</string>
     <string name="path_message">/message/</string>

@@ -1,8 +1,10 @@
 package edu.umass.cs.prepare.communication.local;
 
+import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 
@@ -123,6 +125,7 @@ public class ServiceManager {
      * Stops the data writer service on the mobile device.
      */
     public void stopDataWriterService(){
+        Log.d(TAG, "stop data writer service");
         Intent startIntent = new Intent(context, DataWriterService.class);
         startIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
         context.startService(startIntent);
@@ -133,33 +136,34 @@ public class ServiceManager {
      */
     public void startMetawearService(){
         if (!applicationPreferences.enablePillBottle()) return;
-        if (applicationPreferences.useAndroidWear()){
-            remoteSensorManager.startMetawearService();
-        }else {
+//        if (applicationPreferences.useAndroidWear()){
+//            remoteSensorManager.startMetawearService();
+//        }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);
             startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
             context.startService(startServiceIntent);
-        }
+//        }
     }
 
     /**
      * Stops the Metawear service on the mobile device.
      */
     public void stopMetawearService(){
-        if (applicationPreferences.useAndroidWear()){
-            remoteSensorManager.stopMetawearService();
-        }else {
+//        if (applicationPreferences.useAndroidWear()){
+//            remoteSensorManager.stopMetawearService();
+//        }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);
             startServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
             context.startService(startServiceIntent);
-        }
+//        }
     }
 
     /**
      * Starts the sensor service on the wearable device.
      */
     public void startSensorService(){
-        remoteSensorManager.startSensorService();
+        if (applicationPreferences.useAndroidWear())
+            remoteSensorManager.startSensorService();
     }
 
     /**
@@ -169,4 +173,39 @@ public class ServiceManager {
         remoteSensorManager.stopSensorService();
     }
 
+    /**
+     * Returns whether the given service is running
+     * @param serviceClass a reference to a service class
+     * @return true if the service is running, false otherwise
+     */
+    public boolean isServiceRunning(Class<? extends Service> serviceClass){
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void queryMetawearState(){
+//        if (applicationPreferences.useAndroidWear()){
+////            remoteSensorManager.queryConnectionState(); //TODO
+//        }else {
+            Intent startServiceIntent = new Intent(context, SensorService.class);
+            startServiceIntent.setAction(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE);
+            context.startService(startServiceIntent);
+//        }
+    }
+
+    public void queryWearableState(){
+        if (applicationPreferences.useAndroidWear())
+            remoteSensorManager.queryWearableState();
+    }
+
+    public void queryNetworkState(){
+        Intent startServiceIntent = new Intent(context, DataWriterService.class);
+        startServiceIntent.setAction(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE);
+        context.startService(startServiceIntent);
+    }
 }

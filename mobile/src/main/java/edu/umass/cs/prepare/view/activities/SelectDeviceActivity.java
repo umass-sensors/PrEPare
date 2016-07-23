@@ -40,10 +40,10 @@ public class SelectDeviceActivity extends AppCompatActivity implements ScannerCo
     /**
      * Unique Metawear device identifiers
      */
-    private final static UUID[] serviceUuids;
+    private final static UUID[] serviceUUIDs;
 
     static {
-        serviceUuids = new UUID[] {
+        serviceUUIDs = new UUID[] {
                 MetaWearBoard.METAWEAR_SERVICE_UUID,
                 MetaWearBoard.METABOOT_SERVICE_UUID
         };
@@ -86,7 +86,7 @@ public class SelectDeviceActivity extends AppCompatActivity implements ScannerCo
 
     @Override
     public UUID[] getFilterServiceUuids() {
-        return serviceUuids;
+        return serviceUUIDs;
     }
 
     @Override

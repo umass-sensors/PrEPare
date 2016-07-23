@@ -80,12 +80,6 @@
         android:title="@string/pref_group_metawear_title"
         android:key="@string/pref_group_metawear_key">
 
-        <CheckBoxPreference
-            android:key="@string/pref_wearable_key"
-            android:title="@string/pref_wearable_title"
-            android:summary="@string/pref_wearable_desc"
-            android:defaultValue="@bool/pref_wearable_default"/>
-
         <ListPreference
             android:key="@string/pref_accelerometer_sampling_rate_key"
             android:title="@string/pref_accelerometer_sampling_rate_title"
@@ -138,6 +132,12 @@
     <PreferenceScreen
         android:title="@string/pref_group_wearable_title"
         android:key="@string/pref_group_wearable_key">
+
+        <CheckBoxPreference
+            android:key="@string/pref_wearable_key"
+            android:title="@string/pref_wearable_title"
+            android:summary="@string/pref_wearable_desc"
+            android:defaultValue="@bool/pref_wearable_default"/>
 
         <ListPreference
             android:key="@string/pref_wearable_accelerometer_sampling_rate_key"

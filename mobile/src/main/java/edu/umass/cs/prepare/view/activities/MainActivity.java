@@ -178,6 +178,15 @@ public class MainActivity extends AppCompatActivity {
     /** A handle to the battery level view shown in the main toolbar. **/
     private BatteryStatusActionProvider batteryStatusActionProvider;
 
+    /** Handle to the action provider that displays the Metawear connection status. **/
+    private ConnectionStatusActionProvider metawearStatusActionProvider;
+
+    /** Handle to the action provider that displays the Android wear connection status. **/
+    public ConnectionStatusActionProvider wearableStatusActionProvider;
+
+    /** Handle to the action provider that displays the server connection status. **/
+    public ConnectionStatusActionProvider networkStatusActionProvider;
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -496,11 +505,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
-
-    private ConnectionStatusActionProvider metawearStatusActionProvider;
-    public ConnectionStatusActionProvider wearableStatusActionProvider;
-    public ConnectionStatusActionProvider networkStatusActionProvider;
 
     /**
      * Shows a removable status message at the bottom of the application.

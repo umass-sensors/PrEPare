@@ -9,7 +9,6 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.v4.view.ViewPager;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.widget.CompoundButton;

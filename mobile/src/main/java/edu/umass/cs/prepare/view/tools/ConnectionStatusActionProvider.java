@@ -19,9 +19,6 @@ import edu.umass.cs.prepare.R;
  */
 public class ConnectionStatusActionProvider extends ActionProvider {
 
-    /** The circular progress bar indicating a connection attempt. **/
-    private View progressBar;
-
     /** The icon representing the device. **/
     private View deviceIcon;
 
@@ -56,12 +53,13 @@ public class ConnectionStatusActionProvider extends ActionProvider {
     public View onCreateActionView() {
         LayoutInflater layoutInflater = LayoutInflater.from(mContext);
         view = layoutInflater.inflate(R.layout.action_provider_connection_status, null);
-        progressBar = view.findViewById(R.id.circularProgressBar);
+
+        View progressBar = view.findViewById(R.id.circularProgressBar);
         deviceIcon = view.findViewById(R.id.deviceIcon);
         updateDrawable();
 
-        int color = 0x00002200; //TODO: More appropriate color
-        ((ProgressBar)progressBar).getIndeterminateDrawable().setColorFilter(color, PorterDuff.Mode.LIGHTEN);
+        int color = 0x00002200;
+        ((ProgressBar) progressBar).getIndeterminateDrawable().setColorFilter(color, PorterDuff.Mode.LIGHTEN);
 
         return view;
     }

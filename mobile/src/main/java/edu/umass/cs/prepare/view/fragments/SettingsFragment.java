@@ -16,7 +16,7 @@ import net.rdrei.android.dirchooser.DirectoryChooserConfig;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
-import edu.umass.cs.prepare.view.CustomPreference;
+import edu.umass.cs.prepare.view.SwitchPreference;
 import edu.umass.cs.prepare.view.activities.MainActivity;
 import edu.umass.cs.prepare.view.activities.SelectDeviceActivity;
 import edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider;
@@ -53,7 +53,7 @@ public class SettingsFragment extends PreferenceFragment {
     private ApplicationPreferences applicationPreferences;
 
     /** Metawear service enabled preference, which uses a {@link android.widget.Switch} instead of a check box. **/
-    private CustomPreference toggleServicePreference;
+    private SwitchPreference toggleServicePreference;
 
     /** The settings tutorial sequence. **/
     private StandardTutorial tutorial;
@@ -148,7 +148,7 @@ public class SettingsFragment extends PreferenceFragment {
             }
         });
 
-        toggleServicePreference = (CustomPreference) findPreference(getString(R.string.pref_connect_key));
+        toggleServicePreference = (SwitchPreference) findPreference(getString(R.string.pref_connect_key));
         toggleServicePreference.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean enabled) {

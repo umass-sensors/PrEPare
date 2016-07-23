@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <edu.umass.cs.prepare.view.CustomPreference
+    <edu.umass.cs.prepare.view.SwitchPreference
         android:title="@string/pref_connect_title"
         android:key="@string/pref_connect_key"
         android:defaultValue="@bool/pref_connect_default"

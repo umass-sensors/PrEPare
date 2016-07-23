@@ -11,7 +11,7 @@ import android.widget.Switch;
 
 import edu.umass.cs.prepare.R;
 
-public class CustomPreference extends Preference {
+public class SwitchPreference extends Preference {
     /**
      * The toggle switch associated with the preference
      */
@@ -19,7 +19,7 @@ public class CustomPreference extends Preference {
 
     private CompoundButton.OnCheckedChangeListener onCheckedChangeListener;
 
-    public CustomPreference(Context context, AttributeSet attrs) {
+    public SwitchPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 

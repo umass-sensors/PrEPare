@@ -30,6 +30,7 @@ import java.util.Locale;
 
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
+import edu.umass.cs.prepare.communication.wearable.RemoteSensorManager;
 import edu.umass.cs.prepare.constants.Constants;
 import edu.umass.cs.prepare.view.tools.BatteryStatusActionProvider;
 import edu.umass.cs.prepare.view.fragments.RecordingFragment;
@@ -446,7 +447,14 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.ic_watch_white_24dp);
         connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
                 R.drawable.ic_watch_off_white_24dp);
+        connectionStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
+                R.drawable.ic_watch_error_white_24dp);
         connectionStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_connection_status));
+        if (applicationPreferences.useAndroidWear()) {
+            serviceManager.queryWearableState();
+        }else {
+            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+        }
 
         metawearStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_metawear_status));
         metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
@@ -455,18 +463,30 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.ic_pill_white_24dp);
         metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
                 R.drawable.ic_pill_off_white_24dp);
+        metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
+                R.drawable.ic_pill_error_white_24dp);
         metawearStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_metawear_status));
+        if (applicationPreferences.enablePillBottle()){
+            serviceManager.queryMetawearState();
+        }else{
+            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+        }
 
         networkStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_network_status));
         networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
                 R.drawable.ic_cloud_white_24dp);
         networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED,
                 R.drawable.ic_cloud_done_white_24dp);
-        networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
-                R.drawable.ic_cloud_error_white_24dp);
         networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED,
                 R.drawable.ic_cloud_off_white_24dp);
+        networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
+                R.drawable.ic_cloud_error_white_24dp);
         networkStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_network_status));
+        if (applicationPreferences.writeServer()) {
+            serviceManager.queryNetworkState();
+        } else {
+            networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+        }
 
         if (applicationPreferences.getMwAddress().equals(getString(R.string.pref_device_default))){
             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
@@ -480,7 +500,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private ConnectionStatusActionProvider metawearStatusActionProvider;
-    private ConnectionStatusActionProvider connectionStatusActionProvider;
+    public ConnectionStatusActionProvider connectionStatusActionProvider;
     public ConnectionStatusActionProvider networkStatusActionProvider;
 
     /**
@@ -497,53 +517,75 @@ public class MainActivity extends AppCompatActivity {
             if (intent.getAction() != null) {
                 if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
-                    if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTING){
-                        showStatus(getString(R.string.status_connection_attempt));
-                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
-                    } else if (message == SharedConstants.MESSAGES.METAWEAR_CONNECTED){
-                        showStatus(getString(R.string.status_connected));
-                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
-                        if (viewPager.getCurrentItem() != PAGES.SENSOR_DATA.getPageNumber())
-                            highlightTab();
-                    } else if (message == SharedConstants.MESSAGES.METAWEAR_DISCONNECTED) {
-                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
-                        if (colorAnimation != null)
-                            colorAnimation.cancel();
-                    } else if (message == SharedConstants.MESSAGES.INVALID_ADDRESS){
-                        showStatus(getString(R.string.status_invalid_address));
-                        startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
-                    } else if (message == SharedConstants.MESSAGES.BLUETOOTH_DISABLED){
-                        showStatus(getString(R.string.status_bluetooth_disabled));
-                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
-                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
-                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
-                        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                        startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);
-                    } else if (message == SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED){
-                        showStatus(getString(R.string.status_bluetooth_unsupported));
-                    } else if (message == SharedConstants.MESSAGES.SERVER_CONNECTION_FAILED){
-                        showStatus(getString(R.string.status_server_connection_failed));
-                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
-                    } else if (message == SharedConstants.MESSAGES.SERVER_CONNECTION_SUCCEEDED){
-                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
-                    } else if (message == SharedConstants.MESSAGES.SERVER_DISCONNECTED){
-                        if (applicationPreferences.writeServer())
-                            networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
-                    } else if (message == SharedConstants.MESSAGES.METAWEAR_SERVICE_STOPPED){
-                        showStatus(getString(R.string.status_service_stopped));
-                        metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
-                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
-                        networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
-                    } else if (message == SharedConstants.MESSAGES.NO_MOTION_DETECTED){
-                        showStatus(getString(R.string.status_no_motion));
-                    } else if (message == SharedConstants.MESSAGES.WEARABLE_SERVICE_STARTED) {
-                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
-                    } else if (message == SharedConstants.MESSAGES.WEARABLE_SERVICE_STOPPED) {
-                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
-                    } else if (message == SharedConstants.MESSAGES.WEARABLE_CONNECTED) {
-//                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTING);
-                    } else if (message == SharedConstants.MESSAGES.WEARABLE_DISCONNECTED) {
-                        connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                    switch (message){
+                        case SharedConstants.MESSAGES.METAWEAR_CONNECTING:
+                            showStatus(getString(R.string.status_connection_attempt));
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                            if (applicationPreferences.writeServer())
+                                networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                            break;
+                        case SharedConstants.MESSAGES.METAWEAR_SERVICE_STOPPED:
+                            showStatus(getString(R.string.status_service_stopped));
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                            //connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                            //networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                            break;
+                        case SharedConstants.MESSAGES.METAWEAR_CONNECTED:
+                            showStatus(getString(R.string.status_connected));
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
+                            if (viewPager.getCurrentItem() != PAGES.SENSOR_DATA.getPageNumber())
+                                highlightTab();
+                            break;
+                        case SharedConstants.MESSAGES.METAWEAR_DISCONNECTED:
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                            if (colorAnimation != null)
+                                colorAnimation.cancel();
+                            break;
+                        case SharedConstants.MESSAGES.WEARABLE_SERVICE_STARTED:
+                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
+                            break;
+                        case SharedConstants.MESSAGES.WEARABLE_SERVICE_STOPPED:
+                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                            break;
+                        case SharedConstants.MESSAGES.WEARABLE_CONNECTION_FAILED:
+                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            break;
+                        case SharedConstants.MESSAGES.WEARABLE_DISCONNECTED:
+                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            break;
+                        case SharedConstants.MESSAGES.NO_MOTION_DETECTED:
+                            showStatus(getString(R.string.status_no_motion));
+                            break;
+                        case SharedConstants.MESSAGES.INVALID_ADDRESS:
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
+                            showStatus(getString(R.string.status_invalid_address));
+                            startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
+                            break;
+                        case SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED:
+                            showStatus(getString(R.string.status_bluetooth_unsupported));
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
+                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            break;
+                        case SharedConstants.MESSAGES.BLUETOOTH_DISABLED:
+                            showStatus(getString(R.string.status_bluetooth_disabled));
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
+                            connectionStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                            startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);
+                            break;
+                        case SharedConstants.MESSAGES.SERVER_CONNECTION_FAILED:
+                            showStatus(getString(R.string.status_server_connection_failed));
+                            networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
+                            break;
+                        case SharedConstants.MESSAGES.SERVER_CONNECTION_SUCCEEDED:
+                            networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.CONNECTED);
+                            break;
+                        case SharedConstants.MESSAGES.SERVER_DISCONNECTED:
+                            if (applicationPreferences.writeServer())
+                                networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
+                            else
+                                networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                            break;
                     }
                 }else if (intent.getAction().equals(Constants.ACTION.BROADCAST_SENSOR_DATA)){
                     SharedConstants.SENSOR_TYPE sensorType = DataLayerUtil.deserialize(SharedConstants.SENSOR_TYPE.class).from(intent);

@@ -23,6 +23,7 @@ public class SharedConstants {
         String STOP_METAWEAR_SERVICE = "edu.umass.cs.prepare.commands.stop-metawear-service";
         String START_BEACON_SERVICE = "edu.umass.cs.prepare.commands.start-beacon-service";
         String STOP_BEACON_SERVICE = "edu.umass.cs.prepare.commands.stop-beacon-service";
+        String QUERY_WEARABLE_STATE = "edu.umass.cs.prepare.commands.query-wearable-state";
     }
 
     public interface MESSAGES {
@@ -46,6 +47,7 @@ public class SharedConstants {
         int WEARABLE_DISCONNECTED = 17;
         int SERVER_CONNECTION_SUCCEEDED = 18;
         int SERVER_DISCONNECTED = 19;
+        int WEARABLE_CONNECTION_FAILED = 20;
     }
 
     /**
@@ -55,6 +57,7 @@ public class SharedConstants {
         String START_SERVICE = "edu.umass.cs.prepare.action.start-service";
         String STOP_SERVICE = "edu.umass.cs.prepare.action.stop-service";
         String QUERY_BATTERY_LEVEL = "edu.umass.cs.prepare.action.query-battery-level";
+        String QUERY_CONNECTION_STATE = "edu.umass.cs.prepare.action.query-connection-state";
     }
 
     /**

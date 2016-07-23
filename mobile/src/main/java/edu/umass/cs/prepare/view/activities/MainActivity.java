@@ -289,7 +289,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (selectedPage == PAGES.RECORDING.getPageNumber()) {
                                     recordingFragment.showTutorial(viewPager);
                                 } else if (selectedPage == PAGES.SETTINGS.getPageNumber()) {
-                                    settingsFragment.showTutorial(viewPager);
+                                    settingsFragment.showTutorial();
                                 }
                             }
                             selectedPage = PAGES.NONE;

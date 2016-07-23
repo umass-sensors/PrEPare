@@ -183,7 +183,7 @@ public class SettingsFragment extends PreferenceFragment {
 
     private StandardTutorial tutorial;
 
-    public void showTutorial(final ViewPager viewPager){
+    public void showTutorial(){
         tutorial = new StandardTutorial(getActivity(), toggleServicePreference.getSwitch())
                 .setDescription(getString(R.string.tutorial_enable_service))
                 .enableButton(false)

@@ -45,6 +45,7 @@ public class Constants {
         String SENSOR_DATA = "edu.umass.cs.prepare.key.sensor-data";
         String SENSOR_TYPE = "edu.umass.cs.prepare.key.sensor-type";
         String TIMESTAMP = "edu.umass.cs.prepare.key.timestamp";
+        String PAGE_INDEX = "edu.umass.cs.prepare.key.page-index";
     }
 
 }

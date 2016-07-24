@@ -18,6 +18,7 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -323,6 +324,12 @@ public class MainActivity extends AppCompatActivity {
         applicationPreferences = ApplicationPreferences.getInstance(this);
 
         txtStatus = (TextView) findViewById(R.id.status);
+
+        // change tab if specified
+        if (getIntent() != null) {
+            int pageNumber = getIntent().getIntExtra(Constants.KEY.PAGE_INDEX, PAGES.SENSOR_DATA.getPageNumber());
+            viewPager.setCurrentItem(pageNumber);
+        }
     }
 
     /**

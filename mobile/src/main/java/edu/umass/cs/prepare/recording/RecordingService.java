@@ -219,8 +219,9 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     private Notification getNotification(String contentText){
         Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
         notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        notificationIntent.putExtra(Constants.KEY.PAGE_INDEX, MainActivity.PAGES.RECORDING.getPageNumber());
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Intent stopIntent = new Intent(this, RecordingService.class);
         stopIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);

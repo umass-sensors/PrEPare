@@ -264,7 +264,6 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        Toast.makeText(getApplicationContext(), String.valueOf(isRecording), Toast.LENGTH_LONG).show();
         if (!isRecording)
             startRecording();
     }

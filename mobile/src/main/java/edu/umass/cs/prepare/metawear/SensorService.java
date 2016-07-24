@@ -122,6 +122,11 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
         startForeground(SharedConstants.NOTIFICATION_ID.METAWEAR_SENSOR_SERVICE, notification);
     }
 
+    /**
+     * Returns the notification displayed during background data collection.
+     * @param batteryLevel The current battery level
+     * @return the notification handle
+     */
     private Notification getUpdatedNotification(int batteryLevel, CONTENT_TEXT_IDENTIFIER state){
         Intent queryBatteryLevelIntent = new Intent(this, SensorService.class);
         queryBatteryLevelIntent.setAction(SharedConstants.ACTIONS.QUERY_BATTERY_LEVEL);

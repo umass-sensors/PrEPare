@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -96,8 +97,9 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             sHolder = mSurfaceView.getHolder();
             sHolder.addCallback(this);
 
-            //noinspection deprecation
-            sHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS); //TODO: Supposedly not necessary anymore?
+            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB)
+                //noinspection deprecation
+                sHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
             WindowManager winMan = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
             WindowManager.LayoutParams params = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,

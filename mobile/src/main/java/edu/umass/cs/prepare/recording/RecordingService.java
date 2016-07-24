@@ -211,6 +211,11 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
         }
     }
 
+    /**
+     * Returns the notification displayed during background recording.
+     * @param contentText The text displayed on the notification
+     * @return the notification handle
+     */
     private Notification getNotification(String contentText){
         Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
         notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);

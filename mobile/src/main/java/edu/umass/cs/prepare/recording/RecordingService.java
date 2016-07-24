@@ -231,11 +231,11 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
                 .setContentTitle(getString(R.string.app_name))
                 .setTicker(getString(R.string.app_name))
                 .setContentText(contentText)
-                .setSmallIcon(android.R.drawable.ic_menu_camera)
+                .setSmallIcon(R.drawable.ic_videocam_white_24dp)
                 .setOngoing(true)
                 .setVibrate(new long[]{0, 50, 150, 200})
                 .setPriority(Notification.PRIORITY_MAX)
-                .addAction(android.R.drawable.ic_delete, getString(R.string.stop_service), stopPendingIntent)
+                .addAction(R.drawable.ic_stop_white_24dp, getString(R.string.stop_service), stopPendingIntent)
                 .setContentIntent(pendingIntent).build();
     }
 

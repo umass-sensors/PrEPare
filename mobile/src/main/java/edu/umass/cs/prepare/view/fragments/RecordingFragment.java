@@ -103,7 +103,7 @@ public class RecordingFragment extends Fragment {
         final View view = inflater.inflate(R.layout.fragment_recording, container, false);
         recordingButton = (Button) view.findViewById(R.id.start_button);
         if (RecordingService.isRecording)
-            recordingButton.setBackgroundResource(R.drawable.ic_pause_white_24dp);
+            recordingButton.setBackgroundResource(R.drawable.ic_stop_white_24dp);
         if (!applicationPreferences.showTutorial())
             enableRecordingButton();
         mSurfaceView = (SurfaceView) view.findViewById(R.id.surface_camera);
@@ -235,7 +235,7 @@ public class RecordingFragment extends Fragment {
                 if (intent.getAction().equals(Constants.ACTION.BROADCAST_MESSAGE)){
                     int message = intent.getIntExtra(SharedConstants.KEY.MESSAGE, -1);
                     if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STARTED){
-                        recordingButton.setBackgroundResource(R.drawable.ic_pause_white_24dp);
+                        recordingButton.setBackgroundResource(R.drawable.ic_stop_white_24dp);
                     } else if (message == SharedConstants.MESSAGES.RECORDING_SERVICE_STOPPED){
                         recordingButton.setBackgroundResource(R.drawable.ic_play_arrow_white_24dp);
                     }

@@ -129,8 +129,9 @@ public class SensorService extends edu.umass.cs.shared.metawear.SensorService {
 
         Intent notificationIntent = new Intent(this, MainActivity.class); //open main activity when user clicks on notification
         notificationIntent.setAction(Constants.ACTION.NAVIGATE_TO_APP);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        notificationIntent.putExtra(Constants.KEY.PAGE_INDEX, MainActivity.PAGES.SENSOR_DATA.getPageNumber());
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         // notify the user that the foreground service has started
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)

@@ -88,7 +88,6 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //TODO: Not entirely certain but I believe this occurs when the surface view is not properly destroyed
         if (intent == null){
             stopForeground(true);
             stopSelf();
@@ -111,8 +110,6 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
                             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                     PixelFormat.TRANSLUCENT);
-
-            //TODO: FLAG_NOT_TOUCHABLE with TYPE_SYSTEM_ALERT?
 
             //surface view dimensions and position specified where service intent is called
             params.gravity = Gravity.TOP | Gravity.START;

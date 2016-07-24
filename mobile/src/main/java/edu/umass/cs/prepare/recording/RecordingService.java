@@ -290,16 +290,14 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
      */
     @SuppressWarnings("deprecation")
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
-        final double ASPECT_TOLERANCE = 0.05;
-        double targetRatio = (double) w/h;
-
         if (sizes==null) return null;
 
+        final double ASPECT_TOLERANCE = 0.05;
+        double targetRatio = (double) w/h;
         Camera.Size optimalSize = null;
-
         double minDiff = Double.MAX_VALUE;
 
-        // Find size
+        // Find closest size with suitable aspect ratio
         for (Camera.Size size : sizes) {
             double ratio = (double) size.width / size.height;
             if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
@@ -309,6 +307,7 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
             }
         }
 
+        // if no size is within the tolerance of the aspect ratio, choose the size with the closest height
         if (optimalSize == null) {
             minDiff = Double.MAX_VALUE;
             for (Camera.Size size : sizes) {

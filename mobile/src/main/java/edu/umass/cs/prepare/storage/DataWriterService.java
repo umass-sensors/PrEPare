@@ -88,14 +88,6 @@ public class DataWriterService extends Service {
      */
     private AsyncFileWriter getFileWriter(String filename) {
         File directory = new File(applicationPreferences.getSaveDirectory());
-        if(!directory.exists()) {
-            if (directory.mkdirs()){
-                Toast.makeText(this, String.format("Created directory %s", directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
-            }else{
-                Toast.makeText(this, String.format("Failed to create directory %s. Please set the directory in Settings",
-                        directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
-            }
-        }
         AsyncFileWriter writer = fileWriterHashMap.get(filename);
         if (writer == null) {
             String fullFileName = filename + String.valueOf(System.currentTimeMillis()) + CSV_EXTENSION;
@@ -175,7 +167,7 @@ public class DataWriterService extends Service {
         networkState = NETWORK_STATE.DISCONNECTED;
         writeServer = applicationPreferences.writeServer();
         if (writeServer) {
-            client = new MHLMobileIOClient(applicationPreferences.getIpAddress(), SharedConstants.SERVER_PORT, 0);
+            client = new MHLMobileIOClient(applicationPreferences.getIpAddress(), SharedConstants.SERVER_PORT, applicationPreferences.getSubjectID());
             client.setConnectionStateHandler(new MHLConnectionStateHandler() {
                 @Override
                 public void onConnected() {

@@ -163,4 +163,15 @@ public class RemoteSensorManager {
             }
         });
     }
+
+    public void queryMetawearState(){
+        Log.d(TAG, "Query metawear state.");
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "Sending message to wearable...");
+                sendMessageInBackground(SharedConstants.COMMANDS.QUERY_METAWEAR_STATE, null);
+            }
+        });
+    }
 }

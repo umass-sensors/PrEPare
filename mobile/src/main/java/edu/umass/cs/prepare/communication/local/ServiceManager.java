@@ -134,26 +134,26 @@ public class ServiceManager {
      */
     public void startMetawearService(){
         if (!applicationPreferences.enablePillBottle()) return;
-//        if (applicationPreferences.useAndroidWear()){
-//            remoteSensorManager.startMetawearService();
-//        }else {
+        if (applicationPreferences.useAndroidWear()){
+            remoteSensorManager.startMetawearService();
+        }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);
             startServiceIntent.setAction(SharedConstants.ACTIONS.START_SERVICE);
             context.startService(startServiceIntent);
-//        }
+        }
     }
 
     /**
      * Stops the Metawear service on the mobile device.
      */
     public void stopMetawearService(){
-//        if (applicationPreferences.useAndroidWear()){
-//            remoteSensorManager.stopMetawearService();
-//        }else {
+        if (applicationPreferences.useAndroidWear()){
+            remoteSensorManager.stopMetawearService();
+        }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);
             startServiceIntent.setAction(SharedConstants.ACTIONS.STOP_SERVICE);
             context.startService(startServiceIntent);
-//        }
+        }
     }
 
     /**
@@ -187,13 +187,13 @@ public class ServiceManager {
     }
 
     public void queryMetawearState(){
-//        if (applicationPreferences.useAndroidWear()){
-////            remoteSensorManager.queryConnectionState(); //TODO
-//        }else {
+        if (applicationPreferences.useAndroidWear()){
+            remoteSensorManager.queryMetawearState();
+        }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);
             startServiceIntent.setAction(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE);
             context.startService(startServiceIntent);
-//        }
+        }
     }
 
     public void queryWearableState(){

@@ -14,9 +14,11 @@ import android.widget.EditText;
 import net.rdrei.android.dirchooser.DirectoryChooserActivity;
 import net.rdrei.android.dirchooser.DirectoryChooserConfig;
 
+import java.util.Locale;
+
 import edu.umass.cs.prepare.R;
 import edu.umass.cs.prepare.communication.local.ServiceManager;
-import edu.umass.cs.prepare.view.SwitchPreference;
+import edu.umass.cs.prepare.view.preference.SwitchPreference;
 import edu.umass.cs.prepare.view.activities.MainActivity;
 import edu.umass.cs.prepare.view.activities.SelectDeviceActivity;
 import edu.umass.cs.prepare.view.tools.ConnectionStatusActionProvider;
@@ -182,6 +184,14 @@ public class SettingsFragment extends PreferenceFragment {
                     ((MainActivity)getActivity()).wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISCONNECTED);
                 else
                     ((MainActivity)getActivity()).wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
+                return true;
+            }
+        });
+
+        findPreference(getString(R.string.pref_subject_id_key)).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object o) {
+                preference.setSummary(String.format(Locale.getDefault(), "%03d", (Integer)o));
                 return true;
             }
         });

@@ -1,4 +1,4 @@
-package edu.umass.cs.prepare.view;
+package edu.umass.cs.prepare.view.preference;
 
 import android.content.Context;
 import android.content.SharedPreferences;

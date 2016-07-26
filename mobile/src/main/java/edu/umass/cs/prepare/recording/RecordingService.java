@@ -1,6 +1,7 @@
 package edu.umass.cs.prepare.recording;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -52,6 +54,10 @@ import edu.umass.cs.shared.preferences.ApplicationPreferences;
  */
 public class RecordingService extends Service implements SurfaceHolder.Callback
 {
+    @SuppressWarnings("unused")
+    /** used for debugging purposes */
+    private static final String TAG = RecordingService.class.getName();
+
     /** Holder for the {@link SurfaceView} which displays the recording **/
     private SurfaceHolder sHolder;
 
@@ -89,9 +95,11 @@ public class RecordingService extends Service implements SurfaceHolder.Callback
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null){
+            Log.d(TAG, getString(R.string.notify_service_killed));
             stopForeground(true);
             stopSelf();
         } else if (intent.getAction().equals(SharedConstants.ACTIONS.START_SERVICE)) {
+            Log.d(TAG, "Service started");
             mSurfaceView = new SurfaceView(getApplicationContext());
             sHolder = mSurfaceView.getHolder();
             sHolder.addCallback(this);

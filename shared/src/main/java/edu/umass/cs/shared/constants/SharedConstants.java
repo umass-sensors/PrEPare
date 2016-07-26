@@ -22,6 +22,7 @@ public class SharedConstants {
         String START_METAWEAR_SERVICE = "edu.umass.cs.prepare.commands.start-metawear-service";
         String STOP_METAWEAR_SERVICE = "edu.umass.cs.prepare.commands.stop-metawear-service";
         String QUERY_WEARABLE_STATE = "edu.umass.cs.prepare.commands.query-wearable-state";
+        String QUERY_METAWEAR_STATE = "edu.umass.cs.prepare.commands.query-metawear-state";
     }
 
     public interface MESSAGES {

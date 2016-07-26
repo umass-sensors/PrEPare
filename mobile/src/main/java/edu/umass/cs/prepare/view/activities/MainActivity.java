@@ -19,12 +19,14 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.DecimalFormat;
 import java.util.Locale;
@@ -58,10 +60,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
 
     private static int COLOR_ANIMATION_DURATION_MILLIS = 3000;
-
-    private static int DIALOG_WIDTH = 1000;
-
-    private static int DIALOG_HEIGHT = 800;
 
     /** Request identifiers **/
     public interface REQUEST_CODE {
@@ -437,7 +435,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 alertDialog.show();
-                alertDialog.getWindow().setLayout(DIALOG_WIDTH, DIALOG_HEIGHT);
 
                 TextView txtBatteryLevel = (TextView) dialogLayout.findViewById(R.id.batteryLevel);
                 TextView txtLifetimeEstimate = (TextView) dialogLayout.findViewById(R.id.estimatedLifetime);
@@ -470,6 +467,36 @@ public class MainActivity extends AppCompatActivity {
         }else {
             wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
         }
+        wearableStatusActionProvider.setOnClickListener(new ConnectionStatusActionProvider.OnClickListener() {
+            @Override
+            public void onClick(ConnectionStatusActionProvider.CONNECTION_STATUS state) {
+                final String info;
+                switch (state){
+                    case DISABLED:
+                        info = "Android Wear is disabled. Go to settings to re-enable it.";
+                        break;
+                    case DISCONNECTED:
+                        info = "The wearable is connected but the wearable service is not running.";
+                        break;
+                    case CONNECTED:
+                        info = "Connected to the wearable and collecting data.";
+                        break;
+                    case ERROR:
+                        info = "Failed to connect to wearable. Make sure that Bluetooth is enabled and your band is configured.";
+                        break;
+                    case DEFAULT:
+                        info = "Default icon..."; //TODO
+                        break;
+                    default:
+                        return;
+                }
+                Toast toast = Toast.makeText(MainActivity.this, info, Toast.LENGTH_LONG);
+                int[] location = new int[2];
+                connectionStatusView.getLocationOnScreen(location);
+                toast.setGravity(Gravity.TOP|Gravity.START, location[0], location[1]);
+                toast.show();
+            }
+        });
 
         metawearStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_metawear_status));
         metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
@@ -567,18 +594,18 @@ public class MainActivity extends AppCompatActivity {
                             showStatus(getString(R.string.status_no_motion));
                             break;
                         case SharedConstants.MESSAGES.INVALID_ADDRESS:
-                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR); //TODO: ERROR?
                             showStatus(getString(R.string.status_invalid_address));
                             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
                             break;
                         case SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED:
                             showStatus(getString(R.string.status_bluetooth_unsupported));
-                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR); //TODO: ERROR?
                             wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             break;
                         case SharedConstants.MESSAGES.BLUETOOTH_DISABLED:
                             showStatus(getString(R.string.status_bluetooth_disabled));
-                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED); //TODO: ERROR?
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR); //TODO: ERROR?
                             wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                             startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import java.io.File;
 
@@ -31,7 +32,8 @@ public class ApplicationPreferences implements SharedPreferences.OnSharedPrefere
                 accelerometerSamplingRate,
                 gyroscopeSamplingRate,
                 wearableAccelerometerSamplingRate,
-                wearableGyroscopeSamplingRate;
+                wearableGyroscopeSamplingRate,
+                subjectID;
 
     private String  saveDirectory,
                     mwAddress,
@@ -101,6 +103,8 @@ public class ApplicationPreferences implements SharedPreferences.OnSharedPrefere
                 context.getResources().getBoolean(R.bool.pref_wearable_default));
         enableWearableGyroscope = preferences.getBoolean(context.getString(R.string.pref_wearable_gyroscope_key),
                 context.getResources().getBoolean(R.bool.pref_wearable_gyroscope_default));
+        subjectID = preferences.getInt(context.getString(R.string.pref_subject_id_key),
+                context.getResources().getInteger(R.integer.pref_subject_id_default));
     }
     
     public boolean recordAudio(){
@@ -156,6 +160,15 @@ public class ApplicationPreferences implements SharedPreferences.OnSharedPrefere
     }
 
     public String getSaveDirectory(){
+        File directory = new File(saveDirectory);
+        if(!directory.exists()) {
+            if (directory.mkdirs()){
+                Toast.makeText(context, String.format("Created directory %s", directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
+            }else{
+                Toast.makeText(context, String.format("Failed to create directory %s. Please set the directory in Settings",
+                        directory.getAbsolutePath()), Toast.LENGTH_LONG).show();
+            }
+        }
         return saveDirectory;
     }
 
@@ -181,6 +194,10 @@ public class ApplicationPreferences implements SharedPreferences.OnSharedPrefere
 
     public int getRssiSamplingRate(){
         return rssiSamplingRate;
+    }
+
+    public int getSubjectID(){
+        return subjectID;
     }
 
     @Override

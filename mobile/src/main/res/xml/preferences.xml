@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <edu.umass.cs.prepare.view.SwitchPreference
+    <edu.umass.cs.prepare.view.preference.SwitchPreference
         android:title="@string/pref_connect_title"
         android:key="@string/pref_connect_key"
         android:defaultValue="@bool/pref_connect_default"
@@ -13,16 +13,26 @@
 
         android:widgetLayout="@layout/switch_toggle_service" />
 
+    <edu.umass.cs.prepare.view.preference.NumberPickerPreference
+        xmlns:preference="http://schemas.android.com/apk/res-auto"
+        android:key="@string/pref_subject_id_key"
+        android:title="@string/pref_subject_id_title"
+        android:defaultValue="@integer/pref_subject_id_default"
+        android:summary="001"
+        preference:minValue="1"
+        preference:maxValue="999"
+        preference:wrapSelectorWheel="true"/>
+
     <!-- General settings -->
-    <PreferenceScreen
-        android:title="@string/pref_group_general_title"
-        android:key="@string/pref_group_general_key">
+    <!--<PreferenceScreen-->
+        <!--android:title="@string/pref_group_general_title"-->
+        <!--android:key="@string/pref_group_general_key">-->
 
         <Preference
             android:title="@string/pref_device_title"
             android:key="@string/pref_device_key" />
 
-    </PreferenceScreen>
+    <!--</PreferenceScreen>-->
 
     <!-- Storage settings -->
     <PreferenceScreen

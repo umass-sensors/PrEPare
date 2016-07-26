@@ -1,19 +1,16 @@
 package edu.umass.cs.prepare.view.preference;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.preference.DialogPreference;
-import android.preference.Preference;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.NumberPicker;
-import android.widget.Switch;
+
+import java.util.Locale;
 
 import edu.umass.cs.prepare.R;
 
@@ -22,21 +19,37 @@ import edu.umass.cs.prepare.R;
  */
 public class NumberPickerPreference extends DialogPreference {
 
-    // allowed range
-    public static final int MAX_VALUE = 100;
-    public static final int MIN_VALUE = 0;
-    // enable or disable the 'circular behavior'
-    public static final boolean WRAP_SELECTOR_WHEEL = true;
+    public static final int DEFAULT_MAX_VALUE = 100;
+    public static final int DEFAULT_MIN_VALUE = 0;
+    public static final boolean DEFAULT_WRAP_SELECTOR_WHEEL = true;
 
+    /** Minimum value allowed **/
+    private final int minValue;
+
+    /** Maximum value allowed **/
+    private final int maxValue;
+
+    /** Indicates whether the circular behavoir is enabled. **/
+    private final boolean wrapSelectorWheel;
+
+    /** Reference to the number picker object. **/
     private NumberPicker picker;
+
+    /** The currently selected value. **/
     private int value;
 
     public NumberPickerPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        this(context, attrs, android.R.attr.dialogPreferenceStyle);
     }
 
     public NumberPickerPreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
+        final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.NumberPickerPreference);
+        minValue = a.getInteger(R.styleable.NumberPickerPreference_minValue, DEFAULT_MIN_VALUE);
+        maxValue = a.getInteger(R.styleable.NumberPickerPreference_maxValue, DEFAULT_MAX_VALUE);
+        wrapSelectorWheel = a.getBoolean(R.styleable.NumberPickerPreference_wrapSelectorWheel, DEFAULT_WRAP_SELECTOR_WHEEL);
+        a.recycle();
     }
 
     @Override
@@ -57,10 +70,16 @@ public class NumberPickerPreference extends DialogPreference {
     @Override
     protected void onBindDialogView(View view) {
         super.onBindDialogView(view);
-        picker.setMinValue(MIN_VALUE);
-        picker.setMaxValue(MAX_VALUE);
-        picker.setWrapSelectorWheel(WRAP_SELECTOR_WHEEL);
+        picker.setMinValue(minValue);
+        picker.setMaxValue(maxValue);
+        picker.setWrapSelectorWheel(wrapSelectorWheel);
         picker.setValue(getValue());
+        picker.setFormatter(new NumberPicker.Formatter() {
+            @Override
+            public String format(int i) {
+                return String.format(Locale.getDefault(), "%03d", i);
+            }
+        });
     }
 
     @Override
@@ -76,12 +95,12 @@ public class NumberPickerPreference extends DialogPreference {
 
     @Override
     protected Object onGetDefaultValue(TypedArray a, int index) {
-        return a.getInt(index, MIN_VALUE);
+        return a.getInt(index, minValue);
     }
 
     @Override
     protected void onSetInitialValue(boolean restorePersistedValue, Object defaultValue) {
-        setValue(restorePersistedValue ? getPersistedInt(MIN_VALUE) : (Integer) defaultValue);
+        setValue(restorePersistedValue ? getPersistedInt(minValue) : (Integer) defaultValue);
     }
 
     public void setValue(int value) {

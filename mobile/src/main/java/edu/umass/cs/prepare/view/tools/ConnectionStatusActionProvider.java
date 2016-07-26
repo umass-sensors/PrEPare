@@ -23,7 +23,7 @@ import edu.umass.cs.prepare.R;
  * @see ActionProvider
  * @see BatteryStatusActionProvider
  */
-public class ConnectionStatusActionProvider extends ActionProvider {
+public class ConnectionStatusActionProvider extends ActionProvider implements View.OnClickListener {
 
     /** The icon representing the device. **/
     private View deviceIcon;
@@ -37,8 +37,16 @@ public class ConnectionStatusActionProvider extends ActionProvider {
     /** The current connection state. **/
     private CONNECTION_STATUS status = CONNECTION_STATUS.DISCONNECTED;
 
+    public interface OnClickListener {
+        void onClick(CONNECTION_STATUS state);
+    }
+
+    private OnClickListener onClickListener;
+
     /**
-     * Set of connection states.
+     * Set of connection states. One of {@link CONNECTION_STATUS#DISABLED},
+     * {@link CONNECTION_STATUS#DISCONNECTED}, {@link CONNECTION_STATUS#CONNECTED},
+     * {@link CONNECTION_STATUS#ERROR} or {@link CONNECTION_STATUS#DEFAULT}.
      */
     public enum CONNECTION_STATUS {
         DISABLED,
@@ -64,6 +72,7 @@ public class ConnectionStatusActionProvider extends ActionProvider {
     public View onCreateActionView() {
         LayoutInflater layoutInflater = LayoutInflater.from(mContext);
         view = layoutInflater.inflate(R.layout.action_provider_connection_status, null);
+        view.setOnClickListener(this);
 
         View progressBar = view.findViewById(R.id.circularProgressBar);
         deviceIcon = view.findViewById(R.id.deviceIcon);
@@ -126,5 +135,15 @@ public class ConnectionStatusActionProvider extends ActionProvider {
      */
     public void setDrawable(CONNECTION_STATUS status, int resourceId){
         connectionStatusMap.put(status, resourceId);
+    }
+
+    public void setOnClickListener(final OnClickListener onClickListener){
+        this.onClickListener = onClickListener;
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (onClickListener != null)
+            onClickListener.onClick(status);
     }
 }

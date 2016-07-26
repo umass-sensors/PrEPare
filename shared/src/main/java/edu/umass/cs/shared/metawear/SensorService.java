@@ -122,6 +122,12 @@ public class SensorService extends Service implements ServiceConnection {
     /** Thread for the RSSI request handler. **/
     private HandlerThread hThread;
 
+    /** Handles the reconnection request. **/
+    private Handler reconnectionHandler;
+
+    /** Thread for the reconnection request handler. **/
+    private HandlerThread reconnectionThread;
+
     /**
      * The broadcaster is responsible for handling communication from the Sensor service
      * to other application components, both on the mobile and wearable side.
@@ -269,6 +275,28 @@ public class SensorService extends Service implements ServiceConnection {
         }
     }
 
+    private void stopReconnectAttempt(){
+        if (reconnectionHandler != null) {
+            reconnectionHandler.removeCallbacks(reconnectAfterDelayTask);
+        }
+        if (reconnectionThread != null && reconnectionThread.isAlive()) {
+            reconnectionThread.interrupt();
+            reconnectionThread.quit();
+            reconnectionThread = null;
+        }
+    }
+
+    private void stopRSSI(){
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+        }
+        if (hThread != null && hThread.isAlive()) {
+            hThread.interrupt();
+            hThread.quit();
+            hThread = null;
+        }
+    }
+
     /**
      * Called when the application disconnects from the Metawear board.
      */
@@ -278,15 +306,16 @@ public class SensorService extends Service implements ServiceConnection {
             broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_DISCONNECTED);
         switch (disconnectSource){
             case BLUETOOTH_DISABLED:
-                if (handler != null)
-                    handler.removeCallbacksAndMessages(null);
+                stopReconnectAttempt();
+                stopRSSI();
+
                 doUnbind();
                 if (broadcaster != null)
                     broadcaster.broadcastMessage(SharedConstants.MESSAGES.BLUETOOTH_DISABLED);
                 return;
             case DISCONNECT_REQUESTED:
-                if (handler != null)
-                    handler.removeCallbacksAndMessages(null);
+                stopReconnectAttempt();
+                stopRSSI();
                 doUnbind();
                 if (broadcaster != null)
                     broadcaster.broadcastMessage(SharedConstants.MESSAGES.METAWEAR_SERVICE_STOPPED);
@@ -294,8 +323,7 @@ public class SensorService extends Service implements ServiceConnection {
                 stopSelf();
                 return;
             case NO_MOTION_DETECTED:
-                if (handler != null)
-                    handler.removeCallbacksAndMessages(null);
+                stopRSSI();
                 postReconnect();
                 if (broadcaster != null)
                     broadcaster.broadcastMessage(SharedConstants.MESSAGES.NO_MOTION_DETECTED);
@@ -533,11 +561,14 @@ public class SensorService extends Service implements ServiceConnection {
      */
     private void startRSSI() {
         Log.d(TAG, getString(R.string.routing_rssi));
-        if (handler != null)
+        if (handler != null) {
             handler.removeCallbacksAndMessages(null);
+            handler.removeCallbacks(reconnectAfterDelayTask);
+        }
         if (hThread != null && hThread.isAlive()) {
             hThread.interrupt();
             hThread.quit();
+            hThread = null;
         }
         hThread = new HandlerThread("HandlerThread");
         hThread.start();
@@ -676,7 +707,7 @@ public class SensorService extends Service implements ServiceConnection {
             hThread.start();
         }
         Handler reconnectionHandler = new Handler(hThread.getLooper());
-        Runnable reconnectAfterDelayTask = new Runnable() {
+        reconnectAfterDelayTask = new Runnable() {
             @Override
             public void run() {
                 connect();
@@ -684,6 +715,8 @@ public class SensorService extends Service implements ServiceConnection {
         };
         reconnectionHandler.postDelayed(reconnectAfterDelayTask, RECONNECTION_TIMEOUT_MILLIS);
     }
+
+    private Runnable reconnectAfterDelayTask;
 
     /**
      * Disconnect from the Metawear board.

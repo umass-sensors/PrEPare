@@ -122,7 +122,6 @@ public class SensorReadingFragment extends Fragment {
                     }
                 });
                 alertDialog.show();
-                alertDialog.getWindow().setLayout(1000, 800);
 
                 TextView txtDevice = (TextView) dialogLayout.findViewById(R.id.device);
                 TextView txtSensor = (TextView) dialogLayout.findViewById(R.id.sensor);

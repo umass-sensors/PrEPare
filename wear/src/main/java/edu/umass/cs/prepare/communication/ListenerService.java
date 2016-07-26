@@ -47,6 +47,10 @@ public class ListenerService extends WearableListenerService {
             Intent stopServiceIntent = new Intent(this, SensorService.class);
             stopServiceIntent.setAction(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE);
             startService(stopServiceIntent);
+        }else if (messageEvent.getPath().equals(SharedConstants.COMMANDS.QUERY_METAWEAR_STATE)) {
+            Intent stopServiceIntent = new Intent(this, edu.umass.cs.prepare.metawear.SensorService.class);
+            stopServiceIntent.setAction(SharedConstants.ACTIONS.QUERY_CONNECTION_STATE);
+            startService(stopServiceIntent);
         }
     }
 }

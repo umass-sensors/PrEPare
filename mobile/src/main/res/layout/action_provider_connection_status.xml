@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     style="?attr/actionButtonStyle"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
@@ -9,6 +10,7 @@
 
     <ImageView
         android:id="@+id/deviceIcon"
+        android:contentDescription="@string/content_description_connection_status"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:paddingTop="12sp"
@@ -30,6 +32,7 @@
         android:visibility="gone" />
 
     <ImageView
+        tools:ignore="contentDescription"
         android:id="@+id/connectedIcon"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

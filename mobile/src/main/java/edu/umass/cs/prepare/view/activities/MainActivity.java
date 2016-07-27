@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
     private View networkStatusView;
 
     /** The view which displays the wearable connection status in the toolbar. **/
-    private View connectionStatusView;
+    private View wearableStatusView;
 
     /** The view which displays the pill bottle connection status in the toolbar. **/
     private View metawearStatusView;
@@ -358,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                 .setDisabledIcon(R.drawable.ic_pill_off_white_24dp)
                 .setDescription(getString(R.string.tutorial_metawear_status))
                 .setButtonText(getString(R.string.tutorial_next));
-        StandardTutorial wearableStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, connectionStatusView)
+        StandardTutorial wearableStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, wearableStatusView)
                 .setConnectedIcon(R.drawable.ic_watch_white_24dp)
                 .setDisconnectedIcon(R.drawable.ic_watch_white_24dp)
                 .setErrorIcon(R.drawable.ic_watch_error_white_24dp)
@@ -463,7 +463,7 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.ic_watch_off_white_24dp);
         wearableStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR,
                 R.drawable.ic_watch_error_white_24dp);
-        connectionStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_connection_status));
+        wearableStatusView = MenuItemCompat.getActionView(menu.findItem(R.id.action_connection_status));
         if (applicationPreferences.useAndroidWear()) {
             serviceManager.queryWearableState();
         }else {
@@ -494,11 +494,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Toast toast = Toast.makeText(MainActivity.this, info, Toast.LENGTH_LONG);
                 int[] location = new int[2];
-                connectionStatusView.getLocationOnScreen(location);
+                wearableStatusView.getLocationOnScreen(location);
                 toast.setGravity(Gravity.TOP|Gravity.START, location[0], location[1]);
                 toast.show();
             }
         });
+        wearableStatusActionProvider.setContentDescription(getString(R.string.content_description_wearable_status));
 
         metawearStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_metawear_status));
         metawearStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
@@ -540,11 +541,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Toast toast = Toast.makeText(MainActivity.this, info, Toast.LENGTH_LONG);
                 int[] location = new int[2];
-                connectionStatusView.getLocationOnScreen(location);
+                metawearStatusView.getLocationOnScreen(location);
                 toast.setGravity(Gravity.TOP|Gravity.START, location[0], location[1]);
                 toast.show();
             }
         });
+        metawearStatusActionProvider.setContentDescription(getString(R.string.content_description_metawear_status));
 
         networkStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_network_status));
         networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,
@@ -561,6 +563,37 @@ public class MainActivity extends AppCompatActivity {
         } else {
             networkStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
         }
+        networkStatusActionProvider.setOnClickListener(new ConnectionStatusActionProvider.OnClickListener() {
+            @Override
+            public void onClick(ConnectionStatusActionProvider.CONNECTION_STATUS state) {
+                final String info;
+                switch (state){
+                    case DISABLED:
+                        info = "Server connection is disabled. Go to settings to re-enable it.";
+                        break;
+                    case DISCONNECTED:
+                        info = "Waiting for incoming data before connecting to the server.";
+                        break;
+                    case CONNECTED:
+                        info = "Writing data to server at " + applicationPreferences.getIpAddress();
+                        break;
+                    case ERROR:
+                        info = "Server connection failed. Make sure the IP address is correct and the server is up.";
+                        break;
+                    case DEFAULT:
+                        info = "Default icon..."; //TODO
+                        break;
+                    default:
+                        return;
+                }
+                Toast toast = Toast.makeText(MainActivity.this, info, Toast.LENGTH_LONG);
+                int[] location = new int[2];
+                networkStatusView.getLocationOnScreen(location);
+                toast.setGravity(Gravity.TOP|Gravity.START, location[0], location[1]);
+                toast.show();
+            }
+        });
+        networkStatusActionProvider.setContentDescription(getString(R.string.content_description_network_status));
 
         if (applicationPreferences.getMwAddress().equals(getString(R.string.pref_device_default))){
             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);

@@ -25,6 +25,9 @@ import edu.umass.cs.prepare.R;
  */
 public class ConnectionStatusActionProvider extends ActionProvider implements View.OnClickListener {
 
+    /** The content description of the connection status icon, used for improved accessibility. **/
+    private String contentDescription;
+
     /** The icon representing the device. **/
     private View deviceIcon;
 
@@ -76,6 +79,7 @@ public class ConnectionStatusActionProvider extends ActionProvider implements Vi
 
         View progressBar = view.findViewById(R.id.circularProgressBar);
         deviceIcon = view.findViewById(R.id.deviceIcon);
+        deviceIcon.setContentDescription(contentDescription);
         updateDrawable();
 
         int color = 0x00002200;
@@ -137,8 +141,22 @@ public class ConnectionStatusActionProvider extends ActionProvider implements Vi
         connectionStatusMap.put(status, resourceId);
     }
 
+    /**
+     * Sets the listener for handling click events.
+     * @param onClickListener defines how the click events should be handled.
+     */
     public void setOnClickListener(final OnClickListener onClickListener){
         this.onClickListener = onClickListener;
+    }
+
+    /**
+     * Sets the content description of the connection status icon and updates the view immediately if available.
+     * @param contentDescription describes the view content.
+     */
+    public void setContentDescription(String contentDescription){
+        this.contentDescription = contentDescription;
+        if (deviceIcon != null)
+            deviceIcon.setContentDescription(contentDescription);
     }
 
     @Override

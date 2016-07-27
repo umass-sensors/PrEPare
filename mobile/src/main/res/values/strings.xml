@@ -51,4 +51,9 @@
     <string name="battery_level">Battery Level: %d%%</string>
     <string name="estimated_lifetime">Estimated Lifetime: %s hours.</string>
     <string name="recording_button_disabled_tutorial_mode">Disabled in tutorial mode.</string>
+
+    <string name="content_description_connection_status">Displays the connection status of the device.</string>
+    <string name="content_description_metawear_status">Displays the connection status of the pill bottle.</string>
+    <string name="content_description_wearable_status">Displays the connection status of the Android wear.</string>
+    <string name="content_description_network_status">Displays the network status.</string>
 </resources>

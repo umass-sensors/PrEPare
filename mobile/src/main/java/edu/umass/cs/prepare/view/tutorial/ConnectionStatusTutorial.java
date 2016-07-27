@@ -22,7 +22,7 @@ import edu.umass.cs.prepare.R;
  */
 public class ConnectionStatusTutorial extends StandardTutorial {
 
-    private int connectedIconId, disconnectedIconId, disabledIconId;
+    private int connectedIconId, disconnectedIconId, disabledIconId, errorIconId;
 
     /**
      * Initializes a tutorial sequence.
@@ -63,12 +63,24 @@ public class ConnectionStatusTutorial extends StandardTutorial {
         return this;
     }
 
+    /**
+     * Sets the resource ID of the icon to be displayed if an error occurs
+     * @param resourceId a reference to a drawable resource
+     * @return the tutorial object
+     */
+    public ConnectionStatusTutorial setErrorIcon(int resourceId){
+        this.errorIconId = resourceId;
+        return this;
+    }
+
     @Override
     public void onLayoutInflated(View view) {
+        final TextView errorIcon = (TextView) view.findViewById(R.id.txtErrorIcon);
         final TextView disabledIcon = (TextView) view.findViewById(R.id.txtDisabledIcon);
         final TextView disconnectedIcon = (TextView) view.findViewById(R.id.txtDisconnectedIcon);
         final TextView connectedIcon = (TextView) view.findViewById(R.id.txtConnectedIcon);
 
+        errorIcon.setCompoundDrawablesWithIntrinsicBounds(null, ContextCompat.getDrawable(UI, errorIconId), null, null);
         disabledIcon.setCompoundDrawablesWithIntrinsicBounds(null, ContextCompat.getDrawable(UI, disabledIconId), null, null);
         disconnectedIcon.setCompoundDrawablesWithIntrinsicBounds(null, ContextCompat.getDrawable(UI, disconnectedIconId), null, null);
         connectedIcon.setCompoundDrawablesWithIntrinsicBounds(null, ContextCompat.getDrawable(UI, connectedIconId), null, null);

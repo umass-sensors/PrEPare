@@ -27,6 +27,15 @@
         android:id="@+id/layout_connection_icons"
         android:paddingTop="10dp">
         <TextView
+            android:id="@+id/txtErrorIcon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Error"
+            android:textColor="@color/tooltip_background"
+            android:drawableTop="@drawable/ic_pill_error_white_24dp"
+            android:textAlignment="center"/>
+        <TextView
             android:id="@+id/txtDisabledIcon"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -35,6 +44,16 @@
             android:textColor="@color/tooltip_background"
             android:drawableTop="@drawable/ic_pill_off_white_24dp"
             android:textAlignment="center"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/layout_connection_icons"
+        android:id="@+id/layout_connection_icons_additional"
+        android:paddingTop="10dp">
         <TextView
             android:id="@+id/txtDisconnectedIcon"
             android:layout_width="0dp"
@@ -54,13 +73,12 @@
             android:textColor="@color/tooltip_background"
             android:drawableTop="@drawable/ic_pill_white_24dp"
             android:textAlignment="center"/>
-
     </LinearLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/layout_connection_icons">
+        android:layout_below="@id/layout_connection_icons_additional">
         <ImageView
             android:id="@+id/tutorial_next_button"
             android:layout_width="wrap_content"

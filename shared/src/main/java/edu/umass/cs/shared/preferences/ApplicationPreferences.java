@@ -25,6 +25,7 @@ public class ApplicationPreferences implements SharedPreferences.OnSharedPrefere
                     enableGyroscope,
                     enablePillBottle,
                     useAndroidWear,
+                    runServiceOverWearable,
                     enableWearableGyroscope;
     
     private int batteryLevel,
@@ -101,6 +102,8 @@ public class ApplicationPreferences implements SharedPreferences.OnSharedPrefere
                 context.getResources().getBoolean(R.bool.pref_connect_default));
         useAndroidWear = preferences.getBoolean(context.getString(R.string.pref_wearable_key),
                 context.getResources().getBoolean(R.bool.pref_wearable_default));
+        runServiceOverWearable = preferences.getBoolean(context.getString(R.string.pref_run_service_over_wearable_key),
+                context.getResources().getBoolean(R.bool.pref_run_service_over_wearable_default));
         enableWearableGyroscope = preferences.getBoolean(context.getString(R.string.pref_wearable_gyroscope_key),
                 context.getResources().getBoolean(R.bool.pref_wearable_gyroscope_default));
         subjectID = preferences.getInt(context.getString(R.string.pref_subject_id_key),
@@ -149,6 +152,10 @@ public class ApplicationPreferences implements SharedPreferences.OnSharedPrefere
 
     public boolean enablePillBottle(){
         return enablePillBottle;
+    }
+
+    public boolean runServiceOverWearable(){
+        return runServiceOverWearable;
     }
 
     public String getMwAddress(){

@@ -134,7 +134,7 @@ public class ServiceManager {
      */
     public void startMetawearService(){
         if (!applicationPreferences.enablePillBottle()) return;
-        if (applicationPreferences.useAndroidWear()){
+        if (applicationPreferences.useAndroidWear() && applicationPreferences.runServiceOverWearable()){
             remoteSensorManager.startMetawearService();
         }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);
@@ -147,7 +147,8 @@ public class ServiceManager {
      * Stops the Metawear service on the mobile device.
      */
     public void stopMetawearService(){
-        if (applicationPreferences.useAndroidWear()){
+        //TODO: Should we stop the service anyway??
+        if (applicationPreferences.useAndroidWear() && applicationPreferences.runServiceOverWearable()){
             remoteSensorManager.stopMetawearService();
         }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);
@@ -187,7 +188,7 @@ public class ServiceManager {
     }
 
     public void queryMetawearState(){
-        if (applicationPreferences.useAndroidWear()){
+        if (applicationPreferences.useAndroidWear() && applicationPreferences.runServiceOverWearable()){
             remoteSensorManager.queryMetawearState();
         }else {
             Intent startServiceIntent = new Intent(context, SensorService.class);

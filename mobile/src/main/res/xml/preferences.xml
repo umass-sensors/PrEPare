@@ -149,6 +149,13 @@
             android:summary="@string/pref_wearable_desc"
             android:defaultValue="@bool/pref_wearable_default"/>
 
+        <CheckBoxPreference
+            android:key="@string/pref_run_service_over_wearable_key"
+            android:title="@string/pref_run_service_over_wearable_title"
+            android:summary="@string/pref_run_service_over_wearable_summary"
+            android:defaultValue="@bool/pref_run_service_over_wearable_default"
+            android:dependency="@string/pref_wearable_key"/>
+
         <ListPreference
             android:key="@string/pref_wearable_accelerometer_sampling_rate_key"
             android:title="@string/pref_wearable_accelerometer_sampling_rate_title"

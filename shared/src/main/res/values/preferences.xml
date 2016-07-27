@@ -4,6 +4,11 @@
     <string name="pref_wearable_desc">If checked, collect data from an Android Wear device.</string>
     <bool name="pref_wearable_default">true</bool>
 
+    <string name="pref_run_service_over_wearable_key">run-service-over-wearable</string>
+    <string name="pref_run_service_over_wearable_title">Pill Bottle over Wear</string>
+    <string name="pref_run_service_over_wearable_summary">If checked, connect to the pill bottle over Android wear.</string>
+    <bool name="pref_run_service_over_wearable_default">true</bool>
+
     <string name="pref_audio_key">enable-audio</string>
     <string name="pref_audio_title">Enable Audio</string>
     <string name="pref_audio_desc">If checked, audio will be recorded along with video.</string>

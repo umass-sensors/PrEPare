@@ -602,6 +602,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startTutorial();
         }
+        Toast.makeText(this, "UPDATED!", Toast.LENGTH_LONG).show();
         return true;
     }
 

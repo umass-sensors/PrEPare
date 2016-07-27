@@ -18,7 +18,6 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -355,18 +354,21 @@ public class MainActivity extends AppCompatActivity {
         StandardTutorial metawearStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, metawearStatusView)
                 .setConnectedIcon(R.drawable.ic_pill_white_24dp)
                 .setDisconnectedIcon(R.drawable.ic_pill_white_24dp)
+                .setErrorIcon(R.drawable.ic_pill_error_white_24dp)
                 .setDisabledIcon(R.drawable.ic_pill_off_white_24dp)
                 .setDescription(getString(R.string.tutorial_metawear_status))
                 .setButtonText(getString(R.string.tutorial_next));
         StandardTutorial wearableStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, connectionStatusView)
                 .setConnectedIcon(R.drawable.ic_watch_white_24dp)
                 .setDisconnectedIcon(R.drawable.ic_watch_white_24dp)
+                .setErrorIcon(R.drawable.ic_watch_error_white_24dp)
                 .setDisabledIcon(R.drawable.ic_watch_off_white_24dp)
                 .setDescription(getString(R.string.tutorial_wearable_status))
                 .setButtonText(getString(R.string.tutorial_next));
         StandardTutorial networkStatusTutorial = new ConnectionStatusTutorial(MainActivity.this, networkStatusView)
                 .setConnectedIcon(R.drawable.ic_cloud_done_white_24dp)
                 .setDisconnectedIcon(R.drawable.ic_cloud_white_24dp)
+                .setErrorIcon(R.drawable.ic_cloud_error_white_24dp)
                 .setDisabledIcon(R.drawable.ic_cloud_off_white_24dp)
                 .setDescription(getString(R.string.tutorial_network_status))
                 .setButtonText(getString(R.string.tutorial_next));
@@ -513,6 +515,36 @@ public class MainActivity extends AppCompatActivity {
         }else{
             metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.DISABLED);
         }
+        metawearStatusActionProvider.setOnClickListener(new ConnectionStatusActionProvider.OnClickListener() {
+            @Override
+            public void onClick(ConnectionStatusActionProvider.CONNECTION_STATUS state) {
+                final String info;
+                switch (state){
+                    case DISABLED:
+                        info = "Pill bottle is disabled. Go to settings to re-enable it.";
+                        break;
+                    case DISCONNECTED:
+                        info = "Waiting for motion before connecting to the pill bottle.";
+                        break;
+                    case CONNECTED:
+                        info = "Connected to the pill bottle and collecting data.";
+                        break;
+                    case ERROR:
+                        info = "Failed to connect to pill bottle. Make sure that Bluetooth is enabled and your pill bottle battery is in.";
+                        break;
+                    case DEFAULT:
+                        info = "Default icon..."; //TODO
+                        break;
+                    default:
+                        return;
+                }
+                Toast toast = Toast.makeText(MainActivity.this, info, Toast.LENGTH_LONG);
+                int[] location = new int[2];
+                connectionStatusView.getLocationOnScreen(location);
+                toast.setGravity(Gravity.TOP|Gravity.START, location[0], location[1]);
+                toast.show();
+            }
+        });
 
         networkStatusActionProvider = (ConnectionStatusActionProvider) MenuItemCompat.getActionProvider(menu.findItem(R.id.action_network_status));
         networkStatusActionProvider.setDrawable(ConnectionStatusActionProvider.CONNECTION_STATUS.DEFAULT,

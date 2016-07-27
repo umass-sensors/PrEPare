@@ -659,18 +659,18 @@ public class MainActivity extends AppCompatActivity {
                             showStatus(getString(R.string.status_no_motion));
                             break;
                         case SharedConstants.MESSAGES.INVALID_ADDRESS:
-                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR); //TODO: ERROR?
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             showStatus(getString(R.string.status_invalid_address));
                             startActivityForResult(new Intent(MainActivity.this, SelectDeviceActivity.class), REQUEST_CODE.SELECT_DEVICE);
                             break;
                         case SharedConstants.MESSAGES.BLUETOOTH_UNSUPPORTED:
                             showStatus(getString(R.string.status_bluetooth_unsupported));
-                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR); //TODO: ERROR?
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             break;
                         case SharedConstants.MESSAGES.BLUETOOTH_DISABLED:
                             showStatus(getString(R.string.status_bluetooth_disabled));
-                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR); //TODO: ERROR?
+                            metawearStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             wearableStatusActionProvider.setStatus(ConnectionStatusActionProvider.CONNECTION_STATUS.ERROR);
                             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                             startActivityForResult(enableBtIntent, REQUEST_CODE.ENABLE_BLUETOOTH);

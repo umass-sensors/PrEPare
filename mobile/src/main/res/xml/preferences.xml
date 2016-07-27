@@ -183,4 +183,8 @@
 
     </PreferenceScreen>
 
+    <Preference
+        android:key="@string/pref_check_for_updates_key"
+        android:title="@string/pref_check_for_updates_title" />
+
 </PreferenceScreen>

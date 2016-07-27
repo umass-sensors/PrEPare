@@ -128,4 +128,7 @@
     <string name="pref_subject_id_title">Subject ID</string>
     <integer name="pref_subject_id_default">1</integer>
 
+    <string name="pref_check_for_updates_key">check-for-updates</string>
+    <string name="pref_check_for_updates_title">Check for Updates</string>
+
 </resources>

@@ -1,7 +1,12 @@
 package edu.umass.cs.prepare.view.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -10,10 +15,17 @@ import android.text.InputFilter;
 import android.text.Spanned;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import net.rdrei.android.dirchooser.DirectoryChooserActivity;
 import net.rdrei.android.dirchooser.DirectoryChooserConfig;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Locale;
 
 import edu.umass.cs.prepare.R;
@@ -195,6 +207,111 @@ public class SettingsFragment extends PreferenceFragment {
                 return true;
             }
         });
+
+        findPreference(getString(R.string.pref_check_for_updates_key)).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                new DownloadTask().execute(getVersionFile());
+                return true;
+            }
+        });
+    }
+
+    private String downloadText(String url) {
+        int BUFFER_SIZE = 2000;
+        InputStream in = null;
+        try {
+            in = openHttpConnection(url);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        }
+
+        String str = "";
+        if (in != null) {
+            InputStreamReader isr = new InputStreamReader(in);
+            int charRead;
+            char[] inputBuffer = new char[BUFFER_SIZE];
+            try {
+                while ((charRead = isr.read(inputBuffer)) > 0) {
+                    // ---convert the chars to a String---
+                    String readString = String.copyValueOf(inputBuffer, 0, charRead);
+                    str += readString;
+                    inputBuffer = new char[BUFFER_SIZE];
+                }
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "";
+            }
+        }
+        return str;
+    }
+
+    public static String getVersionName(Context context) {
+        PackageManager pm = context.getPackageManager();
+        try {
+            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
+            return pi.versionName;
+        } catch (PackageManager.NameNotFoundException ignored) {}
+        return null;
+    }
+
+    private String getVersionFile(){
+        return "https://drive.google.com/uc?export=view&id=0Byr6oHEGQO73SVJSSFRHT2hzSUU";
+    }
+
+    private String getApkFile(){
+        return "https://drive.google.com/uc?export=view&id=0Byr6oHEGQO73Q0laWURLM3hZbHM";
+    }
+
+    private InputStream openHttpConnection(String urlString) throws IOException {
+        InputStream in = null;
+        int response = -1;
+
+        URL url = new URL(urlString);
+        URLConnection conn = url.openConnection();
+
+        if (!(conn instanceof HttpURLConnection))
+            throw new IOException("Not an HTTP connection");
+
+        try {
+            HttpURLConnection httpConn = (HttpURLConnection) conn;
+            httpConn.setAllowUserInteraction(false);
+            httpConn.setInstanceFollowRedirects(true);
+            httpConn.setRequestMethod("GET");
+            httpConn.connect();
+
+            response = httpConn.getResponseCode();
+            if (response == HttpURLConnection.HTTP_OK) {
+                in = httpConn.getInputStream();
+            }
+        } catch (Exception ex) {
+            throw ex;
+        }
+        return in;
+    }
+
+    class DownloadTask extends AsyncTask<String, Void, String> {
+
+        private Exception exception;
+
+        @Override
+        protected String doInBackground(String... url) {
+            return downloadText(url[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String version) {
+            String currentVersion = getVersionName(getActivity());
+            Toast.makeText(getActivity(), "current version: " + currentVersion + ", newest version: " + version, Toast.LENGTH_LONG).show();
+            if (currentVersion == null || version == null)
+                return;
+            if (!version.equals(currentVersion)){
+                Intent updateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getApkFile()));
+                startActivity(updateIntent);
+            }
+        }
     }
 
     public void showTutorial(){

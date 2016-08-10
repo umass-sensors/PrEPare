@@ -20,11 +20,11 @@ You must have a [Metawear C](https://mbientlab.com/metawearc/) board in order to
 
 ## Screenshots
 
-![alt tag](mobile/screenshots/screenshot_ui.png)
-![alt tag](mobile/screenshots/screenshot_data.png)
-![alt tag](mobile/screenshots/screenshot_recording.png)
-![alt tag](mobile/screenshots/screenshot_about.png)
-![alt tag](mobile/screenshots/screenshot_select_pill_bottle.png)
+<img src="mobile/screenshots/screenshot_select_pill_bottle.png" width="200">
+<img src="mobile/screenshots/screenshot_data.png" width="200">
+<img src="mobile/screenshots/screenshot_recording.png" width="200">
+<img src="mobile/screenshots/screenshot_settings.png" width="200">
+<img src="mobile/screenshots/screenshot_about.png" width="200">
 
 ## Sensor Data
 
